@@ -10,6 +10,12 @@ output: revealjs::revealjs_presentation
 
 ## 温故
 
+* 了解 IEEE 802.11 与 Wi-Fi 的关系
+* 了解 IEEE 802.11 无线网络协议中的关键组件有哪些
+* 了解 IEEE 802.11 无线网络中有什么设备
+* 了解 OpenWrt 的基本功能与配置方法
+* 了解本课程实验所需无线网卡的基本要求
+
 ---
 
 ## 知新
@@ -346,7 +352,8 @@ dpkg -L aircrack-ng
 ## 样例数据
 
 * [样例1：开放式认证连接过程样例数据](exp/chap0x02/0-open-ap-public.pcap)
-* [样例2：WPA/WPA2 加密认证过程样例数据](exp/chap0x02/1-wpa2mixed-public.pcap)
+* [样例2：WPA/WPA2 个人模式加密认证过程样例数据](exp/chap0x02/1-wpa2mixed-public.pcap)
+* [样例3：WPA2 企业级加密认证过程样例数据](exp/chap0x02/2-wpa2-enterprise.pcap)
 
 # 以开放式认证连接过程为例
 
@@ -376,7 +383,7 @@ dpkg -L aircrack-ng
 
 ---
 
-## WPA/WPA2 Open Access 连接过程全貌
+## WPA Open Access 连接过程全貌 {id="flowgraph-of-open-access"}
 
 ![](images/chap0x02/open-access-flowgraph.png)
 
@@ -391,6 +398,14 @@ dpkg -L aircrack-ng
 * Authentication (Response)
 * Association Request
 * Association Response
+
+---
+
+### 开放式认证
+
+* 虽然没有设置加密方式，但「认证」步骤没有跳过
+
+![](images/chap0x02/open.access.png)
 
 ---
 
@@ -729,7 +744,7 @@ tshark -r 1-wpa2mixed-public.pcap -T fields -e wlan.fc.type -e wlan.fc.subtype -
 
 ![](images/chap0x02/null-sta-stay-up.png)
 
-# 以 WPA/WPA2 加密认证连接过程为例 {id="wpa2-mixed-flow"}
+# 以 WPA 加密认证连接过程为例 {id="wpa2-mixed-flow"}
 
 ---
 
@@ -753,7 +768,7 @@ tshark -r 1-wpa2mixed-public.pcap -T fields -e wlan.fc.type -e wlan.fc.subtype -
 
 ---
 
-## WPA/WPA2 加密认证连接过程全貌 {id="wpa2-connect-flowgraph"}
+## WPA 加密认证连接过程全貌 {id="wpa2-connect-flowgraph"}
 
 ![](images/chap0x02/openwrt-wpa2-flowgraph.png)
 
@@ -769,9 +784,499 @@ tshark -r 1-wpa2mixed-public.pcap -T fields -e wlan.fc.type -e wlan.fc.subtype -
 
 ![](images/chap0x02/beacon-rsn-wpa1.png)
 
-# WPA/WPA2 基础 {id="wpa-wpa2-basics"}
+---
+
+## IEEE 802.11 链路层地址类型 {id="mac-addr-types"}
+
+* DA = Destination MAC Address
+* SA = Source MAC Address
+* RA = Receiver Address indicate MAC Address of STAtion in WM that have to receive frame
+* TA = Transmitter Address indicate STAtion which have transmitted frame in WM
+* BSSID 
 
 ---
 
+## Frame Header
 
+| 分段名称       | FC  | D/I | Addr1 | Addr2 | Addr3 | SC  | Addr4 | body     | CRC |
+| :-:            | :-: | :-: | :-:   | :-:   | :-:   | :-: | :-:   | :-:      | :-: |
+| 字节数(octets) | 2   | 2   | 6     | 6     | 6     | 2   | 6     | 0 ~ 2312 | 4   |
+
+* FC = Frame Control
+* D/I = Duration/connection ID
+* SC = Sequence control
+* body = Frame body
+
+---
+
+### Frame Control
+
+| 分段名称     | Protocol | Type | Subtype | TD | FD | MF | Retry | PM | MD | PF | Order |
+| :-           | :-       | :-   | :-      | :- | :- | :- | :-    | :- | :- | :- | :-    |
+| 比特数(bits) | 2        | 2    | 4       | 1  | 1  | 1  | 1     | 1  | 1  | 1  | 1     |
+
+* TD = To DS
+* FD = From DS
+* MF = More Fragmentation
+* PM = Power Management
+* PF = Protected Frame
+
+---
+
+### scapy 中可视化无线数据报文 {id="scapy.psdump"}
+
+```python
+beacon=RadioTap()/Dot11()/Dot11Beacon()
+beacon.psdump('beacon.demo.eps', layer_shift=1)
+```
+
+---
+
+### scapy 中可视化无线数据报文 {id="scapy.psdump.result"}
+
+![](images/chap0x02/beacon.demo.png)
+
+---
+
+### Wireshark 中查看数据报帧头部详细信息 {id="wireshark.frame.hdr"}
+
+![](images/chap0x02/wlan.fc.addrs.details.png)
+
+# WPA 基础 {id="wpa-wpa2-basics"}
+
+---
+
+* WEP, Wired Equivalent Privacy
+* WPA, [Wi-Fi Protected Access](https://www.wi-fi.org/discover-wi-fi/security)
+
+---
+
+## 安全协议概述 {id="wifi-security-protocols-1"}
+
+|                | WEP         | WPA            | WPA2           | WPA3              |
+| :-             | :-          | :-             | :-             | :-                |
+| 发布时间       | 1997        | 2003           | 2004           | 2018              |
+| 安全模型       | Open/Shared | PSK/Enterprise | PSK/Enterprise | PSK/Enterprise    |
+| 加密算法       | RC4         | TKIP           | AESS-CCMP      | AES-CCMP/AES-GCMP |
+| 密钥长度       | 64b/128b    | 128b           | 128b           | 128b/256b         |
+| 完整性校验算法 | CRC-32      | 64b MIC        | CBC-MAC        | SHA-2             |
+| PMF 支持       | 不支持      | 可选           | 可选           | 强制要求          |
+| FS 支持        | ❌          | ❌             | ❌             | ✅                |
+| 已淘汰（2021） | 2004        | 2012           | 未淘汰         | 未淘汰            |
+
+---
+
+## 安全协议概述 {id="wifi-security-protocols-2"}
+
+* 密钥长度 - 包括初始化向量 IV 的长度
+* PMF - Protected Management Frame
+* FS  - Forward Secrecy
+* TKIP - Temporal Key Integrity Protocol
+* CCMP - Counter Cipher Mode Protocol，默认密钥长度 128bit
+* GCMP - Galois Counter Mode Protocol, 默认密钥长度 256bit
+
+---
+
+## 安全协议普及应用概况
+
+[![](images/chap0x02/wigle.net.png)](https://wigle.net/enc-large.html)
+
+---
+
+本课程专注于 `WPA/WPA2` 协议及其安全问题讲解。
+
+---
+
+## WPA 工作模式 {id="wpa-work-modes"}
+
+* 个人模式
+    * 适用于家庭和小规模企业无线网络
+    * 基于 **单一** `预共享密钥` 机制
+* 企业模式
+    * 适用于企业无线网络
+    * 基于 `IEEE 802.1X` 标准，支持非共享的独立认证凭据
+
+# WPA 个人模式 {id="wpa-personal"}
+
+---
+
+## 密钥分类概述
+
+| 密钥类型 | 用途                             | 来源           |
+| :-       | :-                               | :-             |
+| PSK      | 认证                             | （离线）配置😈 |
+| PMK      | 长期使用😈，产生其他加密用途密钥 | EAP 协商       |
+| PTK      | 加密单播(unicast)通信            | 产生自 PMK/PSK |
+| GTK      | 加密多播(multicast)通信          | 产生自 PMK/PSK |
+ 
+---
+
+### PSK
+
+* Pre-Shared Key, 预共享密钥
+* 网络中所有使用者（客户端） **共享** 该密钥
+
+---
+
+### PMK
+
+* Pairwise Master Key, 成对主密钥
+* PMK = PBKDF(PSK, SSID, ssidLength, c)
+    * PBKDF: Password-Based Key Derivation Function
+    * CCMP: c=4096, 输出长度：256bit
+
+---
+
+### PBKDF {id="pbkdf-1"}
+
+![](images/chap0x02/pbkdf.png)
+
+---
+
+### PBKDF {id="pbkdf-2"}
+
+* 相同的密码输入，经过 `PBKDF` 运算之后每次的结果都不相同
+* 通过增大迭代参数 `c`，增加暴力破解的计算量，从而增加破解时间
+* `salt` 的选择如果做到 **不可预测** ，则可以抵御预先计算 `PBKDF` 字典的加速暴力破解攻击方法
+    * `WPA/WPA2 PSK` 使用的 `salt` 是 `SSID` 和 `ssidLength`
+
+---
+
+### PTK
+
+* Authenticator: 认证服务提供者
+* Supplicant: 认证服务申请者
+* A-nonce: Authenticator (generated) nonce, 随机值
+* S-nonce: Supplicant (generated) nonce, 随机值
+* Pairwise Transient Key, 成对 **临时** 密钥
+* PTK = Function(PMK, A-nonce, S-nonce, Authenticator MAC, Supplicant MAC)
+    * 此处的 `Function` 是 `预先定义好的伪随机函数`
+
+---
+
+## WPA/WPA2 4 次握手示意图 {id="wpa-4way-handshake"}
+
+![](images/chap0x02/four-way-handshake.png)
+
+---
+
+## WPA/WPA2 4 次握手实例 - 消息1 {id="wpa-4way-handshake-sample-1"}
+
+![](images/chap0x02/fourway-handshake-1.png)
+
+---
+
+## WPA/WPA2 4 次握手实例 - 消息2 {id="wpa-4way-handshake-sample-2"}
+
+![](images/chap0x02/fourway-handshake-2.png)
+
+---
+
+## WPA/WPA2 4 次握手实例 - 消息3 {id="wpa-4way-handshake-sample-3"}
+
+![](images/chap0x02/fourway-handshake-3.png)
+
+---
+
+## WPA/WPA2 4 次握手实例 - 消息4 {id="wpa-4way-handshake-sample-4"}
+
+![](images/chap0x02/fourway-handshake-4.png)
+
+# 抓包任务
+
+---
+
+* 分别使用电脑、手机、Kali 虚拟机连接 USB 无线网卡作为无线网络客户端
+* 无线网络分别配置 `DHCP` 和禁用 `DHCP` 状态下进行抓包
+    * `AP` 广播的 `beacon frame`
+    * `STA` 主动发出的 `probe request frame`
+    * 开放认证: 认证成功、解除认证
+    * WPA-PSK: 认证成功、认证失败、解除认证
+    * WPA2-PSK: 认证成功、认证失败、解除认证
+
+# 数据包分析任务
+
+---
+
+* 查看统计当前信号覆盖范围内一共有多少独立的SSID？其中是否包括隐藏SSID？哪些无线热点是加密/非加密的？加密方式是否可知？
+* 如何分析出一个指定手机在抓包时间窗口内在手机端的无线网络列表可以看到哪些SSID？这台手机尝试连接了哪些SSID？最终加入了哪些SSID？
+* SSID包含在哪些类型的802.11帧？
+
+# Wireshark 分析常用技巧汇总
+
+---
+
+* pcap 文件基本信息
+    * pcap 基本统计信息
+    * 无线网络流量聚类统计
+* 加密无线流量的解密
+* 数据可视化
+
+# Scapy 编程基础
+
+---
+
+## 使用 scapy 构造 802.11 帧的基本层次结构 {id="scapy-layers-hier"}
+
+```ini
+[RadioTap]
+-[Dot11]
+-- [Dot11<Frame Type>]
+--- [Dot11Elt]
+--- [Dot11Elt]
+ …
+--- [Dot11Elt]
+```
+
+---
+
+## 使用 scapy 构造 802.11 帧 {id="scapy-build-frame"}
+
+```python
+frame = RadioTap()/Dot11()/Dot11ProbeReq()/Dot11Elt()
+
+# 查看 Dot11 字段定义
+ls(Dot11)
+# subtype    : BitMultiEnumField  (4 bits)         = (0)
+# type       : BitEnumField  (2 bits)              = (0)
+# proto      : BitField  (2 bits)                  = (0)
+# cfe        : BitEnumField (Cond) (4 bits)        = (0)
+# FCfield    : MultipleTypeField                   = (<Flag 0 ()>)
+# ID         : ShortField                          = (0)
+# addr1      : _Dot11MacField                      = ('00:00:00:00:00:00')
+# addr2      : _Dot11MacField (Cond)               = ('00:00:00:00:00:00')
+# addr3      : _Dot11MacField (Cond)               = ('00:00:00:00:00:00')
+# SC         : LEShortField (Cond)                 = (0)
+# addr4      : _Dot11MacField (Cond)               = ('00:00:00:00:00:00')
+
+# 查看 Dot11Elt 字段定义
+ls(Dot11Elt)
+# ID         : ByteEnumField                       = (0)
+# len        : FieldLenField                       = (None)
+# info       : StrLenField                         = (b'')
+
+# 发送构造好的 wireless frame
+sendp(frame, iface='wlan0', count=10, inter=0.2)
+# 从 pcap 中读取 wireless frame
+frame_list = rdpcap(filename)
+frame_obj = frame_list[0]
+# 嗅探模式实时抓包
+# count=10 捕获 10 个 frame 后退出嗅探
+# prn=FrameHandler 注册一个回调函数 FrameHandler 
+# 用于每收到一个 frame 后调用该函数
+sniff(iface='wlan0', count=10, prn=FrameHandler)
+# 捕获数据写入文件
+wrpcap(filename, frames_list)
+```
+
+---
+
+## 课本资源
+
+* [scapy 无线网络编程入门](https://c4pr1c3.github.io/cuc-mis/chap0x02/scapy.html)
+* [scapy 无线网络编程实例](https://c4pr1c3.github.io/cuc-mis/chap0x03/scapy.html)
+
+# WPA 企业模式 {id="wpa-enterprise"}
+
+---
+
+## 概述
+
+* 认证服务器和 AP 分离
+* 认证服务器和 AP 之间使用 `RADIUS` 协议认证
+    * EAP, Extensible Authentication Protocol
+
+---
+
+## 802.11 与 802.1X {id="wpa-802dot1x"}
+
+* `802.11` 是无线网络链路层协议规范
+* `802.1X` 是物理层无关的基于端口的（链路层）访问控制协议
+* 两者组合后可以提高无线网络安全性
+
+---
+
+## 802.1X 与 802.11 身份认证需求 {id="wpa-802dot1X-requirements"}
+
+* 可以解决
+	* 不同无线客户端使用独立认证凭据
+	* 伪造 AP 和中间人攻击
+	* 精细化授权
+* 无法解决
+	* 伪造数据报文和伪造断开连接请求进行 `DoS` 攻击
+
+---
+
+## EAP
+
+* 非简单用户名和密码
+* 很容易封装到数据链路层协议数据帧
+* 提供了一个适用于所有认证方法的通用框架
+* 更简单的不同认证方法的互操作和兼容性
+* 在 `IEEE 802.11` 协议中提供 `STA` 和认证服务器之间的端到端认证
+    * `AP` 在这个过程中扮演认证代理角色
+    * `RADIUS` 是 `EAP` 在 `IP` 网络中传输的事实标准
+
+---
+
+### EAPOL
+
+EAP encapsulation over LAN.
+
+---
+
+## EAP 的常见可选认证方法 {id="eap-auth-alternatives"}
+
+* 按普及程度从高到低排序
+    * PEAP
+    * EAP-MD5
+    * EAP-TTLS
+    * EAP-TLS (安全等级最高）
+    * LEAP （安全性最差）
+    * EAP-FAST
+
+---
+
+## 802.1X
+
+* 解决用户身份认证问题
+* 定义了有线和无线局域网传送 `EAP` 的标准
+* `EAP` 消息被封装在以太帧负载
+* 提供基于（交换机）端口的访问控制
+* 在不改动现有网络设备的前提下提供高层应用新的认证方式
+* 保证最新的安全技术可以兼容现有网络基础设施
+
+---
+
+## 基于 802.1X 的 WPA 企业级认证流程简化 {id="wpa-enterprise-flowgraph"}
+
+![](images/chap0x02/wpa-enterprise-flowgraph.png)
+
+---
+
+## WPA 企业级认证架构组成 {id="wpa-enterprise-arch"}
+
+![](images/chap0x02/wpa-enterprise-arch.png)
+
+
+# 搭建 WPA2 企业级认证软 AP {id="setup-wpa-enterprise-ap"}
+
+---
+
+## 软件依赖
+
+* OpenWRT
+* FreeRADIUS
+
+---
+
+## 基于 OpenWRT 的软 AP 配置效果 {id="wpa2-openwrt-enterprise"}
+
+![](images/chap0x02/wpa2-enterprise-openwrt-demo.png)
+
+---
+
+## 无线客户端连接时的证书警告
+
+![](images/chap0x02/wpa2-enterprise-client-cert-warning.png)
+
+---
+
+## Wireshark 里的 WPA2 企业级认证连接过程分析 {id="wpa2-eap-md5-vulnerability"}
+
+![](images/chap0x02/eap-md5-vul.png)
+
+---
+
+[OpenWRT 官网的 FreeRADIUS 指南](https://openwrt.org/docs/guide-user/network/wifi/freeradius)
+
+# WPA2 企业级认证配置简要指南 {id="wpa2-enterprise-guide-on-openwrt"}
+
+---
+
+⚠️  本节内容仅限「教学演示」用途，包含严重安全漏洞，切勿用于生产环境！！
+
+⚠️  本节内容仅限「教学演示」用途，包含严重安全漏洞，切勿用于生产环境！！
+
+⚠️  本节内容仅限「教学演示」用途，包含严重安全漏洞，切勿用于生产环境！！
+
+---
+
+## OpenWRT 系统基本信息
+
+OpenWrt 19.07.5, r11257-5090152ae3
+
+---
+
+## 安装依赖软件
+
+```bash
+opkg update && opkg install freeradius3-default freeradius3-utils
+```
+
+---
+
+## 配置 freeradius 客户端认证配置文件
+
+`freeradius3/clients.conf`
+
+```ini
+# 修改配置文件中 secret 变量赋值
+# AP 访问 FreeRADIUS 使用的秘密凭据
+secret = SecretForAP1
+```
+
+---
+
+## 配置 freeradius 授权用户配置文件
+
+`freeradius3/mods-config/files/authorize`
+
+```ini
+# 添加以下「用户密码明文对」到文件第一行
+# 无线客户端连接 AP 时使用的独立用户名密码
+bob Cleartext-Password := "password1"
+```
+
+---
+
+## 开启 freeradius 的登录审计功能
+
+`freeradius3/sites-available/default`
+
+```ini
+# 取消 radutmp 这一行的行首注释
+radutmp
+```
+
+`freeradius3/sites-available/inner-tunnel`
+
+
+```ini
+# 取消注释 'update output.session-state' 这一小节配置
+update outer.session-state {
+        User-Name := &User-Name
+}
+```
+
+---
+
+## 编辑无线网络配置
+
+```ini
+config wifi-iface 'default_radio0'
+	option device 'radio0'
+	option mode 'ap'
+	option ssid 'OpenWrt'
+	option network 'wan'
+	option encryption 'wpa2'
+	option server '127.0.0.1'
+	option key 'SecretForAP1'
+	option acct_server '127.0.0.1'
+	option acct_secret 'SecretForAP1'
+```
+
+---
+
+完成以上配置之后，可以通过 `LuCI` 重启无线网络以使配置生效。
 
