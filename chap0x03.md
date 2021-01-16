@@ -59,6 +59,10 @@ output: revealjs::revealjs_presentation
 * 无加密的无线网络通信就是在“裸奔”
 * 有加密的无线网络通信数据逃不过被获取原始通信数据的命运
 
+---
+
+> 动手准备好自己的无线「监听」环境
+
 # 加入无线网络前 [WEAK-0-1]
 
 ---
@@ -274,7 +278,7 @@ sudo ifconfig en0 ether aa:bb:cc:dd:ee:ff
 
 ---
 
-## Evil SSID {id="evil-ssid-1"}
+## SSID 字段定义 {id="evil-ssid-1"}
 
 | 唯一标识 | 长度  | ESSID    |
 | :-       | :-    | :-       |
@@ -304,7 +308,7 @@ sudo ifconfig en0 ether aa:bb:cc:dd:ee:ff
 
 ---
 
-### XSS 成功示例
+### XSS 成功示例 {id="xss-ok-case"}
 
 ![](images/chap0x03/DGN2200B-Stored-XSS-SSID-9164.png)
 
@@ -325,7 +329,7 @@ sudo airbase-ng --essid "<script>alert(/hacked/)</script>" -a "23:33:33:33:33:33
 
 ---
 
-### XSS 失败示例
+### XSS 失败示例 {id="xss-failed-case"}
 
 ![](images/chap0x03/evil-ssid-xss-2-9113.png)
 
@@ -333,15 +337,21 @@ sudo airbase-ng --essid "<script>alert(/hacked/)</script>" -a "23:33:33:33:33:33
 
 ---
 
-> Evil Twin
+## Evil Twin
 
 * [公开资料最早见于 2001 年的技术白皮书：Wireless LAN Security](http://www.packetnexus.com/docs/wireless_LAN_security.pdf)
-* 常见分类
-    * [KARMA Attack - 2004~2006](http://theta44.org/karma/) | [Simple Karma Attack (Tool)](https://github.com/Leviathan36/SKA)
-    * [MANA Attack - 2014](https://github.com/sensepost/hostapd-mana/wiki/KARMA---MANA-Attack-Theory)
-    * [Lure10 Attack - 2017](https://census-labs.com/news/2017/05/11/lure10-exploiting-windows-automatic-association-algorithm/)
-        * 影响 [Windows 10 version 1703 以前版本](https://support.microsoft.com/zh-cn/windows/在-windows-10-中连接到开放-wlan-热点-bcec4e8b-00e7-4930-d3ff-5349a3e70037)
-    * [Known Beacon Attack - 2018](https://census-labs.com/news/2018/02/01/known-beacons-attack-34c3/)
+
+> **Access Point Clone (`Evil Twin`) Traffic Interception** – An attacker fools legitimate wireless clients into connecting to the attacker’s own network by placing an unauthorized access point with a **stronger signal in close proximity** to wireless clients. Users attempt to log into the substitute servers and unknowingly give away passwords and similar sensitive data.
+
+---
+
+## Evil Twin 常见分类 {id="evil-twin-variants"}
+
+* [KARMA Attack - 2004~2006](http://theta44.org/karma/) | [Simple Karma Attack (Tool)](https://github.com/Leviathan36/SKA)
+* [MANA Attack - 2014](https://github.com/sensepost/hostapd-mana/wiki/KARMA---MANA-Attack-Theory)
+* [Lure10 Attack - 2017](https://census-labs.com/news/2017/05/11/lure10-exploiting-windows-automatic-association-algorithm/)
+    * 影响 [Windows 10 version 1703 以前版本](https://support.microsoft.com/zh-cn/windows/在-windows-10-中连接到开放-wlan-热点-bcec4e8b-00e7-4930-d3ff-5349a3e70037)
+* [Known Beacon Attack - 2018](https://census-labs.com/news/2018/02/01/known-beacons-attack-34c3/)
 
 ---
 
@@ -404,10 +414,214 @@ sudo airbase-ng --essid "<script>alert(/hacked/)</script>" -a "23:33:33:33:33:33
 
 ---
 
-> 破解认证凭据
+> 恢复/破解认证凭据
 
+* WEP
 * WPA/WPA2 PSK
 * WPA/WPA2 EAP
+
+---
+
+## 短命的 WEP {id="short-life-of-wep"}
+
+* **W**ired **E**quivalent **P**rivacy (1997-2004) ，属于早期 `IEEE 802.11` 协议的组成部分
+* `IEEE` 随后在 2004.7.23 的 `IEEE 802.11i-2004` 报告中同时包含了 `TKIP` 和 `CCMP` 
+    * 废止了 `WEP` 协议
+    * `Wi-Fi 联盟` 接受了 `IEEE` 的上述相关报告并冠以 `WPA2` 这个 **商业名称** 发布
+
+---
+
+## 临时救火队员 TKIP {id="temporary-tkip"}
+
+* 2002.10.31，`Wi-Fi 联盟` 提出 `TKIP` 协议，归类于 `WPA` 标准的一部分
+    * `TKIP` - Temporal Key Integrity Protocol，临时密钥完整性协议
+    * 用于升级 `WEP` 的 **临时过渡** 解决方案，保留了 `WEP` 的基本架构与过程方式
+* `TKIP` 随后由于安全性原因于 2009 年 1 月被 `IEEE` 废弃
+* 自 2012 年的 `IEEE 802.11` 标准中，`TKIP` 已不再视为安全，目前已经处于废弃状态
+
+---
+
+## WEP 的已知经典密钥恢复相关漏洞 
+
+* [`FMS` attack on WEP RC4 - 2001](http://www.cs.cornell.edu/People/egs/615/rc4_ksaproc.pdf)
+* [KoreK 改进了 `FMS` attack - 2006](https://infoscience.epfl.ch/record/113785)
+* [`PTW` Attack - 2007](https://eprint.iacr.org/2007/120.pdf) 
+    * 基于 2005 年发布的 `Klein's attack on RC4`
+
+---
+
+## 回顾 WPA/WPA2 PSK 四次握手认证过程 {id="review-of-wpa-psk-flow"}
+
+```
+PTK = PRF(PMK||A-nonce||S-nonce|| AP Mac || STA Mac)
+PMK = PBKDF(Passphrase, SSID, ssidLength, 4096, 256)
+```
+
+* 上述公式里的 `PRF` 通常使用 `Hash` 函数来实现
+    * PRF = Pseudo-Random Function
+* `A-nonce` 在 4 次握手消息中的第 1 个 EAP 包；
+* `S-nonce` 在 4 次握手消息中的第 2 个 EAP 包；
+* 剩下的变量在 `AP` 的 `beacon frame` 广播包、`STA` 和 `AP` 之间的 `probe request`、`probe response`、`association request` 和 `association response` 中都可以提取到；
+
+---
+
+> 如果我们可以恢复/破解出上述公式中的 Passphrase 就可以加入目标网线网络
+
+---
+
+> ⚠️ 我们在嗅探获得的数据包中并不能得到 `PTK`
+
+---
+
+> 实际上我们能够提取到的是 `PTK` 的组成部分之一：校验和字段 `MIC` 值
+
+---
+
+## PMK 与 MIC 的关系 {id="pmk-and-mic"}
+
+![](images/chap0x03/pmk.png)
+
+---
+
+### TKIP 声明 {id="tkip-in-beacon"}
+
+![](images/chap0x03/tkip.png)
+
+---
+
+### TKIP EAPOL 中的 MIC {id="tkip-in-eapol"}
+
+![](images/chap0x03/tkip-eapol.png)
+
+---
+
+### CCMP 声明 {id="ccmp-in-beacon-1"}
+
+![](images/chap0x03/ccmp-in-wap-wap2-auth.png)
+
+---
+
+### CCMP EAPOL 中的 MIC {id="ccmp-in-eapol-1"}
+
+![](images/chap0x03/ccmp-mic-hmac-sha1.png)
+
+---
+
+### CCMP 声明 {id="ccmp-in-beacon-2"}
+
+![](images/chap0x03/ccmp-in-full-connect.png)
+
+---
+
+### CCMP with SHA256 {id="ccmp-in-wpa3"}
+
+![](images/chap0x03/ccmp-association-req-psk-sha256.png)
+
+---
+
+### CCMP EAPOL 中的 MIC {id="ccmp-in-eapol-2"}
+
+![](images/chap0x03/ccmp-mic-aes-128-cmac.png)
+
+---
+
+### 使用 OpenWrt 自行组合以下安全策略 {id="openwrt-security-config-1"}
+
+* WPA/WPA2 Mixed
+* WPA/WPA2 TKIP
+* WPA/WPA2 CCMP
+* WPA CCMP
+* WPA TKIP
+* WPA2 TKIP
+* WPA2 CCMP
+
+---
+
+### 使用 OpenWrt 自行组合以下安全策略 {id="openwrt-security-config-2"}
+
+![](images/chap0x03/openwrt-security-config.png)
+
+---
+
+### 在 Wireshark 中筛选不同安全策略组合
+
+```bash
+# CCMP
+wlan.rsn.pcs.type==4 && wlan.rsn.pcs.count==1
+
+# TKIP
+wlan.rsn.pcs.type==2 && wlan.rsn.pcs.count==1
+
+# CCMP && TKIP mixed
+wlan.rsn.pcs.type==2 && wlan.rsn.pcs.type==4
+
+# ex: exp/chap0x03/wpa-wpa2-auth-public.pcap
+# CCMP 条件下协商使用 AES Cipher, HMAC-SHA1 MIC (2) 
+# 只看 AP 的 Beacon Frame 中声明的安全信息
+wlan_rsna_eapol.keydes.key_info.keydes_version == 2 || (wlan.rsn.pcs.type==4 && wlan.fc.type_subtype==8)
+
+# ex: exp/chap0x03/full-connect-public.pcap
+# CCMP 条件下协商使用 AES Cipher, AES-128-CMAC MIC (3)
+# 只看 AP 的 Beacon Frame 中声明的安全信息
+wlan_rsna_eapol.keydes.key_info.keydes_version == 3 || (wlan.rsn.pcs.type==4 && wlan.fc.type_subtype==8)
+
+# ex: exp/chap0x03/wpa2-tkip-public.pcap
+# TKIP 条件下协商使用 RC4 Cipher, HMAC-MD5 MIC (1)
+# 只看 AP 的 Beacon Frame 中声明的安全信息
+wlan_rsna_eapol.keydes.key_info.keydes_version == 1 || (wlan.rsn.pcs.type==2 && wlan.fc.type_subtype==8)
+```
+
+---
+
+### WPA/WPA2 PSK 秘钥恢复的关键 {id="key-to-key-recovery-in-wpa-wpa2-1"}
+
+* 无论 `TKIP` 还是 `CCMP` 加密模式，均是「数据机密性」保护算法，与身份认证无关
+* WPA 和 WPA2 的 PSK 认证机制均是 `AP` **单向** 通过 `挑战-响应` 模式验证客户端身份，且挑战算法均使用了「消息签名算法」来生成 **随机数挑战值**
+    * HMAC 或 [AES-CMAC](https://tools.ietf.org/html/rfc4493) 的区别而已
+
+---
+
+### WPA/WPA2 PSK 秘钥恢复的关键 {id="key-to-key-recovery-in-wpa-wpa2-2"}
+
+* 上述身份验证算法在设计时没有考虑 **防重放** 攻击
+* 攻击者只要通过网络嗅探，拿到了以下关键参数
+    * `A-nonce` 在 4 次握手消息中的第 1 个 EAP 包；
+    * `S-nonce` 在 4 次握手消息中的第 2 个 EAP 包；
+    * `SSID`, `AP MAC` 和 `STA MAC`
+* 遍历寻找 `TargetPassphrase` 代入 `PMK` 公式
+    * `TargetPMK = PBKDF(TargetPassphrase, SSID, ssidLength, 4096, 256)`
+
+---
+
+### WPA/WPA2 PSK 秘钥恢复的关键 {id="key-to-key-recovery-in-wpa-wpa2-3"}
+
+* 根据 `EAPOL` 包中的签名算法信息（例如 `AES-128-CMAC` 或 `HMAC-SHA1` 或 `HMAC-MD5`）即可计算出对应的 `TargetPTK` 
+* 再根据 `EAPOL` 中的 `MIC` 算法信息计算出 `TargetMIC` 与 `EAPOL` 握手消息中的第 2 个消息中包含的 `MIC` 进行比较
+* 如果 `TargetMIC == MIC` ，则说明找到了 `Passphrase = TargetPassphrase`。否则，继续遍历尝试下一个 `TargetPassphrase` ，直到找到或穷举完口令字典
+
+---
+
+> 等等，目标客户端已经连接上目标 AP 了怎么抓取到认证 4 次握手中的前 2 个数据包？
+
+---
+
+> 请看稍候即将登场的 Deauthentication Attack
+
+---
+
+> 目标 AP 不在附近也能恢复出目标 AP 的入网认证口令？
+
+---
+
+使用 `Evil Twin` 去攻击附近曾经连接过 `目标 AP` 的无线客户端。
+
+---
+
+## 使用工具完成上述秘钥恢复算法
+
+```bash
+aircrack-ng -w /usr/share/wordlists/rockyou.txt -e OpenWrt exp/chap0x03/full-connect-public.pcap
+```
 
 # 加入无线网络 [WEAK-1-2]
 
