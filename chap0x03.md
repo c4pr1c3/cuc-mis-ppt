@@ -418,7 +418,9 @@ sudo airbase-ng --essid "<script>alert(/hacked/)</script>" -a "23:33:33:33:33:33
 
 * WEP
 * WPA/WPA2 PSK
-* WPA/WPA2 EAP
+* WPA/WPA2 企业级认证
+
+# 加入无线网络 WEP [WEAK-1-1-0]
 
 ---
 
@@ -448,9 +450,17 @@ sudo airbase-ng --essid "<script>alert(/hacked/)</script>" -a "23:33:33:33:33:33
 * [`PTW` Attack - 2007](https://eprint.iacr.org/2007/120.pdf) 
     * 基于 2005 年发布的 `Klein's attack on RC4`
 
+# 加入无线网络 WPA/WPA2 PSK [WEAK-1-1-1]
+
 ---
 
 ## 回顾 WPA/WPA2 PSK 四次握手认证过程 {id="review-of-wpa-psk-flow"}
+
+![](images/chap0x02/four-way-handshake.png)
+
+---
+
+## 回顾 WPA/WPA2 PSK 四次握手认证参数定位和计算方法 {id="review-of-wpa-psk-flow"}
 
 ```
 PTK = PRF(PMK||A-nonce||S-nonce|| AP Mac || STA Mac)
@@ -613,7 +623,11 @@ wlan_rsna_eapol.keydes.key_info.keydes_version == 1 || (wlan.rsn.pcs.type==2 && 
 
 ---
 
-使用 `Evil Twin` 去攻击附近曾经连接过 `目标 AP` 的无线客户端。
+### 主动攻击离线客户端
+
+* 提前开启无线数据嗅探
+* 使用 `Evil Twin` 去攻击附近曾经连接过 `目标 AP` 的无线客户端
+* 目标：获取 4 次握手认证过程的前 2 个数据包
 
 ---
 
@@ -622,6 +636,143 @@ wlan_rsna_eapol.keydes.key_info.keydes_version == 1 || (wlan.rsn.pcs.type==2 && 
 ```bash
 aircrack-ng -w /usr/share/wordlists/rockyou.txt -e OpenWrt exp/chap0x03/full-connect-public.pcap
 ```
+
+---
+
+### PMKID Hash Dictionary Attack
+
+* 2018 年由 [Hashcat](https://hashcat.net/hashcat/) 的作者 `Steube` 公布了一种[基于 PMKID 的针对 WPA/WPA2 PSK 认证算法的新型字典攻击方法](https://hashcat.net/forum/thread-7717.html)
+* 攻击者需要能直接和目标 AP 通信
+* 目标 AP 需要开启 **漫游** 功能
+
+---
+
+### OpenWrt 中开启 **漫游** 功能 {id="roaming-in-openwrt"}
+
+![](images/chap0x03/roaming-in-openwrt.png)
+
+---
+
+### PMKID 消息示例
+
+![](images/chap0x03/pmkid-hash.png)
+
+---
+
+### PMKID 计算方法 {id="how-pmkid-is-generated"}
+
+```
+PMKID = HMAC-SHA1-128(PMK, "PMK Name" | MAC_AP | MAC_STA)
+```
+
+* 上述公式中 `PMK Name` 是固定静态字符串，`PMKID`，`MAC_AP` 和 `MAC_STA` 均可以通过抓包获得
+* 剩下的工作原理就和前述 `MIC` 字典爆破过程原理相同
+
+---
+
+### PMKID 攻击的工具实现方法 {id="pmkid-tools"}
+
+[Hashcat 作者给出的攻击原理详解和工具使用说明](https://hashcat.net/forum/thread-7717.html)
+
+---
+
+### PMKID 相比较于 MIC 爆破方法 {id="pmkid-vs-mic-crack"}
+
+* 更隐蔽
+    * 无需获取 EAPOL 4 次握手认证包
+        * 无需依赖目标 AP 的任何在线或离线客户端
+        * 无需等待客户端连接加入目标 AP 的认证握手过程
+        * 无需对客户端实施 `Deauthentication Attack` ，客户端意外掉线会引起目标用户警觉
+* 结果更可靠
+    * 不用担心警觉用户故意输错连接口令导致的 EAPOL 中的 MIC 无法匹配出正确的联网口令
+
+
+---
+
+## 防御 WPA/WPA2 PSK 认证口令恢复攻击
+
+* 使用健壮的认证口令
+    * 口令长度设置 **与时俱进** ，当前建议不少于 16 位
+    * 大小写字母、数字、特殊符号随机组合
+
+# 加入无线网络 WPA/WPA2 企业级认证 [WEAK-1-1-2]
+
+---
+
+## 回顾 WPA/WPA2 企业级认证 {id="wpa-enterprise-1"}
+
+![](images/chap0x03/wpa-enterprise-1.png)
+
+---
+
+> 逻辑上来说，EAP认证过程发生在请求者（supplicant）和认证服务器（authentication server）之间
+
+---
+
+## 回顾 WPA/WPA2 企业级认证 {id="wpa-enterprise-2"}
+
+![](images/chap0x03/wpa-enterprise-2.png)
+
+> 物理上来说，AP 扮演了认证过程的中间人
+
+---
+
+## 回顾 WPA/WPA2 企业级认证 {id="wpa-enterprise-3"}
+
+![](images/chap0x03/wpa-enterprise-3.png)
+
+---
+
+* 在安全隧道建立之前，`AP` 是一个开放访问的接入点
+* 开放无线网络易遭受 `Evil Twin` 攻击，因为（客户端）没有办法验证 `AP` 的身份
+    * `Evil Twin` 攻击针对 `WPA/WPA2` 企业级认证是否能成功主要取决于「无线网络用户」的安全意识
+
+---
+
+## 你会重视连接无线网络时的证书警告吗？
+
+![](images/chap0x03/wpa-enterprise-4.png)
+
+---
+
+## 一旦被 `Evil Twin` 攻击得手 {id="wpa-enterprise-after-evil-twin-1"}
+
+![](images/chap0x03/wpa-enterprise-5.png)
+
+---
+
+### 虽然在无线信道上认证数据是安全的
+
+* SSL/TLS 加密隧道保护了传输的 EAPOL 相关报文
+    * WPA/WPA2 PSK 认证过程使用的 EAPOL 是明文传输、易被捕获
+
+---
+
+## 一旦被 `Evil Twin` 攻击得手 {id="wpa-enterprise-after-evil-twin-2"}
+
+![](images/chap0x03/asleep-1.png)
+
+`假 AP` 搭建的 SSL/TLS 加密隧道，当然可以直接“看到”基于明文口令生成的 `挑战-响应应答消息`（**单向散列运算值**），如上图所示。
+
+---
+
+## 一旦被 `Evil Twin` 攻击得手 {id="wpa-enterprise-after-evil-twin-3"}
+
+![](images/chap0x03/asleep-2.png)
+
+`asleep` 直接 **跑字典** 爆破出口令。
+
+---
+
+## 加固 WPA/WPA2 企业级认证 {id="protect-wpa-wpa2-enterprise"}
+
+* 健壮口令设置
+* 禁用不安全的 `EAP` 实现方法，例如：EAP-MD5, EAP-OTP, [EAP-GTC](https://www.defcon.org/images/defcon-21/dc-21-presentations/djwishbone-PuNk1nPo0p/DEFCON-21-djwishbone-PuNk1nPo0p-BYO-Disaster-Updated.pdf) , LEAP
+* 启用并 **正确配置** 安全的 `EAP` 实现方法，例如：PEAP, TTLS, EAP/TLS
+* 在无线客户端上预置自签发的 `EAP` 认证证书信任链或购买权威CA签发的用于身份认证的证书
+* 无线客户端启用永远验证服务器证书有效性
+* 教育无线网络用户不要信任任何被警告的证书
+    * 学会手工验证证书的 `CN` 字段值是否与公司通告一致（只是缓解风险，如果攻击者完全克隆企业的证书信息，则本方法无效）
 
 # 加入无线网络 [WEAK-1-2]
 
@@ -655,24 +806,127 @@ aircrack-ng -w /usr/share/wordlists/rockyou.txt -e OpenWrt exp/chap0x03/full-con
 
 > 脆弱的 WPS 认证机制
 
+* 静态 PIN 码预测攻击：部分设备厂商的脆弱性实现
 * 离线破解认证凭据：WPS Pixie Dust Attack
 * 在线破解认证凭据：WPS Brute Force Attck
 
-# 加入无线网络 [WEAK-1-4]
+---
+
+## 静态 PIN 码预测攻击 {id="vulnerable-pin-generator"}
+
+* 针对 `Headless` 设备静态预分配 `PIN` 码的弱随机产生算法或静态确定性产生算法
+
+![](images/chap0x03/headless-pin.png)
 
 ---
 
-> KRACK Attack against WPA/WPA2
+### 相关历史安全事件
+
+* [2012年爆出所有MAC地址前6位是C83A35和00B00C的腾达和磊科全系路由器采用了确定性PIN码算法可以通过嗅探无线路由器MAC地址后秒算PIN码](http://wifibeta.com/2012-04/thread-712-1-1.html)
+    * 这些WPS PIN是通过mac的后6位 DEC2HEX 取舍而得
+* [2014年D-Link部分路由器的WPS PIN算法被逆向并可以从BSSID秒算](http://www.devttys0.com/2014/02/reversing-the-wrt120n-firmware-obfuscation/)
+* [2015年贝尔金部分路由器的WPS PIN算法被逆向并可以从路由器MAC地址秒算](http://www.freebuf.com/articles/wireless/63627.html)
+
+---
+
+### 又是协议设计无缺陷，实现偷工减料导致安全漏洞的实例
+
+[《Wi-Fi Simple Configuration Technical Specification》](https://c4pr1c3.gitee.io/cuc-mis/chap0x03/attach/chap0x02/media/Wi-Fi_Simple_Configuration_Technical_Specification_v2.0.5.pdf) 的 `4.3.2 Guidelines and Requirements for PIN values` 
+
+> The recommended length for a manually entered device password is an 8-digit numeric PIN.  This length does not provide a large amount of entropy for strong mutual authentication, but the design of the Registration Protocol protects against dictionary attacks on PINs if a fresh PIN or a rekeying key is used each time the Registration Protocol is run.
+
+---
+
+> ***PIN values should be randomly generated, and they SHALL NOT be derivable from any information that can be obtained by an eavesdropper or active attacker***. The device’s serial number and MAC address, for example, are easily eavesdropped by an attacker on the in-band channel.  Furthermore, if a device includes multiple PIN values, these values SHALL be cryptographically separate from each other.  If, for example, a device includes both a label-based PIN and a Device Password on an integrated NFC Tag, the two Device Passwords SHALL be different and uncorrelated.   
+
+---
+
+## WPS Brute Force Attack
+
+* `WPS` 协议中使用到的 `PIN` 码本身是 **定长的 8 位数字** ，理论爆破需要尝试 $10^8$ 次，即 1亿次；
+* [2011 年公布的一种改进版爆破算法](https://sviehb.files.wordpress.com/2011/12/viehboeck_wps.pdf) 最多只需要尝试 11000 次即可恢复出 PSK
+
+---
+
+### WPS 两轮认证过程存在的设计缺陷 {id="wps-two-fold-auth-weakness"}
+
+> 以下内容是为了便于理解，简化说明
+
+* WPS 在线认证过程也会用到 PSK 校验，但会先将 PSK 一分为二：PSK-1 和 PSK-2 
+* 第一轮验证 PIN 只用到了前 4 位，在线爆破尝试最多 $10^4$ 次后成功得到 PSK-1
+* 第二轮验证 PIN 只用到了后 4 位，且最后 1 位是校验和位，实际只验证后 3 位，在线爆破尝试最多 $10^3$ 次后成功得到 PKS-2。
+* PSK = PKS1 || PSK2
+
+---
+
+### 使用工具 [reaver](https://github.com/t6x/reaver-wps-fork-t6x)
+
+![](images/chap0x03/wps-reaver.png)
+
+---
+
+### 防御 WPS 在线认证暴力破解 {id="defend-against-wps-brute-force"}
+
+* 设置「认证封禁策略」，将短时间内多次 WPS 认证失败的 `STA MAC` 加入黑名单封禁一段时间 
+    * 启用「动态罚时」策略：每次封禁时长动态增长
+* `AP` 配置禁用 `WPS` 功能
+
+---
+
+## [WPS Pixie Dust Attack](https://forums.kali.org/showthread.php?24286-WPS-Pixie-Dust-Attack-\(Offline-WPS-Attack\))
+
+* WPS 认证过程中的关键变量 `E-Hash1`、`E-Hash2`、`PKE`、`PKR` 都是可以直接通过抓包获得的，剩下的 `PSK1` 和 `PSK2` 分别对应 `PIN` 码前后两半，可被枚举
+* `E-S1` 和 `E-S2` 是整个 **离线破解** 的关键，⼀旦这 2 个参数被计算出来，则对照公式可以离线遍历 `PSK-1` 和 `PSK-2` 的可能性验证计算出的 `E-Hash1` 是否与抓包得到的 `E-Hash1` 相同
+* `E-S1` 和 `E-S2` 在实际设备中的实现算法使用的是 **伪随机数发⽣器**
+
+---
+
+### 伪随机数发生器常见实现缺陷
+
+* 嵌⼊式设备⼤多采用 32 位 CPU，状态空间不⾜，导致产生的随机数取值空间较小
+* 伪随机算法可能被逆向
+* 伪随机数种⼦状态可能会被预测和恢复
+
+---
+
+### 伪随机数发生器缺陷实例
+
+* Broadcom/eCos，E-S1 + E-S2 使用与 N1 相同的随机数发⽣器
+* Realtek，E-S1 = E-S2 = N1 或使用秒为单位的 UNIX 时间戳格式整数作为随机数发⽣器种⼦
+* Ralink / MediaTek / Celeno， E-S1 = E-S2 = 0
+
+---
+
+### 使用工具 [pixiewps](https://github.com/wiire-a/pixiewps)
+
+![](images/chap0x03/pixiewps.png)
+
+> 依赖于存在伪随机数发生器缺陷的特定路由器
+
+---
+
+### 防御 WPS 离线认证暴力破解 {id="defend-against-wps-pixie"}
+
+* 修补路由器的伪随机数发生器缺陷
+
 
 # 加入无线网络后 [WEAK-2-0]
 
 ---
 
-> 回顾 《网络安全》第 4 章 网络监听 一节提到的所有局域网攻防手段
+> 回顾 《网络安全》第 4 章 网络监听 一节提到的所有 **局域网** 攻防手段
 
 * ARP 欺骗
 * DNS 投毒
 * SSL Stripping
+
+---
+
+## 防御方法 {id="defense-against-arp"}
+
+* 设置无线和有线客户端隔离
+
+![](images/chap0x03/isolate-clients-in-ap.png)
 
 # 加入无线网络后 [WEAK-2-1]
 
@@ -731,6 +985,255 @@ sudo aireplay-ng --deauth 1 -a  3C:46:D8:59:E8:F4 -c 62:27:AD:C4:0F:F2 wlan0 --i
 
 * WPA/WPA2-PSK 在拿到 PSK 情况下直接解密历史和进行中通信数据
 * [Hole196 Vulnerability - 2010](http://securedsolutions.com.my/pdf/WhitePapers/WPA2-Hole196-Vulnerability.pdf)
+* [KRACK Attack against WPA/WPA2 - 2017](https://www.krackattacks.com/)
+
+---
+
+## 使用 Wireshark 解密 WPA/WPA2 PSK 加密的流量
+
+* Edit->Preferences->Protocol->IEEE 802.11->Enable decryption->descryption keys选择 `wpa-pwd` ，填入已知共享密钥保存
+* 在 `IEEE 802.11` 的首选项设置面板，勾选启用：`Enable decryption` 功能
+
+---
+
+### 从 Passphrase 到 PSK {id="from-pwd-to-psk"}
+
+* [Wireshark 官网提供的网页版小工具](https://www.wireshark.org/tools/wpa-psk.html)
+* 使用命令行工具 `wpa_passphrase`
+
+```bash
+wpa_passphrase <SSID> <Passphrase>
+# wpa_passphrase OpenWrt WelcomeCUCer-2018
+# network={
+#         ssid="OpenWrt"
+#         #psk="WelcomeCUCer-2018"
+#         psk=04f305d51a8331d0839a48900a47560f80665d4fdb1ca28290bdcbb3908ffb64
+# }
+```
+
+```python
+import hashlib, binascii
+
+def wpa_psk(ssid, password):
+    dk = hashlib.pbkdf2_hmac(
+        'sha1',
+        str.encode(password),
+        str.encode(ssid),
+        4096,
+        256
+    )
+    return (binascii.hexlify(dk))
+
+print((wpa_psk('OpenWrt', 'WelcomeCUCer-2018')[0:64].decode('utf8')))
+```
+
+---
+
+## [Hole196 Vulnerability - 2010](http://securedsolutions.com.my/pdf/WhitePapers/WPA2-Hole196-Vulnerability.pdf)
+
+基于 `加密 GTK 负载` 的 **纯无线** ARP 投毒攻击
+
+---
+
+### 回顾第二章内容：无线网络中的单播、组播和广播加密 {id="enc-in-wpa-wpa2"}
+
+| 密钥类型 | 用途                                     | 来源           |
+| :-       | :-                                       | :-             |
+| PSK      | 认证                                     | （离线）配置😈 |
+| PMK      | 长期使用😈，产生其他加密用途密钥         | EAP 协商       |
+| PTK      | 加密单播(unicast)通信                    | 产生自 PMK/PSK |
+| GTK      | 加密广播(broadcast)和多播(multicast)通信 | 产生自 PMK/PSK |
+
+---
+
+### 相比较于前述无线局域网中的直接 ARP 投毒 {id="hole196-vs-arp"}
+
+![](images/chap0x03/hole196-attack.png)
+
+---
+
+## 防御方法 {id="defense-against-hole196"}
+
+* 设置无线和有线客户端隔离
+
+# [KRACK Attack against WPA/WPA2 - 2017](https://www.krackattacks.com/)
+
+---
+
+## 简介
+
+* **K**ey **R**einstallation **A**tta**ck**s, Breaking WPA2 by forcing nonce reuse
+    * WPA/WPA2 PSK 协议的 EAPOL 认证过程存在消息重放漏洞，导致相同的密钥和加密用 nonce 被反复使用在不同的会话上
+* WPA/WPA2 PSK 认证过程中的 EAPOL 4 次握手第 3 步存在协议设计缺陷
+* 无线客户端实现漏洞利用
+
+---
+
+## 协议设计缺陷原理
+
+* 不管是 `AES-CCMP` 还是 `RC4-TKIP` ，实际的无线通信数据加密过程使用了 `流密码加密` 工作模式
+* 原本的 `密钥流` 虽然也会复用加密密钥和 IV，但存在一个不断增长的 `密钥重用计数器` 。只要计数器正常计数工作，`密钥流` 就不会出现重用现象
+
+---
+
+### 流密码加密的密钥重用攻击原理 {id="stream-cipher-1"}
+
+* 给定明文 A 和明文 B，定义加密函数为 `E()` 。
+* 随机序列生成器定义为 `C(K)` ，其中 `K` 为主密钥。
+* 流密码加密过程为以主密钥 `K` 为种子、`C(K)` 为随机序列生成器产生一个“无限长”的 `流密钥`，将待加密明文与 `流密钥` 进行逐字节异或操作完成 `流密码加密`
+
+---
+
+### 流密码加密的密钥重用攻击原理 {id="stream-cipher-2"}
+
+```
+E(A) = A xor C
+E(B) = B xor C
+
+E(A) xor E(B) = (A xor C) xor (B xor C) = A xor B xor C xor C = A xor B
+```
+
+从以上计算公式可以看出：如果 C 在 A 和 B 的加密过程中被重用，则攻击者只需要掌握了：
+
+* A 攻击者自行构造的明文
+* E(A) 攻击者通过数据嗅探捕获到的自己发出的密文
+* E(B) 攻击者通过数据嗅探捕获到的目标用户发出的密文
+
+即使不知道密钥 `K` ，也可以通过 `B = E(A) xor E(B) xor A` 恢复出目标用户发出的明文
+
+---
+
+## 回到 KRACK 中的协议设计缺陷原理 {id="back-to-krack-design-flaws-1"}
+
+* `WPA/WPA2 PSK` 的 `4 次握手认证` 消息中的第 3 个消息 $EAPOL_3$ 是由 `AP` 发给 `STA` 
+* 由于无线网络的物理传输介质不可靠特性，`IEEE 802.11i` 规定如果丢包可以重传
+* 攻击者利用上述协议规定 **精心构造** 第 3 个消息的多次重放达到 `KRACK` 攻击的多种攻击效果
+    * `WPA` 的 `RC4-TKIP` 和 `WPA2` 的 `AES-CCMP` 均受漏洞影响
+    * 不需要恢复和掌握 `PTK` 的前提下，解密通信数据、中间人篡改消息
+    * 不需要恢复和掌握 `GTK` 的前提下，解密通信数据、中间人篡改消息
+
+---
+
+## 回到 KRACK 中的协议设计缺陷原理 {id="back-to-krack-design-flaws-2"}
+
+* $EAPOL_3$ 的作用是 `AP` 通知 `STA` ：`PTK` 已生成完毕，可以 `安装` 用于后续单播通信加密。另外，`GTK` 被加密后以密文形式包含在 $EAPOL_3$ 中。此时 `重放计数器` 被设置为 `AP` 发送 $EAPOL_1$ 时设置的 `重放计数器r+1`
+* `AP` 只有在接收到 `STA` 发送的 $EAPOL_4$ 才会真正 `安装 PTK` 
+
+---
+
+> IEEE 802.11i 协议最关键的缺陷定义即将登场
+
+---
+
+* `STA` 只要自己把 $EAPOL_4$ “成功” 发出去，就会按照协议规定认为 `EAPOL 4 次握手` 已经完结，接下来的会话过程就会使用前述“握手成功”的 `PTK` 和 `GTK` 
+* 但实际上如果 `AP` 并没有 “成功接收” 到 $EAPOL_4$ ，还可以重发一遍 $EAPOL_3$ ，要求 `STA` 重新安装一次 `PTK` 和 `GTK`
+* `AP` 判定 `EAPOL 4 次握手` 完结的标准是收到 $EAPOL_4$ 
+
+> 在 KRACK 之前，IEEE 802.11i 的 4 次握手安全性证明是建立在一个重要（假设）前提之上：`PTK` 和 `GTK` 的密钥只会被安装一次。
+
+---
+
+攻击者实施 `KRACK` 攻击的 1 个重要前提是：攻击者能通过中间人攻击劫持目标 `STA` 和目标 `AP` 的通信过程。具体来说的典型实施手段如下：
+
+1. 监听目标 `AP` 和目标 `STA` 之间的通信过程
+2. 通过 `Deauthenticaion Attack` 强制目标 `STA` 从目标 `AP` 断开且重新连接目标 `AP` 时要连接到攻击者搭建的 **信号更强** 的[不同信道同名无线网络](https://lirias.kuleuven.be/bitstream/123456789/473761/1/acsac2014.pdf)
+3. 攻击者使用 2 个不同信道建立起了目标 `STA` 和目标 `AP` 的跨信道中间人攻击链路
+
+---
+
+* 在具备上述 **中间人攻击链路** 之后，`KRACK` 攻击才能真正开始
+* 这也是为什么 `KRACK` 攻击在实践中较难利用成功的一个重要原因
+    * 如何搭建起一个对于目标 `STA` 来说比目标 `AP` **信号更强** 的无线网络
+
+---
+
+* 攻击者要阻断 `STA` 给 `AP` 回应的 $EAPOL_4$ ，触发 `AP` 的 $EAPOL_3$ 重传
+    * 此时重传的 $EAPOL_3$ 的 `重传计数器` 相比于 $EAPOL_1$ 的 `重传计数器r` 已经是 `r+2` 了
+* 攻击者转发上述 `r+2` 的 $EAPOL_3$ 给目标 `STA`
+
+---
+
+* 按照 `IEEE 802.11i` 规定，`STA` 只要收到 $EAPOL_3$ ， **不管三七二十一** ，必须回复 $EAPOL_4$ 。并且， **不管四七二十几** ，`STA` 需要执行 `PTK` **重装** 操作。更进一步的过分要求是：会话密钥加密密钥流生成算法里使用的 `nonce` 需要重置为 1  
+    * 此处的 `nonce` 和 `A-nonce` 与 `S-nonce` 没有任何关系
+    * 此处的 `nonce` 实际上就是一个当前加密会话的「发包计数器」，初始值为 1
+    * 此时的 $EAPOL_4$ 实际上是被 `STA` 用已经协商好的 `PTK` 以及对应的 `nonce` 加密后的密文
+* 经过上述一通操作，目标 `STA` 实际是被打了个「流密码加密的密钥重用攻击」组合拳
+    * $EAPOL_4$ 明文和密文同时在手了
+
+---
+
+## 上述解密过程的局限性
+
+* 如何搭建起一个对于目标 `STA` 来说比目标 `AP` **信号更强** 的无线网络来实现「中间人攻击」？
+* $EAPOL_4$ 长度有限，基于流密码加密的密钥重用攻击使用异或操作这个特点，一对 $EAPOL_4$ 明密文对在手一次能解密的目标密文数据长度有限
+    * 作者在漏洞证明演示视频里演示的就是解密电子邮件地址和口令
+
+---
+
+## 受漏洞影响客户端信息
+
+[![](images/chap0x03/krack-affected-clients.png)](https://papers.mathyvanhoef.com/ccs2017.pdf)
+
+---
+
+## 为什么苹果的 iOS 和微软的 Windows 不受 KRACK 影响？ {id="why-ios-windows-not-affected"}
+
+因为他们的程序员没有按照 `IEEE 802.11i` 规范去开发代码 🤷 
+
+> the implementation does not accept retransmissions of message 3.
+
+---
+
+如果想要了解关于 `KRACK` 的更多利用方式细节，一定要仔细阅读作者发表在 CCS 17 上的论文。
+
+[Vanhoef, M., & Piessens, F. (2017, October). Key reinstallation attacks: Forcing nonce reuse in WPA2. In Proceedings of the 2017 ACM SIGSAC Conference on Computer and Communications Security (pp. 1313-1328).](https://papers.mathyvanhoef.com/ccs2017.pdf)
+
+---
+
+## 受漏洞影响客户端的补丁信息
+
+![](images/chap0x03/krack-patched.png)
+
+---
+
+## 当前 Kali 上自带的 wpa_supplicant {id="wpa_supplicant-on-kali"}
+
+```bash
+# lsb_release -a
+# No LSB modules are available.
+# Distributor ID: Kali
+# Description:    Kali GNU/Linux Rolling
+# Release:        2020.4
+# Codename:       kali-rolling
+# date
+# Sun 17 Jan 2021 02:12:47 PM CST
+wpa_supplicant -v
+# wpa_supplicant v2.9
+# Copyright (c) 2003-2019, Jouni Malinen <j@w1.fi> and contributors
+```
+
+---
+
+## KRACK 带给我们的启示 {id="krack-inspiration-1"}
+
+[![](images/chap0x03/czx0o-twqaaeali.jpg)](https://blog.cryptographyengineering.com/2017/10/16/falling-through-the-kracks/)
+
+> Two unit tests, 0 integration tests
+
+---
+
+## KRACK 带给我们的启示 {id="krack-inspiration-1"}
+
+* 上图是 `KRACK` 作者在 `Blackhat Europe` 做报告时用的一张图：单元测试只能保证组件可以独立工作，一旦集成测试就会暴露出「协作」漏洞
+    * `KRACK` 就是一个典型的「组件协作漏洞」
+
+---
+
+## 防御 KRACK {id="defense-against-krack"}
+
+* <del>抱紧无线路由器上网（不是🤷 </del>
+* 设备和软件升级
+
 
 # 上行有线接入网络通信 [WEAK-3-1]
 

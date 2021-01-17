@@ -902,12 +902,12 @@ beacon.psdump('beacon.demo.eps', layer_shift=1)
 
 ## 密钥分类概述
 
-| 密钥类型 | 用途                             | 来源           |
-| :-       | :-                               | :-             |
-| PSK      | 认证                             | （离线）配置😈 |
-| PMK      | 长期使用😈，产生其他加密用途密钥 | EAP 协商       |
-| PTK      | 加密单播(unicast)通信            | 产生自 PMK/PSK |
-| GTK      | 加密多播(multicast)通信          | 产生自 PMK/PSK |
+| 密钥类型 | 用途                                     | 来源           |
+| :-       | :-                                       | :-             |
+| PSK      | 认证                                     | （离线）配置😈 |
+| PMK      | 长期使用😈，产生其他加密用途密钥         | EAP 协商       |
+| PTK      | 加密单播(unicast)通信                    | 产生自 PMK/PSK |
+| GTK      | 加密广播(broadcast)和多播(multicast)通信 | 产生自 PMK/PSK |
  
 ---
 
