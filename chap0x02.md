@@ -857,7 +857,7 @@ beacon.psdump('beacon.demo.eps', layer_shift=1)
 | :-             | :-          | :-             | :-             | :-                |
 | 发布时间       | 1997        | 2003           | 2004           | 2018              |
 | 安全模型       | Open/Shared | PSK/Enterprise | PSK/Enterprise | PSK/Enterprise    |
-| 加密算法       | RC4         | TKIP           | AESS-CCMP      | AES-CCMP/AES-GCMP |
+| 加密算法       | RC4         | TKIP           | AES-CCMP       | AES-CCMP/AES-GCMP |
 | 密钥长度       | 64b/128b    | 128b           | 128b           | 128b/256b         |
 | 完整性校验算法 | CRC-32      | 64b MIC        | CBC-MAC        | SHA-2             |
 | PMF 支持       | 不支持      | 可选           | 可选           | 强制要求          |

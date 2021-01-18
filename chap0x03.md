@@ -43,6 +43,12 @@ output: revealjs::revealjs_presentation
 
 ---
 
+```
+(!(wlan.fc.type_subtype==0x24) && !(wlan.fc.type_subtype==0x1d)) && !(ipv6.version==6) && (frame.number==1 || frame.number==12||frame.number>18)
+```
+
+---
+
 ## 一个典型的无线网络完整生命周期
 
 * 加入无线网络前
@@ -686,6 +692,18 @@ PMKID = HMAC-SHA1-128(PMK, "PMK Name" | MAC_AP | MAC_STA)
 * 结果更可靠
     * 不用担心警觉用户故意输错连接口令导致的 EAPOL 中的 MIC 无法匹配出正确的联网口令
 
+---
+
+## 离线字典方式爆破口令的其他改进措施
+
+* 基本思想1：空间换时间，针对常见 SSID 预先计算好 PMK
+    * genpmk - WPA-PSK precomputation attack 
+    * [pyrit](https://github.com/JPaulMora/Pyrit) 
+* 基本思想2：使用 GPU 代替 CPU 计算字典
+    * [pyrit](https://github.com/JPaulMora/Pyrit) - A GPGPU-driven WPA/WPA2-PSK key cracker
+    * [hashcat](https://hashcat.net/hashcat/) - World's fastest password cracker
+* 基本思想3：并行/分布式计算
+    * Google: distributed wpa crack
 
 ---
 
@@ -970,6 +988,9 @@ sudo aireplay-ng --deauth 1 -a  3C:46:D8:59:E8:F4 -c 62:27:AD:C4:0F:F2 wlan0 --i
 
 * 在 AP 上启用 [IEEE 802.1w-2009](https://standards.ieee.org/standard/802_11w-2009.html) 引入的 `Protected Management Frames (PMF)` 机制
     * 对管理帧启用了机密性、完整性、来源真实性和重放保护机制
+* `WPA2` 启用了 `PMF` 后（`WPA` 不支持）
+    * `MIC` 产生算法从 `HMAC-SHA1` 进化为 `AES-CMAC`
+    * `PTK` 产生算法从 `SHA-1` 进化为 `SHA-256`
 
 ---
 
@@ -993,6 +1014,10 @@ sudo aireplay-ng --deauth 1 -a  3C:46:D8:59:E8:F4 -c 62:27:AD:C4:0F:F2 wlan0 --i
 
 * Edit->Preferences->Protocol->IEEE 802.11->Enable decryption->descryption keys选择 `wpa-pwd` ，填入已知共享密钥保存
 * 在 `IEEE 802.11` 的首选项设置面板，勾选启用：`Enable decryption` 功能
+
+---
+
+![](images/chap0x03/gtk-decryption.png)
 
 ---
 
@@ -1024,7 +1049,7 @@ def wpa_psk(ssid, password):
     )
     return (binascii.hexlify(dk))
 
-print((wpa_psk('OpenWrt', 'WelcomeCUCer-2018')[0:64].decode('utf8')))
+print(wpa_psk('OpenWrt', 'WelcomeCUCer-2018')[0:64].decode('utf8'))
 ```
 
 ---
@@ -1239,7 +1264,46 @@ wpa_supplicant -v
 
 ---
 
-> Rogue AP
+> Rogue Access Point, Rogue AP
+
+---
+
+## 广义 Rogue AP {id="generalized-rogue-ap"}
+
+* 这是许多基于 `AP` 方式专门攻击无线客户端行为的笼统称谓
+    * `Evil Twin`
+    * `KRACK` 中使用到的「跨信道中间人攻击」技术
+
+---
+
+> 本节要介绍的是一种「后门」方式实现的 `Rogue AP` 
+
+---
+
+## 狭义 Rogue AP {id="specific-rogue-ap"}
+
+在未经有线网络管理员允许/授权情况下，悄悄接入目标有线网络并开启无线网络功能的 `AP` 。
+
+* 硬件方式：使用便携式无线路由器直接接入有线网络
+* 软件方式：员工用自己连入有线网络的个人电脑私开无线热点
+
+---
+
+## 对于企业网络的主要威胁
+
+* 增加了若干新的风险暴露面
+    * 非授权的访问可以绕过已有的有线网络安全接入控制，通过不受监管控制的无线网络接入方式访问到企业内网
+    * `Rogue AP` 本身如果还具备远程控制能力，则相当于在企业内网直接建立了一个「远程攻击跳板」
+
+---
+
+## 防御狭义 `Rogue AP`
+
+* 防范硬件形式的 `Rogue AP`
+    * 部署严格的有线网络端口接入访问控制，例如启用有线交换机所有暴露端口的 `802.1X` 认证，避免任何设备只要连入网线即可访问企业内网
+* 防范软件形式的 `Rogue AP`
+    * 员工终端电脑配置统一的软件安装和配置管理策略，禁止电脑开启无线热点
+    * 部署无线入侵检测设备，第一时间发现并报告工作场所中存在未备案的无线热点
 
 # 上行有线接入网络通信 [WEAK-3-2]
 
@@ -1248,6 +1312,12 @@ wpa_supplicant -v
 > 回顾 《网络安全》第 4 章 网络监听 一节提到的所有局域网攻防手段
 
 > 对于企业级认证来说，可以对 Radius 协议进行『中间人攻击』
+
+---
+
+## 防御加固方法
+
+参见《网络安全》第 4 章局域网安全加固方法和建议。
 
 # 其他似是而非的无线安全机制
 
@@ -1281,13 +1351,59 @@ wpa_supplicant -v
 
 ---
 
+## 主要安全性改进 {id="wpa3-enhancements-1"}
+
+* [Wi-Fi Enhanced Open™](https://www.wi-fi.org/beacon/dan-harkins/wi-fi-certified-enhanced-open-transparent-wi-fi-protections-without-complexity)
+    * [Opportunistic Wireless Encryption, OWE - RFC 8110](https://www.wi-fi.org/download.php?file=/sites/default/files/private/Opportunistic_Wireless_Encryption_Specification_v1.1.pdf), 免认证的开放无线网络也能自动协商加密密钥并加密整个无线通信会话
+* SAE 升级替代了 PSK 模式用于个人及家庭无线网络的访问控制机制
+    * `Simultaneous Authentication of Equals` ，一种 **在线计算** 的「零知识证明」算法
+    * 每次认证前均通过 `SAE` 过程协商出一个 **随机认证用共享秘钥** ，代替 `PSK` 模式时的「预共享静态秘钥」
+
+---
+
+## 主要安全性改进 {id="wpa3-enhancements-2"}
+
+* 默认强制开启了 `PMF`
+* 完美前向安全性
+    * Perfect Forward Secrecy (PFS)
+    * `SAE` 保证了即使捕获到了无线数据包、拥有预共享的无线网络入网口令，但由于每个无线会话均使用了“不可预测”（$\frac{1}{2^{128}}$ ~ $\frac{1}{2^{256}}$ 几率重复）的随机会话秘钥，使得解密抓包数据在 **可爆破计算意义上** 没有可能
+
+---
+
+## 延伸课外学习
+
 * [Dragonblood](https://wpa3.mathyvanhoef.com/)
+    * CERT ID #VU871675: 针对 WPA3-Transtition 模式的降级攻击使得离线字典攻击恢复网络认证口令成为可能
+    * CERT ID #VU871675: 针对 `SAE` 握手过程的加密算法降级攻击
+    * CVE-2019-9494: `hostapd` 和 `wpa_supplicant` 实现缺陷导致的侧信道信息泄露
+    * CERT ID #VU871675: 针对 `SAE` 握手过程的计算资源消耗型拒绝服务攻击
+
+# 小结
+
+---
+
+| 威胁/漏洞类型            | WPA3 是否已经解决 | 备注                                     |
+| :-                       | :-                | :-                                       |
+| SSID 信息泄露            | ❌                |                                          |
+| Evil Twin                | ❌                | 企业级认证模式里启用双向证书认证可解决   |
+| SSL Stripping            | ❌                | 应用层风险                               |
+| DNS 欺骗                 | ❌                | 应用层风险                               |
+| Rogue AP                 | ❌                |                                          |
+| ARP 欺骗等               | ❌                |                                          |
+| 悄无声息的监听           | ⚠️  部分解决       | `OWE` 保证了不再有明文无线通信网络       |
+| STA 地址泄露             | ⚠️  大部分已解决   | 无线设备厂商和操作系统厂商共同努力       |
+| SSID 滥用与 Evil SSID    | ⚠️  大部分已解决   | 无线设备厂商和操作系统厂商共同努力       |
+| 解密数据                 | ✅                |                                          |
+| 离线字典破解握手认证报文 | ✅                |                                          |
+| PMKID 离线破解           | ✅                |                                          |
+| DeAuth Attack            | ✅                | WPA2 + PMF 也能做到                      |
+| KRACK                    | ✅                |                                          |
 
 # 附录
 
 ---
 
-* [v1s1t0r1sh3r3/airgeddon 全功能综合无线网络安全风险评估工具集](https://github.com/v1s1t0r1sh3r3/airgeddon）
+* [v1s1t0r1sh3r3/airgeddon 全功能综合无线网络安全风险评估工具集](https://github.com/v1s1t0r1sh3r3/airgeddon)
 * [wifiphisher/wifiphisher Evil Twin 自动化攻击工具集](https://github.com/wifiphisher/wifiphisher)
 * [s0lst1c3/eaphammer WPA2-企业级认证无线网络 Evil Twin 自动化攻击工具集](https://github.com/s0lst1c3/eaphammer)
 
