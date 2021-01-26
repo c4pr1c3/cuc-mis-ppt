@@ -27,9 +27,14 @@ output: revealjs::revealjs_presentation
 
 ---
 
-* [本章演示使用到的 pcap 样例数据文件一](exp/chap0x03/full-connect-public.pcap)
-* [本章演示使用到的 pcap 样例数据文件二](exp/chap0x03/utf8-ssid-full-beacons-public.pcap)
-* [本章演示使用到的 pcap 样例数据文件二](exp/chap0x03/hidden-essid-public.pcap)
+## 本章演示使用到的 pcap 样例数据文件 {id="pcap-as-examples"}
+
+1. [WPA2-CCMP EAPOL 4 次握手包，完整连接过程](exp/chap0x03/full-connect-public.pcap)
+2. [WPA-TKIP 4 次握手包](exp/chap0x03/wpa-tkip-public.pcap)
+3. [WPA/WPA2 等多安全机制组合](exp/chap0x03/wpa-wpa2-auth-public.pcap)
+4. [中文 SSID](exp/chap0x03/utf8-ssid-full-beacons-public.pcap)
+5. [隐藏 SSID](exp/chap0x03/hidden-essid-public.pcap)
+6. [DeAuth Attack](exp/chap0x03/deauth-public.pcap)
 
 ---
 
@@ -460,13 +465,13 @@ sudo airbase-ng --essid "<script>alert(/hacked/)</script>" -a "23:33:33:33:33:33
 
 ---
 
-## 回顾 WPA/WPA2 PSK 四次握手认证过程 {id="review-of-wpa-psk-flow"}
+## 回顾 WPA/WPA2 PSK 四次握手认证过程 {id="review-of-wpa-psk-flow-1"}
 
 ![](images/chap0x02/four-way-handshake.png)
 
 ---
 
-## 回顾 WPA/WPA2 PSK 四次握手认证参数定位和计算方法 {id="review-of-wpa-psk-flow"}
+## 回顾 WPA/WPA2 PSK 四次握手认证参数定位和计算方法 {id="review-of-wpa-psk-flow-2"}
 
 ```
 PTK = PRF(PMK||A-nonce||S-nonce|| AP Mac || STA Mac)
@@ -1247,7 +1252,7 @@ wpa_supplicant -v
 
 ---
 
-## KRACK 带给我们的启示 {id="krack-inspiration-1"}
+## KRACK 带给我们的启示 {id="krack-inspiration-2"}
 
 * 上图是 `KRACK` 作者在 `Blackhat Europe` 做报告时用的一张图：单元测试只能保证组件可以独立工作，一旦集成测试就会暴露出「协作」漏洞
     * `KRACK` 就是一个典型的「组件协作漏洞」
@@ -1398,6 +1403,100 @@ wpa_supplicant -v
 | PMKID 离线破解           | ✅                |                                          |
 | DeAuth Attack            | ✅                | WPA2 + PMF 也能做到                      |
 | KRACK                    | ✅                |                                          |
+
+# 构建安全的无线局域网
+
+---
+
+## 层次化的安全加固策略
+
+* 人
+* 应用层
+* 网络层
+* 链路层
+* 物理层
+
+---
+
+### 人的安全意识教育指南
+
+* 避免使用 `Wi-Fi 分享类应用`
+* 定期更换共享密钥
+* 谨慎使用公共或陌生 `Wi-Fi`
+    * 避免使用高安全等级业务：重要账户登录、金融类业务在线操作等
+    * 尽可能使用额外的 VPN 措施保护所有联网行为
+* 所有具备 `Wi-Fi` 功能的设备在不使用 `Wi-Fi` 功能时关闭无线开关（软开关或硬件开关）
+    * 避免 `Evil Twin` 攻击套取到你连过的 `AP` 的 `EAPOL Packet` 用于离线破解 `WPA/WPA2 PSK` 密码
+    * 避免设备主动连入开放认证的恶意 `AP`
+        * 监听、中间人攻击
+
+---
+
+### 个人用户的应用层安全加固指南
+
+* 无线路由器默认设置的安全加固
+    * 修改默认的管理员密码
+    * 修改默认的管理员用户名
+    * 启用登录管理界面的图形化验证码
+    * 更新到最新版固件
+
+---
+
+### 个人用户的网络层安全加固指南
+
+* 启用客人/访客网络
+    * 仅提供互联网访问，禁止访问有线局域网
+    * 使用独立密码
+* 启用 `AP` 隔离功能
+    * 禁止无线网络中的客户端相互直接访问，杜绝局域网内的攻击
+
+---
+
+### 个人用户的链路层安全加固指南
+
+* 仅使用 `WPA3-SAE`
+    * 从协议兼容性角度，可以配置 `WPA3-SAE/WPA2-PSK only` ，禁用 `WPA` 兼容模式
+* 使用强健口令
+    * 大小写字母、数字、特殊字符组合，口令长度建议 16 位以上
+* 禁用 `WPS` 功能
+* 避免使用常见 `SSID` 名
+    * 例如：dlink、NetGear等
+
+---
+
+### 个人用户的物理层安全加固指南
+
+* 根据信号覆盖范围需求，合理设置无线路由器的信号发射功率
+    * 「穿墙」模式按需开启
+
+---
+
+### 企业用户的网络层安全加固指南
+
+* 子网划分与隔离
+* 按业务需求、安全等级设置无线局域网、有线局域网和互联网之间的访问控制机制
+
+---
+
+### 企业用户的链路层安全加固指南
+
+* 启用 `WPA/WPA2/WPA3-企业级` 身份认证
+    * 实名制、独立账号接入
+    * 有 `IT` 技术能力的企业强烈建议配置 `EAP-TLS`
+        * **双向证书验证**
+* 部署无线入侵检测与防护系统
+    * 检测：通过监听模式配合白名单比对发现 `Rogue AP` 并告警
+    * 防护
+        * 对 `Rogue AP` 构建的无线网络实施 `DeAuth Attack`
+        * 有线网络全部启用 `802.1X` 端口认证，避免 `Rogue AP` 物理接入
+
+---
+
+### 企业用户的物理层安全加固指南
+
+* 缩窄发射天线覆盖范围
+* 墙面信号反射涂料
+* 使用定向天线
 
 # 附录
 
