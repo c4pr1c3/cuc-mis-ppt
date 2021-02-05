@@ -160,6 +160,16 @@ output: revealjs::revealjs_presentation
 
 ---
 
+## [经认证支持 GMS 的设备清单](https://storage.googleapis.com/play_public/supported_devices.html)
+
+* `GMS`: Google Mobile Services
+    * 包含 `Google Play Services`（也被称为 `GmsCore`）, `Google Play Store`（应用商店）, `Google Search`, `Chrome` 等 `Google` 预置应用
+* 支持包含 `GMS` 的 `Android` 系统才可以使用以上基础设施服务
+    * 定位
+    * 统一消息推送
+
+---
+
 ## Android 生态圈——厂商 {id="android-manufactures"}
 
 * 设备
@@ -639,7 +649,7 @@ Host: appleid.apple.com
 
 ## 我们为什么推荐大家少看「翻译版」技术资料
 
-![](images/chap0x05/why-read-in-english-is-important.png)
+[![](images/chap0x05/why-read-in-english-is-important.png)](https://source.android.com/security/bulletin/)
 
 > 中文翻译版滞后 2 个月!!!
 
