@@ -102,7 +102,7 @@ output: revealjs::revealjs_presentation
 
 ### 物理安全威胁分类定义 T.P4
 
-* 已屏幕解锁设备，被分享给非机主使用
+* 已解锁屏幕设备，被分享给非机主使用
     * 滥用风险
 
 ---
@@ -281,8 +281,8 @@ output: revealjs::revealjs_presentation
 
 ## 架构设计基本原则
 
-1. 纵深防御 `defense in depth`
-2. 设计安全 `safe by design`
+1. 纵深防御 `defense in depth` - `DiD`
+2. 设计安全 `safe by design` - `SD`
 
 ---
 
@@ -307,10 +307,135 @@ output: revealjs::revealjs_presentation
 
 ## 确保「易于理解」的许可
 
-* 许可的表达方式应易于「三方」无歧义正确理解
+* `许可`（`授权`）的表达方式应 **易于** 「三方」 **无歧义** 正确理解并执行
+    * 用户
+    * 开发者
+    * Android 平台
+* 三方中的任意一方 **不许可** 则目标操作将无法执行成功
 * 两个例子
     * 在不同应用间共享数据
-    * 变更移动网络运营商配置
+    * 变更 `移动网络运营商配置`
+        * MNO, Mobile Network Operator
+
+---
+
+### 在不同应用间共享数据——体现「用户许可」 {id="sharing-bt-apps-user"}
+
+* `用户` 在分享对话窗口里「选择」目标应用接受当前分享内容
+
+---
+
+### 在不同应用间共享数据——体现「开发者许可」 {id="sharing-bt-apps-developer"}
+
+* 分享 `来源` 应用的 `开发者` 通过 `UI&UE` 设计，告知 `用户` 当前应用内「哪些内容」 **允许** 被分享出去
+* 分享 `目标` 应用的 `开发者` 自行决定是否接收、如何处理接收到的分享数据内容
+
+---
+
+### 在不同应用间共享数据——体现「平台许可」 {id="sharing-bt-apps-platform"}
+
+* 平台通过 `访问控制策略和机制`
+    * **判定** 不同组件间的数据访问是否被 **允许**
+    * **确保** `目标` 应用只能访问到 `来源` 应用 **显式** 分享的数据内容
+        * 除了明确分享出来的数据之外，`来源` 应用的任何其他数据无法被越权访问到
+
+---
+
+### 变更移动网络运营商配置——体现「用户许可」 {id="mno-config-by-user"}
+
+* `用户` 通过在设置对话窗口中的「开关选项」来变更许可
+
+---
+
+### 变更移动网络运营商配置——体现「开发者许可」 {id="mno-config-by-developer"}
+
+* `MNO` 应用的开发者通过编程：查询平台访问控制策略后，借助 `UI&UE` 提供给用户可以进行许可变更的选项
+
+---
+
+### 变更移动网络运营商配置——体现「平台许可」 {id="mno-config-by-platform"}
+
+* 平台确保 `用户` 通过 `MNO 应用` 发起的变更操作是合法、无违规的
+    * 不同国家的无线电频率使用管制策略差异
+    * 配置变更不会影响到平台或网络稳定性
+
+# 开发者视角的请求用户许可授权
+
+---
+
+## 在 Android 上声明和请求运行时权限的工作流 {id="runtime-user-consent"}
+
+[![](images/chap0x06/workflow-runtime.png)](https://developer.android.com/training/permissions/requesting?hl=zh-cn)
+
+---
+
+## 开发者向用户申请代码执行许可 —— 开发阶段 {id="developer-req-consent-from-user-1"}
+
+1. 在应用的清单文件中，[声明应用可能需要请求的权限](https://developer.android.com/training/permissions/declaring?hl=zh-cn)
+    * 如果是安装时权限（例如普通权限或签名权限），系统会在用户安装应用时自动为其授予相应权限
+    * 如果是运行时权限，并且用户将应用安装在 Android 6.0（API 级别 23）或更高版本的设备上，则应用程序开发者必须自己向用户请求权限
+2. 设计应用的用户体验，使应用中的特定操作与特定运行时权限相关联。应当让用户知道哪些操作可能会要求他们为您的应用授予访问用户私人数据的权限。
+
+---
+
+## 开发者向用户申请代码执行许可 —— 用户使用阶段 {id="developer-req-consent-from-user-2"}
+
+3. 等待用户调用应用中需要访问特定用户私人数据的任务或操作
+4. 每次执行需要该权限的操作时，应用必须检查自己是否具有该权限。如果已授权，那么该应用可以访问用户私人数据。如果没有，则开始『申请用户授权流程』
+5. Android 平台允许开发者的部分权限申请添加一段 **自我解释说明文本** ，目的是 **便于用户理解** 即将授权当前应用获得哪些权限、意味着什么
+
+---
+
+## 开发者向用户申请代码执行许可 —— 平台授权阶段 {id="platform-consent-from-user"}
+
+6. 无论是否使用 **自我解释说明文本** ，`平台` 会使用 **统一** 的 **系统原生** 运行时权限 **提示对话框** 来将最终授权操作交给 `用户`
+    * 避免开发者伪造「挂羊头卖狗肉」的权限申请对话框「骗取」用户的过度授权
+    * 开发者向用户发起授权请求，用户依赖于 `平台授权` 保障体系确保 **正确无误** 的给予（开发者开发的）应用授权
+        * 平台授权依赖于 **不同保护级别** 的 `Android 权限` 体系，详见 `DiD.1 隔离和抑制` 一节的 `访问控制`
+
+---
+
+## 开发者向用户申请代码执行许可 —— 用户完成授权 {id="developer-req-consent-from-user-3"}
+
+7. 应用代码检查用户的响应，用户可能会选择同意或拒绝授予运行时权限
+8. 如果用户向当前应用授予权限，则当前应用就可以访问用户私人数据
+
+---
+
+## 开发者向用户申请代码执行许可 —— 用户拒绝授权 {id="developer-req-consent-from-user-4"}
+
+8. 如果用户拒绝授予该权限，Android 官方文档建议开发者适当降低应用体验，使应用在未获得受该权限保护的信息时也能向用户提供功能
+
+---
+
+### 来自 Android 官方开发指南的特别说明 {id="permission-tips-1"}
+
+> 从 Android 11（API 级别 30）开始，在应用安装到设备上后，如果用户在使用过程中多次针对某项特定的权限点按拒绝，那么在当前应用再次请求该权限时，用户将不会看到系统权限对话框。该操作表示用户希望“不再询问”。在之前的版本中，除非用户先前已选中“不再询问”对话框或选项，否则每当应用请求权限时，用户都会看到系统权限对话框
+
+---
+
+### 来自 Android 官方开发指南的特别说明 {id="permission-tips-2"}
+
+> 在某些情况下，系统可能会自动拒绝权限，而无需用户执行任何操作（同样，系统也可能会自动授予权限）
+
+> 如果应用以 Android 11（API 级别 30）或更高版本为目标平台并且数月未使用，系统会通过自动重置用户已授予应用的运行时敏感权限来保护用户数据
+
+---
+
+### 来自 [Android 官方安全和隐私小组 2020 年 12 月更新的公开论文](https://arxiv.org/abs/1904.05572) 建议
+
+> Achieving meaningful user consent is by far the most difficult and nuanced challenge in determining meaningful consent
+
+---
+
+### 来自 [Android 官方安全和隐私小组 2020 年 12 月更新的公开论文](https://arxiv.org/abs/1904.05572) 建议
+
+* 避免过度提醒用户许可：以免用户「弹框疲劳」和「盲目授权」
+* 用户许可提示应易于理解：避免使用专家型术语
+* 使用「选择器」和「一次性许可」，避免过度索取许可授权
+    * 举例：访问通讯录中特定联系人信息
+* 操作系统不应将难题丢给用户
+* 提供用户「反悔」能力：授权是可以随时被 **撤销** 的
 
 # SD.2 用户认证
 
@@ -327,6 +452,49 @@ output: revealjs::revealjs_presentation
 * 持久化存储数据加密
 * 通信数据加密
 
+---
+
+## 持久化存储数据加密 {id="safe-by-rest-1"}
+
+* 当系统内核没有运行或 **被绕过**（例如直接读取持久化存储介质），如何实现 `多方许可` 和 `安全合规`
+    * Anroid 5.0 全盘加密技术（Full Disk Encryption, FDE），拟解决 [T.P2] ，但不解密磁盘无法使用紧急呼叫、无障碍访问辅助服务、闹钟等低安全风险功能
+    * Android 7.0 引入基于文件的选择加密（File Based Encryption, FBE），解决了上述全盘加密技术的不足之处
+    * Android 10.0 新增 [Adiantium](https://source.android.com/security/encryption/adiantum) 支持，可以在缺少 AES 硬件加速功能的设备上以更低的计算资源消耗获得不变的 AES 加密效果
+        * Android 9 需要自行手动给内核打补丁并重新编译内核
+    * Android 10 起，默认系统所有数据启用全盘加密
+
+---
+
+## 持久化存储数据加密 {id="safe-by-rest-2"}
+
+* 开启全盘加密后，实现 `出厂设置能保证恢复设备到安全状态` 无需再抹除用户数据，只需删除加密用主密钥即可
+
+---
+
+## 通信数据加密改进历程 {id="network-sandboxing-1"}
+
+| 引入版本 | 改进措施                                  | **拟解决** 的威胁 |
+| :-       | :-                                        | :-                |
+| 6.x      | $^0$ 代码级别明文通信声明                 | [T.N1][T.N2]      |
+| 7.x      | 网络安全配置项增加 TLS 和明文通信设置选项 | [T.N1][T.N2]      |
+
+* $^0$ 清单文件中使用 [`usesCleartextTraffic`](https://developer.android.com/guide/topics/manifest/application-element#usesCleartextTraffic) 来显式声明应用是否支持明文通信
+    * 对于目标 API 级别为 27 或更低级别的应用，默认值为 `true`。对于目标 API 级别为 28 或更高级别的应用，默认值为 `false`
+    * 如果将此属性设为 `false`，平台组件（例如 HTTP 和 FTP 堆栈、DownloadManager 和 MediaPlayer）将拒绝应用要使用明文流量的请求。但这只是一个 `尽力而为` 选项，并非所有组件都遵守该字段声明
+
+---
+
+## 通信数据加密改进历程 {id="network-sandboxing-2"}
+
+| 引入版本 | 改进措施                                                        | **拟解决** 的威胁 |
+| :-       | :-                                                              | :-                |
+| 9.0      | $^1$ DNS-over-TLS                                               | [T.N1][T.N2]      |
+| 9.0      | 所有连接默认使用 TLS                                            | [T.N1][T.N2]      |
+| 10       | 客户端模式, SoftAP 和 WiFi Direct 模式均默认使用 MAC 地址随机化 | [T.N1]            |
+| 10       | 新增 `TLS 1.3` 支持                                             | [T.N1][T.N2]      |
+
+* $^1$ [DNS-over-TLS](https://android-developers.googleblog.com/2018/04/dns-over-tls-support-in-android-p.html)
+
 # DiD.1 隔离和抑制
 
 ---
@@ -342,13 +510,64 @@ output: revealjs::revealjs_presentation
 
 ---
 
-### Android 权限 {id="android-permissions"}
+### Android 权限 {id="android-permissions-1"}
 
-* Audit-only permissions
-* Runtime permissions
-* Special Access permissions
-* Privileged permissions
-* Signaturepermissions
+* 仅审计权限 `Audit-only` ：应用权限保护级别为 `normal` ，属于 `安装时权限`
+* 运行时权限 `Runtime` ：应用权限保护级别为 `dangerous` ，既需要在应用代码的清单文件里声明，也需要在代码里定义如何向用户申请授权许可
+* 特殊访问权限 `Special Access` ：用户只能通过 `系统设置` 去变更授权许可，应用代码里无法声明和发起申请
+
+---
+
+### Android 权限 {id="android-permissions-2"}
+
+* 系统级特权 `Privileged` ：只针对 `系统预装` 应用，通常是 `OEM` 通过白名单机制指定特定应用享有的系统级别特权。通常配合 `签名` 级别权限使用
+    * `API Level 23` 之前版本，在应用清单文件被声明为 `<permission android:protectionLevel=signature|privileged>`
+    * `API Level 23` 及之后版本，在应用清单文件被声明为 `<permission android:protectionLevel=signatureOrSystem>`
+* 验证签名权限 `Signature` ：应用权限保护级别为 `signature` ，拥有相同签名的（系统或应用）组件才能相互访问/调用，无需告知或征得用户许可即可自动授权
+    * 开发者可以依赖此机制保护自己编写的应用和组件（避免被其他应用或组件非授权访问）
+
+---
+
+### Android 权限 {id="android-permissions-3"}
+
+* [开发者自定义当前应用权限](https://developer.android.com/guide/topics/manifest/permission-element) ，用于限制其他应用访问当前应用的特定组件或功能代码
+    * `<permission>`
+    * `<permission-group>`
+    * `<path-permission>` `内容提供者` 组件专用的访问控制授权声明
+* [开发者向用户请求授权许可](https://developer.android.com/guide/topics/manifest/uses-permission-element)
+    * `<uses-permission>`
+    * `<uses-permission-sdk-23>` `Android 6.0` 开始引入的运行时权限申请专用
+* [设备软硬件特性兼容性检查](https://developer.android.com/guide/topics/manifest/uses-feature-element)
+    * `<uses-feature>`
+
+---
+
+### Android 权限发展历史上的里程碑 {id="android-permissions-milestones"}
+
+* `Android 6.0` (`API Level 23`) ：新增 `运行时权限` 类别，用户授权不再是安装时「一锤子买卖」，实现了「精细化授权」和「按需授权」
+* `Android 10.0`(`API Level 29`) ：新增 `上下文权限` ，在原有二元化的 `允许` 与 `拒绝` 选项基础之上增加了 `仅在使用中允许`
+* `Android 11` ：新增 `每次询问权限` 
+* `Android 10.0` ：禁止应用直接读取设备唯一标识（`IMEI`）
+
+---
+
+### 国产安卓之荣光 {id="domestic-android-1"}
+
+* `MIUI 12`（基于 `Android 10`）的 `空白通行证`
+* `ColorOS 7`（基于 `Android 10`）的 `保护个人信息`
+    * 当应用需要读取特定个人信息（通话记录、联系人、短信、日程表）时，系统将提供 **空信息**
+
+---
+
+### 国产安卓之荣光 {id="domestic-android-2"}
+
+![](images/chap0x06/Screenshots/Screenshot_2021-02-18-16-00-05-987_com.miui.securitycenter.jpg)
+
+---
+
+### 一点思考：空信息？
+
+* 真的是返回 `空信息` 吗？`仿真信息` 是不是比 `空信息` 更好？
 
 ---
 
@@ -432,7 +651,7 @@ output: revealjs::revealjs_presentation
 
 ---
 
-## 系统进程沙盒化改进历程 {id="system-sandboxing-2"}
+## 系统进程沙盒化改进历程 {id="system-sandboxing-3"}
 
 | 引入版本 | 改进措施                                         | **拟解决** 的威胁 |
 | :-       | :-                                               | :-                |
@@ -443,7 +662,7 @@ output: revealjs::revealjs_presentation
 
 ---
 
-## 系统进程沙盒化改进历程 {id="system-sandboxing-3"}
+## 系统进程沙盒化改进历程 {id="system-sandboxing-4"}
 
 | 引入版本 | 改进措施                                         | **拟解决** 的威胁 |
 | :-       | :-                                               | :-                |
@@ -504,6 +723,7 @@ output: revealjs::revealjs_presentation
 ---
 
 * Anrdoid 平台历史上 85% 的漏洞是由于不安全的内存访问引起
+    * Android 安全团队认为对抗和缓解上述漏洞成因的有效方法是使用「内存安全」的编程语言：Java / Kotlin
 
 # DiD.3 系统完整性保护
 
@@ -520,4 +740,18 @@ output: revealjs::revealjs_presentation
 * 定期发布补丁和打补丁
     * Android 设备碎片化给补丁管理带来巨大挑战
 
+# Android 应用开发与安全实验环境搭建 {id="setup-android-dev"}
+
+---
+
+# Android 应用软件基础 {id="android-dev-basics"}
+
+---
+
+# 开发第一个 Android 应用程序 {id="hello-android"}
+
+---
+
+* 四大组件
+* 应用签名方法
 
