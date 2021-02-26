@@ -209,7 +209,7 @@ output: revealjs::revealjs_presentation
 
 1. 多方许可
 2. 开放生态访问
-3. 安全是一个兼容性需求
+3. 安全是兼容性需求之一
 4. 出厂设置能保证恢复设备到安全状态
 5. 应用程序安全为主
 
@@ -248,7 +248,7 @@ output: revealjs::revealjs_presentation
 
 ---
 
-### 3. 安全是一个兼容性需求
+### 3. 安全是兼容性需求之一
 
 * Android 安全模型本身也是 Android 规范的组成内容
     * 定义包含在 [Compatibility Definition Document (CDD)](https://source.android.com/compatibility/cdd)
@@ -444,6 +444,63 @@ output: revealjs::revealjs_presentation
 ## 基本需求
 
 * 对于移动终端来说，主要实现方式是系统内置的「锁屏」程序
+* 典型的「安全性」与「易用性」平衡设计需求
+
+---
+
+### 多种锁屏认证因素
+
+<img src="images/chap0x06/Screenshots/Screenshot_2021-02-26-10-53-02-073_com.android.settings.jpg" align="right"/>
+
+* 口令解锁 - what you know, `knowledge`
+    * 图案/数字/混合（支持字符）
+* 指纹解锁 - what you are `biometrics`
+* 人脸解锁 - what you are `biometrics`
+* 蓝牙设备解锁 - what you have
+
+---
+
+### 定期强制输入口令解锁，避免遗忘
+
+* 口令是设备对用户的「**信任根**」<img src="images/chap0x06/lockscreen-passcode-reminder.png" align="right"/>
+    * user-to-device `U2D`
+* 分层认证模型（`tiered authentication model `）
+    * 主认证 `Primary` Authentication ，只支持 `knowledge` 因素
+    * 辅助认证   `Secondary` Authentication，只支持 `biometrics` 因素
+    * 第三方认证 `Tertiary` Authentication
+
+---
+
+### 基于生物认证因素的认证安全性等级划分
+
+* 等级划分依据
+    * 抗欺骗性：Spoof Acceptance Rate, SAR
+    * 架构安全性：生物特征数据处理的全生命周期抗嗅探和篡改能力
+* 依据上述两方面指标划分成[三个安全级别](https://source.android.com/security/biometric/measure)
+    * strong vs. weak vs. convenience
+* 仅使用基于生物认证因素解锁屏幕后依然无法执行某些特权操作
+    * 基于文件或全盘加密的用户数据分区不会被自动解密（第一次启动系统后，需要先进行口令认证才能解锁加密的用户数据分区）
+
+---
+
+### [Android 11 支持基于生物认证因素的精细化授权](https://developer.android.com/about/versions/11/features#biometric-auth)
+
+* Android 11 引入了 [BiometricManager.Authenticators](https://developer.android.com/reference/kotlin/android/hardware/biometrics/BiometricManager.Authenticators) 接口，开发者可用于声明 [应用支持的身份验证类型](https://developer.android.com/training/sign-in/biometric-auth#declare-supported-authentication-types)
+* 未来，通过不同安全性等级的身份认证因素解锁设备可以使用到不同安全等级的功能
+* 不同安全等级的功能可以强制要求对应安全性等级的身份认证因素
+
+---
+
+### 基于生物因素的身份认证低安全性级别提示
+
+![](images/chap0x06/Screenshots/Screenshot_2021-02-26-10-53-41-047_com.android.settings.jpg)
+
+---
+
+## Android 设备本身作为第三方认证因素 {id="android-as-third-auth"}
+
+* 网页端或其他应用可以使用受信任 Android 7+ 设备作为「辅助认证因素」
+* 设备间认证凭据：device-to-device, `D2D` authentication
 
 # SD.3 数据加密
 
@@ -459,13 +516,19 @@ output: revealjs::revealjs_presentation
 * 当系统内核没有运行或 **被绕过**（例如直接读取持久化存储介质），如何实现 `多方许可` 和 `安全合规`
     * Anroid 5.0 全盘加密技术（Full Disk Encryption, FDE），拟解决 [T.P2] ，但不解密磁盘无法使用紧急呼叫、无障碍访问辅助服务、闹钟等低安全风险功能
     * Android 7.0 引入基于文件的选择加密（File Based Encryption, FBE），解决了上述全盘加密技术的不足之处
+
+---
+
+## 持久化存储数据加密 {id="safe-by-rest-2"}
+
+* 当系统内核没有运行或 **被绕过**（例如直接读取持久化存储介质），如何实现 `多方许可` 和 `安全合规`
     * Android 10.0 新增 [Adiantium](https://source.android.com/security/encryption/adiantum) 支持，可以在缺少 AES 硬件加速功能的设备上以更低的计算资源消耗获得不变的 AES 加密效果
         * Android 9 需要自行手动给内核打补丁并重新编译内核
     * Android 10 起，默认系统所有数据启用全盘加密
 
 ---
 
-## 持久化存储数据加密 {id="safe-by-rest-2"}
+## 持久化存储数据加密 {id="safe-by-rest-3"}
 
 * 开启全盘加密后，实现 `出厂设置能保证恢复设备到安全状态` 无需再抹除用户数据，只需删除加密用主密钥即可
 
@@ -690,11 +753,20 @@ output: revealjs::revealjs_presentation
 | 5.x      | 引入 `PXN`$^0$ 机制                                           | [T.A7][T.D2]      |
 | 6.x      | 内核线程被设置为SELinux强制执行模式，限制从内核访问用户态文件 | [T.A7][T.D2]      |
 | 8.x      | 引入 `PAN`$^1$ 和 `PAN` 模拟机制                              | [T.A7][T.D2]      |
-| 9.0      | 引入 `CFI`$^2$                                                | [T.A7][T.D2]      |
-| 10       | 引入 `SCS`$^3$                                                | [T.A7][T.D2]      |
 
 * $^0$ `PXN`, Privileged eXecute Never，内核态进程禁止执行用户态代码，预防 `ret2usr` 形式的漏洞利用技巧
 * $^1$ `PAN`, Privileged Access Never，内核态进程访问用户态内存受到限制，仅允许通过 `copy-*-user()` 系列函数
+
+
+---
+
+## 系统内核沙盒化改进历程 {id="kernel-sandboxing-3"}
+
+| 引入版本 | 改进措施                                                      | **拟解决** 的威胁 |
+| :-       | :-                                                            | :-                |
+| 9.0      | 引入 `CFI`$^2$                                                | [T.A7][T.D2]      |
+| 10       | 引入 `SCS`$^3$                                                | [T.A7][T.D2]      |
+
 * $^2$ `CFI`, [Control Flow Integrity](https://source.android.com/devices/tech/debug/cfi)，基于控制流「白名单」的函数调用限制
 * $^3$ `SCS`, [Shadow Call Stack](https://source.android.com/devices/tech/debug/shadow-call-stack)，通过保护返回地址来实现调用堆栈深度回溯保护
 
@@ -733,25 +805,298 @@ output: revealjs::revealjs_presentation
 * 典型实现方式： `验证启动` (`Verified Boot`)
     * Android KitKat 首次实现，Nougat 开始作为缺省强制启用特性
 
+---
+
+![](images/chap0x06/verified-boot.png)
+
 # DiD.4 补丁/更新
 
 ---
 
+## 概述
+
 * 定期发布补丁和打补丁
     * Android 设备碎片化给补丁管理带来巨大挑战
+* 2015 年 8 月起，Android 每月公开发布一次安全通告和安全补丁
+* Android 8 引入 [Treble](https://android-developers.googleblog.com/2017/05/here-comes-treble-modular-base-for.html) ：模块化 Android
+    * 加快 Android 新版本系统在所有设备上的普及率
+* 2018 年发布的 `Android Enterprise Recommended program` （设备、运营商服务以及企业移动管理服务的最低规格要求）： 
+    * 普通设备：`90 天安全更新`
+    * 加固型设备：`在设备推出后五年内，一旦有安全更新，就会在 90 天内及时安装`
+
+---
+
+## [Treble](https://android-developers.googleblog.com/2017/05/here-comes-treble-modular-base-for.html)  {id="treble-1"}
+
+* `CTS` (`Compatibility Test Suite`) 通过设计稳定和一致的 API，解决应用开发者开发应用的多版本、多设备兼容性需求
+* `VTS` (`Vendor Test Suite`) Android 操作系统框架层面的稳定和一致 API 计划，解耦「设备厂商实现代码」和「Android 操作系统框架代码」
+
+![](images/chap0x06/treble.png)
+
+---
+
+## [Treble](https://android-developers.googleblog.com/2017/05/here-comes-treble-modular-base-for.html)  {id="treble-2"}
+
+* 通过硬件定义语言（`HIDL`）、Android `VTS` 在 `HAL` 和它的用户之间定义一个清晰的接口
+    * `HIDL` 的目标是在不重新构建 `HAL` 的情况下替换操作系统框架
+    * `HAL` 是由半导体供应商进行构建的，并且构建于设备的供应商分区中，这使得操作系统框架被放置于一个自己的分区中，无需重新编译 `HAL` 就能够通过 `OTA` 更新进行替换
+    * 每个 `HAL` 组件运行在自己独立沙盒且只允许所控制的硬件设备驱动访问，上层应用不允许直接访问设备驱动而是只能访问对应关联的 `HAL` 组件
+
+---        
+
+## [Treble](https://android-developers.googleblog.com/2017/05/here-comes-treble-modular-base-for.html)  {id="treble-3"}
+
+* `SELinux` 策略不再是出厂时固化在框架代码里，改为系统启动时从不同安全分区（`system` 和 `vendor`）加载动态组装
+    * 安全策略可以局部、独立更新
+
+# Android 应用开发基础 {id="android-dev-basics"}
+
+---
+
+## [开发者工作流程基础知识](https://developer.android.com/studio/workflow)
+
+1. 设置开发环境
+2. 编写应用代码
+3. 构建并运行
+4. 调试、剖析和测试
+5. 发布应用
+
+---
+
+### 1. 设置开发环境 {id="setup-dev-1"}
+
+* [安装 Android Studio](https://developer.android.com/studio)
+* [创建项目](https://developer.android.com/studio/projects/create-project)
+
+---
+
+### Android Studio 安装后开发前配置 SDK {id="setup-sdk"}
+
+见课本 [第五章 实验](https://c4pr1c3.github.io/cuc-mis/chap0x05/exp.html)
+
+* SDK
+* AVD
+* [Gradle 依赖项目 - Offline components](https://developer.android.com/studio)
+
+---
+
+### 创建项目完毕后大概率会遇到的一个错误 {id="gradle-download-failed-1"}
+
+![](images/chap0x06/gradle-build-failed-due-to-ssl-shutdown-1.png)
+
+---
+
+### 创建项目完毕后大概率会遇到的一个错误 {id="gradle-download-failed-2"}
+
+![](images/chap0x06/gradle-build-failed-due-to-ssl-shutdown-2.png)
+
+---
+
+### 离线安装 Gradle 依赖项目 {id="offline-setup-gradle"}
+
+* 提前从 [Android Studio 官网](https://developer.android.com/studio) 下载好 `Offline components` （`2.7GB+`）
+* [Android Studio 3.6+ 开启 Gradle 的「离线模式」](https://stackoverflow.com/questions/60891740/android-studio-gradle-offline-mode-not-found): 从菜单栏中依次选择 View > Tool Windows > Gradle。然后，在 Gradle 窗口顶部附近，点击 Toggle Offline Mode 图标
+* 解压缩上述 `Gradle 构建依赖压缩包` ，并按照压缩包中的 `README` 进行配置
+    * 其中的可选步骤建议在新创建的项目中也一并完成，此时可能会自动执行一次 gradle 下载
+
+---
+
+### [2. 编写应用代码](https://developer.android.com/studio/write)
+
+[开发第一个 Android 应用程序](https://developer.android.com/training/basics/firstapp)
+
+> 动手编写 Hello World 时间
+
+---
+
+### 3. 构建并运行
+
+---
+
+### 4. 调试、剖析和测试
+
+---
+
+### 5. 发布应用
+
+* 应用签名方法
 
 # Android 应用开发与安全实验环境搭建 {id="setup-android-dev"}
 
 ---
 
-# Android 应用软件基础 {id="android-dev-basics"}
+* [adb](https://developer.android.com/studio/command-line/adb)
+* [logcat](https://developer.android.com/studio/command-line/logcat)
+
+# [Android 应用程序基础](https://developer.android.com/guide/components/fundamentals) {id="android-components-basics"}
 
 ---
 
-# 开发第一个 Android 应用程序 {id="hello-android"}
+## Android 应用开发语言与二进制载体 {id="dev-lang-and-media"}
+
+* 可选应用程序编程语言：Kotlin、 **Java** 和 C++
+* Android SDK 工具会将代码连同任何数据和资源文件编译成一个 APK（ `Android package`），即带有 `.apk` 后缀的（`zip 格式`）归档文件
 
 ---
 
-* 四大组件
-* 应用签名方法
+## Android 应用与进程 {id="app-and-process"}
+
+* Android 操作系统是一种多用户 Linux 系统，其中的 `每个应用都是一个不同的用户`
+* 默认情况下，系统会为每个应用分配一个唯一的 Linux 用户 ID（该 ID 仅由系统使用，应用并不知晓）。系统会为应用中的所有文件设置权限，使得只有分配给该应用的用户 ID 才能访问这些文件；
+* 每个进程都拥有自己的虚拟机 (VM)，因此应用代码独立于其他应用而运行。
+* 默认情况下，每个应用都在其自己的 Linux 进程内运行。Android 系统会在需要执行任何应用组件时启动该进程，然后当不再需要该进程或系统必须为其他应用恢复内存时，其便会关闭该进程。
+
+---
+
+## Android 应用沙盒 {id="app-sandbox"}
+
+* `最小化授权` 的应用
+    * 按照 `用户 ID` 区分应用彼此属主：相同 `用户 ID` 的应用可以互相访问，否则被禁止互相访问
+    * 申请许可制：参见前述 [Android permissions](https://developer.android.com/guide/topics/permissions/overview)
+
+---
+
+## 应用组件
+
+* Activity
+* 服务 `Service`
+* 广播接收器 `BroadcastReceiver`
+* 内容提供程序 `ContentProvider`
+
+---
+
+### Activity {id="activity-1"}
+
+* `Activity` 是 Android 应用中负责与用户交互的组件
+* `View` 是所有UI控件、容器控件的基类
+    * 用户看到的部分
+    * View 组件需要被放到容器组件中或使用 `Activity` 将它显示出来
+        * `setContentView()`
+
+```java
+public class MainActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+    }
+}
+```
+
+---
+
+### Service {id="service-1"}
+
+* 与 `Activity` 地位并列
+* 后台运行，一般不需要与用户交互，无图形用户界面
+* 所有的 `Service` 组件需要继承 `Service` 基类
+* 一个 `Service` 组件被运行起来之后，拥有自己独立的生命周期
+	* 为其他组件提供后台服务或监控其他组件运行状态
+
+---
+
+### BroadcastReceiver {id="BroadcastReceiver-1"}
+
+* 类似于事件编程中的事件监听器
+	* 普通事件监听器监听的事件源是程序中的对象
+	* `BroadcastReceiver` 监听的事件源是 `Android` 应用中的其他组件
+* 开发者实现自己的 `BroadcastReceiver` 子类，重写 `onReceive(Context cx, Intent it)` 方法即可
+
+---
+
+### BroadcastReceiver {id="BroadcastReceiver-2"}
+
+* 其他组件通过 `sendBroadcast()`、`sendStickyBroadcast()` 或 `sendOrderedBroadcast()` 方法发送广播消息时，如该 `BroadcastReceiver` 也对该消息『感兴趣』， `onReceive` 方法会被自动调用
+	* 配置 `IntentFilter` 实现『感兴趣』
+	* 在 `Java` 代码中使用 `Context.registReceiver()` 方法注册 `BroadcastReceiver`
+	* 在 `AndroidManifest.xml` 中使用 `<receiver …/>` 元素完成注册
+
+---
+
+### BroadcastReceiver {id="BroadcastReceiver-3"}
+
+* 借助 `BroadcastReceiver`，系统能够在常规用户流之外向应用传递事件，从而允许应用响应系统范围内的广播通知
+* 系统和第三方应用均可以主动发起广播消息
+* `BroadcastReceiver` 不会显示界面，但其可以创建状态栏通知
+* 每条广播都作为 [Intent](https://developer.android.com/reference/android/content/Intent) 对象进行传递
+
+---
+
+#### Intent 和 IntentFilter {id="intent-1"}
+
+* `Android` 应用内不同组件之间通信的载体
+	* 可以用于启动一个 `Activity` 或 `Service` 组件
+	* 还可以发送一条广播消息来触发系统中所有已注册的 `BroadcastReceiver`
+* `Intent` 封装了当前组件需要启动或触发的目标组件信息
+	* 显式 `Intent`：明确指定需要启动或触发的组件类名
+	* 隐式 `Intent`：仅指定需要启动或触发的组件应满足的条件
+		* `IntentFilter` 声明当前应用能处理哪些隐式 `Intent`
+
+---
+
+#### Intent  {id="intent-2"}
+
+```java
+	    Intent intent = new Intent(this, DisplayMessageActivity.class);
+        EditText editText = (EditText) findViewById(R.id.edit_message);
+        String message = editText.getText().toString();
+        intent.putExtra(EXTRA_MSG, message);
+// Save Data
+        editor.putString(getString(R.string.pref_usr_input_msg), message);
+        editor.commit();
+
+        startActivity(intent);
+```
+
+---
+
+#### IntentFilter
+
+```xml
+<activity android:name=".MainActivity">
+	<intent-filter>
+		<action android:name="android.intent.action.MAIN" />
+		<category android:name="android.intent.category.LAUNCHER" />
+	</intent-filter>
+</activity>
+```
+
+---
+
+### ContentProvider
+
+* `Android OS` 限制每个应用运行在自己独立的虚拟机实例中
+	* 应用间需要实时数据交换：`ContentProvider`
+* 开发者实现自己的 `ContentProvider` 需要实现以下抽象方法
+	* `insert`、`delete`、`update` 和 `query`
+		* 上述方法的第一个参数都是 `URI`
+* `应用A` 通过 `ContentProvider` 暴露自己的数据访问接口，`应用B` 通过 `ContentResolver` 来访问数据
+
+---
+
+### 组件间关系
+
+![](images/chap0x06/android-app-componets-relationships.png)
+
+---
+
+## 清单文件
+
+* `AndroidManifest.xml`
+* 位于应用项目目录的根目录下
+* 声明应用中的所有组件
+* 声明组件功能
+	* 配合 `IntentFilter` 声明
+* 声明应用要求
+	* 确定应用需要的任何用户权限，如互联网访问权限或对用户联系人的读取权限
+	* 根据应用使用的 API，声明应用所需的最低 API 级别
+	* 声明应用使用或需要的硬件和软件功能，如相机、蓝牙服务或多点触摸屏幕
+	* 声明应用需要链接的 API 库（Android 框架 API 除外），如 Google 地图库
+
+---
+
+## 应用资源
+
+* 资源是指代码使用的附加文件和静态内容，例如位图、布局定义、界面字符串、动画说明等
 
