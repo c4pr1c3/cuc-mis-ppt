@@ -901,6 +901,30 @@ output: revealjs::revealjs_presentation
 
 ---
 
+### 使用国内的 Maven 仓库镜像
+
+* 使用 [阿里云云效 Maven](https://maven.aliyun.com/mvn/guide) 提供的 `Maven` 仓库镜像
+* 修改 `项目` **根目录** 下的 `build.gradle`
+
+```gradle
+//        google()
+//        jcenter()
+maven {
+    url 'https://maven.aliyun.com/repository/google/'
+}
+maven {
+    url 'https://maven.aliyun.com/repository/jcenter/'
+}
+```
+
+---
+
+### build.gradle 修改前后对比
+
+![](images/chap0x06/maven-mirror-in-build.gradle.png)
+
+---
+
 ### [2. 编写应用代码](https://developer.android.com/studio/write)
 
 [开发第一个 Android 应用程序](https://developer.android.com/training/basics/firstapp)
@@ -911,22 +935,90 @@ output: revealjs::revealjs_presentation
 
 ### 3. 构建并运行
 
+* [在 IDE 中构建和运行](https://developer.android.com/studio/run)
+* [管理模拟器/虚拟设备](https://developer.android.com/studio/run/managing-avds)
+
+---
+
+#### 如果在线下载 Android 镜像失败 {id="dl-google-com-failed-1"}
+
+![](images/chap0x06/image-download-failed.png)
+
+---
+
+#### 如果在线下载 Android 镜像失败 {id="dl-google-com-failed-2"}
+
+* 多重试几次：有时纯粹是偶然的网络连接问题
+* 使用国内镜像 `android dl.google.com 国内镜像`
+* 其他渠道获取到指定版本镜像的压缩包 + 离线安装
+
+---
+
+#### 离线安装模拟器系统镜像 {id="offline-install-sysimage-1"}
+
+* 确认当前 `Android SDK` 安装路径 `$ANDROID_HOME`
+
+![](images/chap0x06/android-sdk-home.png)
+
+---
+
+#### 离线安装模拟器系统镜像 {id="offline-install-sysimage-2"}
+
+* 解压缩下载得到的指定 `API 版本号` 的系统镜像压缩包文件
+    * 以本节示例下载失败截图中的文件 `x86-27_r11.zip` 为例
+* 解压缩后得到一个名为 `x86` 的目录
+* 将该目录覆盖到 `$ANDROID_HOME/system-images/android-27` 下包含 **同名** `x86` 的子目录，形成如下目录层次结构
+
+```ini
+android-27
+└── google_apis
+    └── x86
+```
+
+---
+
+#### 离线安装模拟器系统镜像 {id="offline-install-sysimage-3"}
+
+* 在 `AVD Manager` 的镜像列表页面点击「刷新」按钮即可看到镜像已可用
+
+![](images/chap0x06/avd-offline-install.png)
+
 ---
 
 ### 4. 调试、剖析和测试
+
+* [官方 Android Studio 调试指南](https://developer.android.com/studio/debug)
+* [官方 Android Studio 剖析指南](https://developer.android.com/studio/profile)
+* [官方 Android Studio 测试指南](https://developer.android.com/studio/test)
 
 ---
 
 ### 5. 发布应用
 
-* 应用签名方法
+* [应用签名方法](https://developer.android.com/studio/publish/app-signing)
+    * 为上传 Play 应用商店而签名 - `Play 应用签名计划`
+    * 本地自发布应用签名 - `自行负责保障签名密钥和密钥库的安全`
+
+---
+
+#### 本地自发布应用签名注意事项
+
+在应用的预期生命周期内，应当使用同一证书为应用签名
+
+* 应用升级：证书匹配才能同名应用升级，否则无法升级
+* 应用模块化：同一证书签名的多个 APK 可以在同一个进程中运行（如果应用请求这样做），且同一应用的不同模块可以基于此实现独立更新
+* 通过权限共享代码/数据：基于签名匹配进行更安全的跨应用代码共享和数据交换
 
 # Android 应用开发与安全实验环境搭建 {id="setup-android-dev"}
 
 ---
 
+## Android SDK 自带的相关后续安全实验相关工具 {id="android-sdk-tools-for-sec"}
+
 * [adb](https://developer.android.com/studio/command-line/adb)
+    * [ADB 相关实验详见课本实验指南](https://c4pr1c3.github.io/cuc-mis/chap0x06/exp.html)
 * [logcat](https://developer.android.com/studio/command-line/logcat)
+    * [logcat 应用实验详见第 7 章课本实验指南](https://c4pr1c3.github.io/cuc-mis/chap0x07/exp.html)
 
 # [Android 应用程序基础](https://developer.android.com/guide/components/fundamentals) {id="android-components-basics"}
 
@@ -1083,8 +1175,8 @@ public class MainActivity extends AppCompatActivity {
 
 ## 清单文件
 
-* `AndroidManifest.xml`
-* 位于应用项目目录的根目录下
+* [AndroidManifest.xml](https://developer.android.com/guide/topics/manifest/manifest-intro)
+* 位于应用代码目录的根目录下
 * 声明应用中的所有组件
 * 声明组件功能
 	* 配合 `IntentFilter` 声明
@@ -1099,4 +1191,13 @@ public class MainActivity extends AppCompatActivity {
 ## 应用资源
 
 * 资源是指代码使用的附加文件和静态内容，例如位图、布局定义、界面字符串、动画说明等
+
+# 课后思考题
+
+---
+
+* 真机如何启用 ADB 调试功能？
+* 真机和电脑建立调试连接过程你有发现哪些「安全策略」和「安全机制」？请思考其保护作用和意义。
+* 你的手机连接过的 Wifi 信息保存在手机上什么位置？能否从中找到连过的 Wifi 的口令？
+
 
