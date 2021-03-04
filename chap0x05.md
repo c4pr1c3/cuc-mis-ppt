@@ -445,11 +445,15 @@ output: revealjs::revealjs_presentation
 
 ---
 
-### Sign in with Apple 的优点 {id="sign-in-with-apple-gains"}
+### Sign in with Apple 的优点 {id="sign-in-with-apple-gains-1"}
 
 * 相比较于其他「第三方授权」登录功能，`Sign in with Apple` 更注重用户的隐私保护
     * 用户可以选择向第三方网站提供自己的「假名」和[「匿名电邮地址」](https://support.apple.com/zh-cn/HT210425)
     * 苹果通过 `私密电子邮件中转服务` 帮助用户的「匿名电邮地址」依然可以正确接收到通知邮件
+
+---
+
+### Sign in with Apple 的优点 {id="sign-in-with-apple-gains-2"}
 
 > “通过 Apple 登录”功能既不会跟踪您，也不会分析您的特征。Apple 只会保留必要的信息，以确保您能够登录和管理自己的帐户。
 
@@ -481,6 +485,10 @@ output: revealjs::revealjs_presentation
 ### [Sign in with Apple 漏洞被苹果奖励了 $100k](https://bhavukjain.com/blog/2020/05/30/zeroday-signin-with-apple/) {id="signin-with-apple-4"}
 
 根据上述 **数据校验** 缺陷：收到的请求数据中的 email 字段和前一步身份认证时使用的 email **未进行匹配验证** ，攻击者只需要篡改「交换 JWT」步骤中的请求数据中的 email 字段为任意目标邮箱，苹果服务器均会签发一个「合法 JWT」给攻击者。
+
+---
+
+### [Sign in with Apple 漏洞被苹果奖励了 $100k](https://bhavukjain.com/blog/2020/05/30/zeroday-signin-with-apple/) {id="signin-with-apple-5"}
 
 ```json
 // （伪造电邮地址）请求消息示例
@@ -702,9 +710,13 @@ Host: appleid.apple.com
 
 ---
 
-## 从漏洞利用工具“价格”看两个平台的安全性
+## 从漏洞利用工具“价格”看两个平台的安全性 {id="vul-values-1"}
 
 [![](images/chap0x05/mobile-os-exploits-price.jpg)](https://vuldb.com/?product)
+
+---
+
+## 从漏洞利用工具“价格”看两个平台的安全性 {id="vul-values-2"}
 
 > 价格从 **短期** 来看是由 **供需** 决定， ***长期*** 来看是围绕 ***价值*** 上下波动的。
 
@@ -781,6 +793,129 @@ Host: appleid.apple.com
 
 * 本质上都是利用「系统级别」的 **权限提升漏洞** 获得系统的 `root` 权限代码执行权限
     * 如果 **越狱** 或 **root** 程序在提升权限后“夹带私货”呢？
+
+# Android 应用安全实验环境搭建 {id="setup-android-dev"}
+
+---
+
+## [Android SDK](https://developer.android.com/studio/command-line?hl=zh-cn) {id="android-sdk-intro"}
+
+* 开发Android平台应用软件所需的工具软件套装
+* 打开 [Android Studio](https://developer.android.com/studio) 的 `SDK 管理器`
+* 所有软件包都会下载到 `Android SDK` 目录
+
+![](images/chap0x06/android-sdk-home.png)
+
+---
+
+## Android SDK 目录结构和工具概述 {id="android-sdk-tools-intro"}
+
+```
+├── build-tools // 构建 Android 应用所需要的工具，建议总是使用最新版构建工具
+├── emulator // 模拟器运行时环境相关工具
+├── extras // 扩展开发包，如高版本的API在低版本中开发使用用到的兼容包v4、v7、v13等。也会存放Google提供的USB驱动，Intel提供的硬件加速附件工具包
+├── fonts
+├── licenses
+├── patcher
+├── platform-tools // 平台工具，包含 adb 等基本工具。每次更新都向后兼容旧的平台版本
+├── platforms // 平台工具资源文件，配套 build-tools 版本
+├── skins
+├── sources
+├── system-images // 已下载模拟器镜像
+└── tools // 命令行工具，包括 ProGuard, avdmanager 等基本工具
+```
+
+---
+
+### Intel HAXM
+
+* Intel <font color=red>H</font>ardware <font color=red>A</font>ccelerated e<font color=red>X</font>ecution <font color=red>M</font>anager
+* 英特尔® 硬件加速执行管理器是一个硬件辅助的虚拟化引擎（hypervisor，虚拟机监视器），它使用英特尔® 虚拟化技术加速安卓应用在主机上的模拟
+* 英特尔® 硬件加速执行管理器与英特尔提供的 Android x86 模拟器映像及官方 `Android SDK Manager` 相结合，可在启用英特尔虚拟机的系统上更快地模拟 `Android OS`
+
+---
+
+## Android SDK 自带相关后续安全实验相关工具 {id="android-sdk-tools-for-sec"}
+
+* [adb](https://developer.android.com/studio/command-line/adb)
+    * 位于 `$SDK_ROOT/platform-tools/`
+    * [ADB 相关实验详见课本实验指南](https://c4pr1c3.github.io/cuc-mis/chap0x06/exp.html)
+* [logcat](https://developer.android.com/studio/command-line/logcat)
+    * `adb` 的子命令
+    * [logcat 应用实验详见第 7 章课本实验指南](https://c4pr1c3.github.io/cuc-mis/chap0x07/exp.html)
+
+---
+
+## 建议加入系统 PATH 环境变量的路径 {id="add-to-path"}
+
+提前在对应系统中新建系统环境变量 `ANDROID_HOME` 设置为 `Android SDK` 的根路径
+
+```bash
+# macOS && Linux
+$ANDROID_HOME/platform-tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/emulator
+
+# Windows
+%ANDROID_HOME%/platform-tools:%ANDROID_HOME%/tools/bin:%ANDROID_HOME%/emulator
+```
+
+---
+
+## 提前下载 SDK Tools  {id="download-sdk-tools"}
+
+* 当前最新版即可
+
+---
+
+## 提前下载 AVD 镜像 {id="download-avd-images"}
+
+* 通过 `AVD Manager` 先创建 `Android` 模拟器环境
+    * 带有 `Google Play` 标志的硬件 `Profile` 表示支持 `Google Play` 相关 API 虚拟硬件特性支持
+* 推荐下载当前最新版镜像和 `Android 5.1` 系统镜像
+
+---
+
+### 如果在线下载 Android 镜像失败 {id="dl-google-com-failed-1"}
+
+![](images/chap0x06/image-download-failed.png)
+
+---
+
+### 如果在线下载 Android 镜像失败 {id="dl-google-com-failed-2"}
+
+* 多重试几次：有时纯粹是偶然的网络连接问题
+* 使用国内镜像 `android dl.google.com 国内镜像`
+* 其他渠道获取到指定版本镜像的压缩包 + 离线安装
+
+---
+
+### 离线安装模拟器系统镜像 {id="offline-install-sysimage-1"}
+
+* 确认当前 `Android SDK` 安装路径 `$ANDROID_HOME`
+
+![](images/chap0x06/android-sdk-home.png)
+
+---
+
+### 离线安装模拟器系统镜像 {id="offline-install-sysimage-2"}
+
+* 解压缩下载得到的指定 `API 版本号` 的系统镜像压缩包文件
+    * 以本节示例下载失败截图中的文件 `x86-27_r11.zip` 为例
+* 解压缩后得到一个名为 `x86` 的目录
+* 将该目录覆盖到 `$ANDROID_HOME/system-images/android-27` 下包含 **同名** `x86` 的子目录，形成如下目录层次结构
+
+```ini
+android-27
+└── google_apis
+    └── x86
+```
+
+---
+
+### 离线安装模拟器系统镜像 {id="offline-install-sysimage-3"}
+
+* 在 `AVD Manager` 的镜像列表页面点击「刷新」按钮即可看到镜像已可用
+
+![](images/chap0x06/avd-offline-install.png)
 
 # 课后思考题
 
