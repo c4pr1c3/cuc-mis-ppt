@@ -1136,6 +1136,12 @@ public class MainActivity extends AppCompatActivity {
 
 * 资源是指代码使用的附加文件和静态内容，例如位图、布局定义、界面字符串、动画说明等
 
+---
+
+## 小结：Android 应用构建流程 {id="build-android-app-flow"}
+
+[![](images/chap0x06/build-process.png)](images/chap0x06/build-process_2x.png)
+
 # 课后思考题
 
 ---
