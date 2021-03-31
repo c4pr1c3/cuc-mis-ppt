@@ -650,7 +650,7 @@ beacon.show2()
 #         cap=
 
 # 打印 type 和 subtype 字段取值
-print("{} {}".format(beacon.getlayer(Dot11).type, frame.getlayer(Dot11).subtype))
+print("{} {}".format(beacon.getlayer(Dot11).type, beacon.getlayer(Dot11).subtype))
 # 0 8
 # 管理帧字段 type=0
 ```
@@ -670,7 +670,7 @@ print("{} {}".format(beacon.getlayer(Dot11).type, frame.getlayer(Dot11).subtype)
 
 ---
 
-### 管理帧相关的分析技巧之 tshark {id="wlan.mgt.tshark-2"}
+### 控制帧相关的分析技巧之 tshark {id="wlan.mgt.tshark-2"}
 
 ```bash
 tshark -r 0-open-ap-public.pcap -T fields -e wlan.fc.type -e wlan.fc.subtype -e wlan.fc.type_subtype -e _ws.col.Info "wlan.fc.type==1" | awk -F ',' '{print $1}' | sort -t 1 -u
@@ -683,7 +683,7 @@ tshark -r 0-open-ap-public.pcap -T fields -e wlan.fc.type -e wlan.fc.subtype -e 
 
 ---
 
-### 管理帧相关的分析技巧之 scapy {id="wlan.ctrl.scapy"}
+### 控制帧相关的分析技巧之 scapy {id="wlan.ctrl.scapy"}
 
 ```python
 # 构造一个默认的控制帧
@@ -719,7 +719,7 @@ print("{} {}".format(dot11ack.getlayer(Dot11).type, dot11ack.getlayer(Dot11).sub
 
 ---
 
-### 管理帧相关的分析技巧之 tshark {id="wlan.data.tshark"}
+### 数据帧相关的分析技巧之 tshark {id="wlan.data.tshark"}
 
 ```bash
 tshark -r 1-wpa2mixed-public.pcap -T fields -e wlan.fc.type -e wlan.fc.subtype -e wlan.fc.type_subtype -e _ws.col.Info "wlan.fc.type==2" | awk -F ',' '{print $1}' | sort -t 1 -u
