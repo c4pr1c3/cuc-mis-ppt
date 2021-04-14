@@ -325,13 +325,13 @@ sudo ifconfig en0 ether aa:bb:cc:dd:ee:ff
 
 ---
 
-### 使用 aireplay-ng 创建一个广播 XSS 攻击向量的假 AP {id="aireplay-ng-xss-1"}
+### 使用 airebase-ng 创建一个广播 XSS 攻击向量的假 AP {id="airebase-ng-xss-1"}
 
 ![](images/chap0x03/evil-ssid-xss-1-9088.png)
 
 ---
 
-### 使用 aireplay-ng 创建一个广播 XSS 攻击向量的假 AP {id="aireplay-ng-xss-2"}
+### 使用 airebase-ng 创建一个广播 XSS 攻击向量的假 AP {id="airebase-ng-xss-2"}
 
 ```bash
 sudo airbase-ng --essid "<script>alert(/hacked/)</script>" -a "23:33:33:33:33:33" -c6 wlan0
