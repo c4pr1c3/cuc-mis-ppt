@@ -524,6 +524,147 @@ invoke-virtual {v0}, Ljava/lang/Exception;->printStackTrace()V
 * 针对 HTTP 协议通信监听与逆向分析
 * 监听蓝牙协议通信数据
 
+---
 
+## 模拟器抓包
 
+```bash
+# ref: https://developer.android.com/studio/run/emulator-commandline
+# AVD_NAME 可以通过 Android Studio 菜单 Tools -> AVD Manager 打开 Device Manager 
+# 第 2 列 Name 对应 AVD_NAME
+$ANDROID_HOME/emulator/emulator @AVD_NAME -tcpdump dumpfile.pcap
+
+# 如果遇到启动模拟器后 Android 11 系统无法上网的情况需要手动指定一个宿主机可用的域名解析服务器 IP
+# ref: https://developer.android.com/studio/run/emulator-networking#dns
+$ANDROID_HOME/emulator/emulator @AVD_NAME -dns-server 114.114.114.114 -tcpdump dumpfile.pcap
+```
+
+---
+
+## 物理真机
+
+* 非 root 环境
+    * [PCAPdroid](https://github.com/emanuele-f/PCAPdroid)
+    * 参照第三章 `Evil Twin` 实验思路，电脑自建无线网络、手机连入该网络
+* root 环境
+    * tcpdump
+* 物理真机的“抓包”方法同样适用于模拟器环境
+
+---
+
+### [PCAPdroid](https://github.com/emanuele-f/PCAPdroid) {id="pcapdroid-1"}
+
+* 非 root 环境下的流量捕获是通过创建 [系统全局 VPN](https://developer.android.com/reference/android/net/VpnService) 服务的方式来捕获所有用户应用和系统应用的通信流量
+    * 可以「指定应用」进行流量监视和捕获
+    * 流量捕获过程可以通过 HTTP 服务对外实时开放 `pcap` 文件生成过程
+        * ⚠️ ⚠️ ⚠️  **手机所在局域网任何其他主机都可以通过该服务实时下载手机当前流量**
+    * 借助 `TCP 流量转发` 功能，将所有 TCP 流量转发到指定的 `SOCKS5 代理` ，可以进行 [`HTTPS/TLS` 流量解密](https://emanuele-f.github.io/PCAPdroid/tls_decryption)
+* 更多功能和局限性说明请参观官网文档
+
+---
+
+### [PCAPdroid](https://github.com/emanuele-f/PCAPdroid) {id="pcapdroid-2"}
+
+![](images/chap0x07/pcapdroid-demo.png)
+
+---
+
+### [PCAPdroid](https://github.com/emanuele-f/PCAPdroid) {id="pcapdroid-3"}
+
+* `系统全局 VPN` 捕获流量方式的局限性：只有「网络层」、「传输层」和「应用层」真实数据，无法获取「链路层」和「物理层」数据
+
+![](images/chap0x07/pcapdroid-limit.png)
+
+---
+
+### tcpdump 实验 {id="tcpdump-exp-1"}
+
+* 建议选择 `Android 7.0 (Google APIs)` 镜像启动模拟器可以获得 `root` 权限
+* 使用二进制编译好的 tcpdump for Android 
+    * [for ARM](https://www.androidtcpdump.com/android-tcpdump/downloads)
+    * [for x86](https://github.com/extremecoders-re/tcpdump-android-builds/releases/tag/v1.0)
+* [自行下载源代码进行交叉编译](https://www.androidtcpdump.com/android-tcpdump/compile)
+
+---
+
+### [tcpdump 实验](https://wladimir-tm4pda.github.io/porting/tcpdump.html) {id="tcpdump-exp-2"}
+
+```bash
+# 以 Android 7 x86 模拟器环境为例 
+# 假设目标模拟器环境的设备名称为 emulator-5554
+# x86 版 tcpdump for Android
+adb -s emulator-5554 push tcpdump-x86 /data/local/tmp/
+adb -s emulator-5554 shell
+
+# 以下是在 Android shell 环境中执行的命令
+# 切换到 root 用户身份
+su
+chmod +x /data/local/tmp/tcpdump-x86
+
+# 查看使用帮助
+/data/local/tmp/tcpdump-x86 --help
+# tcpdump-x86 version 4.9.2
+# libpcap version 1.9.0-PRE-GIT (with TPACKET_V3)
+# Usage: tcpdump-x86 [-aAbdDefhHIJKlLnNOpqStuUvxX#] [ -B size ] [ -c count ]
+# 		[ -C file_size ] [ -E algo:secret ] [ -F file ] [ -G seconds ]
+# 		[ -i interface ] [ -j tstamptype ] [ -M secret ] [ --number ]
+# 		[ -Q in|out|inout ]
+# 		[ -r file ] [ -s snaplen ] [ --time-stamp-precision precision ]
+# 		[ --immediate-mode ] [ -T type ] [ --version ] [ -V file ]
+# 		[ -w file ] [ -W filecount ] [ -y datalinktype ] [ -z postrotate-command ]
+# 		[ -Z user ] [ expression ]
+```
+
+---
+
+## 针对 HTTP 协议通信监听与逆向分析 {id="http-capture"}
+
+* 电脑上使用 HTTP 代理工具，搭建 `HTTP 代理服务`
+    * [BurpSuite](https://portswigger.net/burp)
+    * [mitmproxy](https://mitmproxy.org/)
+* Android 系统「无线局域网」高级设置里，配置 `HTTP 代理服务器` 指向电脑上搭建的 `HTTP 代理服务`
+* 手机无需 root
+
+---
+
+## 旁门左道抓包——「投毒」
+
+* DHCP 服务器指定内网任意可抓包主机作为无线网络的默认网关
+* DHCP 服务器指定内网 DNS 服务器，在 DNS 解析记录里配置所有解析记录指向开启透明正向 HTTP 代理的可抓包主机
+    * 针对 HTTP/HTTPS 通信数据的监听
+
+---
+
+## [监听蓝牙协议通信数据](https://medium.com/@charlie.d.anderson/how-to-get-the-bluetooth-host-controller-interface-logs-from-a-modern-android-phone-d23bde00b9fa)
+
+* [验证和调试蓝牙 from Android 官方文档](https://source.android.com/devices/bluetooth/verifying_debugging?hl=zh-cn)
+
+> 在 Android 4.4 及更高版本中，您可以手动收集 BTSnoop 日志（类似于 RFC 1761 中的信息收集格式）。这些日志可捕获主机控制器接口 (HCI) 数据包。对于大多数 Android 设备，这些日志都存储在 data/misc/bluetooth/logs 中
+
+* 访问 `/data` 目录需要 `root` 权限
+
+---
+
+## 使用 Wireshark 分析蓝牙协议数据 {id="wireshark-for-bluetooth"}
+
+![](images/chap0x07/btsnoop_hci.log.png)
+
+---
+
+## 通信协议逆向小结
+
+* 熟练使用网络协议分析工具
+    * wireshark 的显示过滤规则和辅助工具
+* 结合软件逆向分析结果
+    * 反编译源代码级别
+    * 反汇编代码级别
+    * 注入代码并输出关键变量运行时状态值
+        * adb logcat
+
+# 延伸学习资料
+
+---
+
+* [OWASP Mobile Security Testing Guide](https://github.com/OWASP/owasp-mstg)
+* [Android App Reverse Engineering 101](https://www.ragingrock.com/AndroidAppRE/)
 
