@@ -60,8 +60,9 @@ output: revealjs::revealjs_presentation
 
 * 高级语言源代码 `Java` / `Kotlin` / `C/C++`
 * 汇编代码 `Smali`
-    * `smali` 是面向 `人类阅读` 的文本格式代码
-* 机器指令代码 `DEX 字节码`，也称为 `Dalvik 字节码`
+    * `smali` 是面向 `人类阅读` 的文本格式代码，是符合人类语言习惯的语法与 **助记符**
+    * 冰岛语里 `smali` 翻译成英语对应 `complier` ，`baksmali` 翻译成 `decompiler`
+* [机器指令代码 `DEX 字节码`，也称为 `Dalvik 字节码`](https://source.android.com/devices/tech/dalvik/dalvik-bytecode)
     * `Dalvik 字节码` 是面向 `机器执行` 的二进制格式代码
 
 ---
@@ -340,6 +341,265 @@ openssl pkcs7 -in CERT.RSA -inform der -print_certs -text
 3. `Java` 字节码反编译工具 
     * [JD-GUI](https://github.com/java-decompiler/jd-gui)
     * [jadx](https://github.com/skylot/jadx)
+
+# [APKLab on VS Code](https://marketplace.visualstudio.com/items?itemName=Surendrajat.apklab)
+
+---
+
+## 特性一览
+
+* 基于 `VS Code` 的一站式 `Android` 逆向工具汇编
+    * [Quark-Engine](https://github.com/quark-engine/quark-engine), [Apktool](https://github.com/ibotpeaches/apktool/), [Jadx](https://github.com/skylot/jadx), [uber-apk-signer](https://github.com/patrickfav/uber-apk-signer), [apk-mitm](https://github.com/shroudedcode/apk-mitm/)
+
+---
+
+## 安装与配置
+
+* `VS Code` 插件常规安装方式
+* 第一次尝试打开 `apk` 文件进行分析时会自动检查并下载安装缺失的第三方依赖工具
+    *  [Apktool](https://github.com/ibotpeaches/apktool/), [Jadx](https://github.com/skylot/jadx), [uber-apk-signer](https://github.com/patrickfav/uber-apk-signer)
+        * 可能会由于 **网络连接问题** 自动下载失败，可以自行去上述工具的官方仓库下载后，另行在插件配置首选项里指定上述工具的路径
+
+---
+
+## 常见使用场景
+
+* [Apktool](https://github.com/ibotpeaches/apktool/)  反汇编 
+    * 重新打包：右键 `apktool.yml` -- `APKLab: Rebuild the APK`
+* [Jadx](https://github.com/skylot/jadx) 反编译 
+* [uber-apk-signer](https://github.com/patrickfav/uber-apk-signer) APK 签名
+* [Smalise](https://marketplace.visualstudio.com/items?itemName=LoyieKing.smalise) 代码浏览
+    * 查找方法的定义（`definition`）和引用（`reference`）
+* [apk-mitm](https://github.com/shroudedcode/apk-mitm/) APK 级别 HTTPS 中间人劫持攻击自动替换证书
+
+# Smali
+
+---
+
+> Dalvik 字节码的助记符。
+
+* [Jasmin/dedexer 语法风格](http://pallergabor.uw.hu/common/understandingdalvikbytecode.pdf) 基于 `寄存器` 的汇编语言风格
+
+---
+
+## 本节主要参考资料
+
+* [Smali 入门](https://programmer.help/blogs/smali-introduction-manual.html)
+* [Smali 基础](https://www.programmersought.com/article/94154023223/)
+
+---
+
+## 以 Android 官方 firstapp 为例
+
+```{.smali .number-lines}
+# 头信息
+# 类的声明、父类信息、源代码文件名
+.class public Lcuc/edu/cn/MainActivity;
+.super Landroidx/appcompat/app/AppCompatActivity;
+.source "MainActivity.java"
+
+
+# 定义一个 public static final 成员变量 EXTRA_MESSAGE ，其数值类型为 java.lang.String
+# static fields
+.field public static final EXTRA_MESSAGE:Ljava/lang/String; = "com.example.myfirstapp.MESSAGE"
+
+
+# 默认构造方法
+# direct methods
+.method public constructor <init>()V
+    .locals 0
+
+    .line 12 // 对应 Java 源代码行号
+    invoke-direct {p0}, Landroidx/appcompat/app/AppCompatActivity;-><init>()V
+
+    return-void
+.end method
+
+
+# virtual methods
+.method protected onCreate(Landroid/os/Bundle;)V
+    .locals 0
+
+    .line 18
+    invoke-super {p0, p1}, Landroidx/appcompat/app/AppCompatActivity;->onCreate(Landroid/os/Bundle;)V
+
+    const p1, 0x7f0b001d
+
+    .line 19
+    invoke-virtual {p0, p1}, Lcuc/edu/cn/MainActivity;->setContentView(I)V
+
+    return-void
+.end method
+
+.method public sendMessage(Landroid/view/View;)V
+    .locals 2
+
+    .line 24
+    new-instance p1, Landroid/content/Intent;
+
+    const-class v0, Lcuc/edu/cn/DisplayMessageActivity;
+
+    invoke-direct {p1, p0, v0}, Landroid/content/Intent;-><init>(Landroid/content/Context;Ljava/lang/Class;)V
+
+    const v0, 0x7f08006d
+
+    .line 25
+    invoke-virtual {p0, v0}, Lcuc/edu/cn/MainActivity;->findViewById(I)Landroid/view/View;
+
+    move-result-object v0
+
+    check-cast v0, Landroid/widget/EditText;
+
+    .line 26
+    invoke-virtual {v0}, Landroid/widget/EditText;->getText()Landroid/text/Editable;
+
+    move-result-object v0
+
+    invoke-virtual {v0}, Ljava/lang/Object;->toString()Ljava/lang/String;
+
+    move-result-object v0
+
+    const-string v1, "com.example.myfirstapp.MESSAGE"
+
+    .line 27
+    invoke-virtual {p1, v1, v0}, Landroid/content/Intent;->putExtra(Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;
+
+    .line 28
+    invoke-virtual {p0, p1}, Lcuc/edu/cn/MainActivity;->startActivity(Landroid/content/Intent;)V
+
+    return-void
+.end method
+```
+
+---
+
+## 常用约定 {id="registers"}
+
+* 变量存储需要使用寄存器
+* 在方法中需要先声明寄存器数量，才能使用相应的寄存器
+* `局部变量寄存器`（`local register`）从 `v0` 开始，序号顺序增长对应余下寄存器，该类寄存器数量由 `.locals` 定义
+* 单个寄存器只能存储 `32 bit` 长度数据，`64 bit` 长度的 `Double` 和 `Long` 类型数据需要占用 2 个寄存器
+* `#` 是行注释符号
+* `.prologue` 表示代码开始
+
+---
+
+## 常用约定 {id="locals"}
+
+* `参数寄存器`（`parameter register`）
+    * 实例方法中，从 `p0` 开始，指向当前方法所属对象(相当于Java 代码中的 `this`), `p1` 开始表示方法的第一个参数，序号顺序增长对应余下参数
+    * 静态方法中，由于不存在 `this` 引用，所以不存在 `p0`
+* 非方法参数类型变量所需要使用的寄存器个数由 `.locals` 定义，出现在方法定义的第一行
+* 方法中使用到的寄存器总数由 `.registers` 定义，即 `参数寄存器` 和 `非参寄存器` 之和
+
+---
+
+## 基本数据类型
+
+| 助记符 | Java 数据类型             |
+| :-     | :-                        |
+| D      | double，占用2个32位寄存器 |
+| J      | long，占用2个32位寄存器   |
+| V      | void (仅用于方法返回值)   |
+| I      | int                       |
+| Z      | bool                      |
+| B      | byte                      |
+| S      | short                     |
+| C      | char                      |
+| F      | float                     |
+
+---
+
+## 引用数据类型
+
+| 助记符                     | Java 数据类型                                    |
+| :-                         | :-                                               |
+| Lpackage/name/ObjectName;  | 对象                                             |
+| [primaryType               | 例如 [I 对应 int[]                               |
+| [[primaryType              | 例如 [[I 对应 int[]\[\]                            |
+| [Lpackage/name/ObjectName; | 例如 [Ljava/lang/String; 对应 java.lang.String[] |
+
+---
+
+## 访问对象中的成员变量
+
+```{.smali .number-lines}
+# 定义
+Lpackage/name/ObjectName;->FieldName:FieldType
+
+# 举例-1
+# Java 源代码 public boolean f1;
+public f1:Z
+
+# 举例-2
+# Java 源代码 public int f2;
+public f2:I
+
+# 举例-3
+# Java 源代码  public String f3;
+public f3:Ljava/lang/String;
+```
+
+---
+
+## 对象中的成员方法
+
+
+```{.smali .number-lines}
+# 对象名->方法名(形参类型1形参类型2...形参类型n)方法返回值类型
+# 以下代码对应 Java 源代码 boolean package.name.ObjectName.MethodName(int x, int y, int z)
+Lpackage/name/ObjectName;->MethodName(III)Z
+
+# 调用对象实例化方法对应 MethodName 为 <init>
+```
+
+---
+
+## 访问方法指令
+
+| 指令             | 说明                                                                         |
+| :-               | :-                                                                           |
+| invoke-virtual   | 最常见的访问指令，不支持访问私有、静态、final、构造方法，第一个参数通常是 p0 |
+| invoke-super     | 访问父类中的方法                                                             |
+| invoke-direct    | 访问私有方法或构造方法                                                       |
+| invoke-static    | 访问静态方法                                                                 |
+| invoke-interface | 访问接口方法                                                                 |
+
+---
+
+## 方法返回值
+
+| 指令             | 说明                               |
+| :-               | :-                                 |
+| return-void      | 无返回值                           |
+| return v1        | 返回值保存到寄存器 v1              |
+| return-object v1 | 返回对应引用到寄存器 v1            |
+| return-wide v1   | 返回 `double word` 结果到寄存器 v1 |
+
+---
+
+## 更多 [Dalvik 指令集](https://source.android.com/devices/tech/dalvik/dalvik-bytecode#instructions) {id="dalvik-bytecode-instructions"}
+
+```{.smali .number-lines}
+# 一般的指令格式
+[op]-[type](可选)/[位宽，默认4位] [目标寄存器],[源寄存器](可选)
+
+# 实例-1
+# 将 v2 中的值移入到 v1 寄存器（4位，支持 int ）
+move v1,v2
+
+# 实例-2
+# 将 16 位的 v2 寄存器中的值移入到 4 位的 v1 寄存器
+move-wide/from16 v1,v2
+
+# 实例-3
+# 将最近一次方法返回结果对象指针保存到 v0 寄存器
+move-result-object v0
+
+# 实例-4
+# 将 v8 寄存器中的对象指针保存到 v1 寄存器
+move-object v1, v8
+```
 
 # 定位关键代码的方法
 
@@ -667,4 +927,5 @@ chmod +x /data/local/tmp/tcpdump-x86
 
 * [OWASP Mobile Security Testing Guide](https://github.com/OWASP/owasp-mstg)
 * [Android App Reverse Engineering 101](https://www.ragingrock.com/AndroidAppRE/)
+* [Smali 相关学习笔记汇编](https://www.programmersought.com/tag/Smali/)
 
