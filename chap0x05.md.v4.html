@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="黄玮">
+  <title>移动互联网安全</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="lib/reveal.js.v4/dist/reset.css">
+  <link rel="stylesheet" href="lib/reveal.js.v4/dist/reveal.css">
+
+  <!-- For syntax highlighting using highlight.js-->
+  <link rel="stylesheet" href="lib/reveal.js.v4/plugin/highlight/monokai.css">
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+  </style>
+  <link rel="stylesheet" href="lib/reveal.js.v4/dist/theme/my-white.css" id="theme">
+
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide">
+  <h1 class="title">移动互联网安全</h1>
+  <p class="author">黄玮</p>
+</section>
+
+<section>
+<section id="第五章-智能终端操作系统安全基础" class="title-slide slide level1">
+<h1>第五章 智能终端操作系统安全基础</h1>
+
+</section>
+<section id="温故" class="slide level2">
+<h2>温故</h2>
+<ul>
+<li>移动通信安全简史</li>
+<li>物联网总体架构与典型威胁</li>
+<li>蓝牙与智能硬件安全案例</li>
+</ul>
+</section>
+<section id="知新" class="slide level2">
+<h2>知新</h2>
+<ul>
+<li>智能终端概述</li>
+<li>以史为镜
+<ul>
+<li>iOS 系统安全历史概述</li>
+<li>Android 系统安全历史概述</li>
+</ul></li>
+<li>Android 应用安全实验环境搭建</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="智能终端概述" class="title-slide slide level1">
+<h1>智能终端概述</h1>
+
+</section>
+<section id="智能终端早期定义" class="slide level2">
+<h2>智能终端早期定义</h2>
+<p>根据 <code>中国电子技术标准化研究院</code> 发布的 <a href="http://www.cac.gov.cn/files/pdf/baipishu/ITwhitepaper.pdf">智能终端白皮书（2014年修订版）</a></p>
+<blockquote>
+<p>智能终端主要表现形式有：智能电视、智能机顶盒、智能手机、平板电脑等</p>
+</blockquote>
+<blockquote>
+<p>智能终端包含的主要要素：高性能中央处理器、存储器、 <strong>操作系统</strong> 、应用程序和网络接入</p>
+</blockquote>
+</section>
+<section id="智能终端内涵发展" class="slide level2">
+<h2>智能终端内涵发展</h2>
+<p>根据 IDC 中国在 2020 年 12 月 10 日发布的 <a href="https://www.idc.com/getdoc.jsp?containerId=prCHC47146720">《“颠覆”，IDC发布2021年中国智能终端市场10大预测》</a></p>
+<blockquote>
+<p>连接、交互、屏幕等一系列新兴技术正逐渐应用于智能终端设备</p>
+</blockquote>
+<ul>
+<li>连接：5G, <code>Wi-Fi 6</code>, 蓝牙等</li>
+<li>交互：多模交互，例如体感控制、语音控制、触摸控制等</li>
+<li>屏幕：AR/VR/MR, 投影为代表的大屏, 可穿戴设备为代表的小屏幕等</li>
+</ul>
+</section>
+<section id="智能终端的百花齐放" class="slide level2">
+<h2>智能终端的百花齐放</h2>
+<ul>
+<li>老三样依然主流：智能电视、智能手机、平板电脑</li>
+<li>物联网大发展带来智能终端百花齐放
+<ul>
+<li>智慧教育：支持丰富互动能力的电子白板、3D 打印</li>
+<li>商用终端：无人售货柜、移动办公解决方案</li>
+<li>智能家居：基于声光红外等传感装置和无线网络连接能力的智能化家电终端
+<ul>
+<li>空调、冰箱、洗衣机、电饭锅、豆浆机、窗帘、照明等</li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section id="全平台操作系统市场占有率统计" class="slide level2">
+<h2>全平台操作系统市场占有率统计</h2>
+<p><a href="https://gs.statcounter.com/os-market-share"><img data-src="images/chap0x05/os_market_share.jpg" /></a></p>
+</section>
+<section id="智能手机操作系统全球市场占有率统计" class="slide level2">
+<h2>智能手机操作系统全球市场占有率统计</h2>
+<p><a href="https://www.idc.com/promo/smartphone-market-share/os"><img data-src="images/chap0x05/ios-android-market-share.png" /></a></p>
+</section>
+<section class="slide level2">
+
+<p>本课程要深入展开讲解的智能终端设备为智能手机平台。</p>
+</section>
+</section>
+<section>
+<section id="android" class="title-slide slide level1">
+<h1>Android</h1>
+
+</section>
+<section id="android-devices" class="slide level2">
+<h2>Android 生态圈——设备</h2>
+<p><img data-src="images/chap0x05/android_devices.png" /></p>
+</section>
+<section id="android-devices-global-current" class="slide level2">
+<h2>Android 生态圈——设备（全球） 2020.8</h2>
+<p><img data-src="images/chap0x05/AndroidDevicesGlobal.png" /></p>
+</section>
+<section id="android-devices-resolution-1" class="slide level2">
+<h2><a href="https://developer.android.com/guide/practices/screens_support.html?hl=zh-cn">Android支持设备屏幕尺寸规范</a>（1/3）</h2>
+<ul>
+<li>屏幕尺寸
+<ul>
+<li>按屏幕对角测量的实际物理尺寸
+<ul>
+<li>为简便起见，Android 将所有实际屏幕尺寸分组为四种通用尺寸：小、 正常、大和超大</li>
+</ul></li>
+</ul></li>
+<li>屏幕密度
+<ul>
+<li>屏幕物理区域中的像素量；通常称为 dpi（每英寸 <code>像素点数</code>）。例如， 与“正常”或“高”密度屏幕相比，“低”密度屏幕在给定物理区域的像素较少。
+<ul>
+<li>为简便起见，Android 将所有屏幕密度分组为六种通用密度： 低、中、高、超高、超超高和超超超高。</li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section id="android-devices-resolution-2" class="slide level2">
+<h2><a href="https://developer.android.com/guide/practices/screens_support.html?hl=zh-cn">Android支持设备屏幕尺寸规范</a>（2/3）</h2>
+<ul>
+<li>方向
+<ul>
+<li>从用户视角看屏幕的方向，即 <code>横屏</code> 还是 <code>竖屏</code>，分别表示屏幕的纵横比是宽还是高。请注意， 不仅不同的设备默认以不同的方向操作，而且 方向在运行时可随着用户旋转设备而改变</li>
+</ul></li>
+<li>分辨率
+<ul>
+<li>屏幕上物理像素的总数。添加对多种屏幕的支持时， 应用不会直接使用分辨率；而只应关注通用尺寸和密度组指定的屏幕 尺寸及密度。</li>
+</ul></li>
+</ul>
+</section>
+<section id="android-devices-resolution-3" class="slide level2">
+<h2><a href="https://developer.android.com/guide/practices/screens_support.html?hl=zh-cn">Android支持设备屏幕尺寸规范</a>（3/3）</h2>
+<ul>
+<li>密度无关像素 (dp - density-independent pixels)
+<ul>
+<li>在定义 UI 布局时应使用的虚拟像素单位，用于以密度无关方式表示布局维度或位置</li>
+<li>1 dp 约等于中密度屏幕（160dpi；“基准”密度）上的 1 像素。对于其他每个密度，Android 会将此值转换为相应的实际像素数</li>
+</ul></li>
+</ul>
+</section>
+<section id="android-devices-domestic-current" class="slide level2">
+<h2>Android 生态圈——设备（国内） 2021.2</h2>
+<p><img data-src="images/chap0x05/AndroidDevicesDomestic.png" /></p>
+</section>
+<section id="android-distributions-global-1" class="slide level2">
+<h2>Android 版本分布情况（全球） 2021.2</h2>
+<p><img data-src="images/chap0x05/AndroidOSGlobal.jpg" /></p>
+</section>
+<section id="android-distributions-global-2" class="slide level2">
+<h2>Android 版本分布情况（全球） 2021.2</h2>
+<ul>
+<li>以 Android 4.4 <code>KitKat</code> 为例，发布于 2013 年 10 月，截止 2017 年 11 月，全球范围内仍然有 13.8% 的设备还在运行着 4 年前的“旧”系统</li>
+<li>以 Android 7.0 <code>Nougat</code> 为例，发布于 2016 年 8 月，截止 2021 年 2 月，全球范围内仍然有 11.2% 的设备还在运行着 4 年前的“旧”系统
+<ul>
+<li><code>11.2% = 84.9% - 73.7%</code></li>
+</ul></li>
+</ul>
+<blockquote>
+<p>新版本系统更新部署到终端设备周期较长</p>
+</blockquote>
+</section>
+<section id="android-codename-version-tips" class="slide level2">
+<h2>Android 版本号基础知识</h2>
+<ul>
+<li>平台代号 <code>Codename</code> 从 2014 年 <code>Android 5 (Lollipop)</code> 开始，每年一个新版本代号发布</li>
+<li>版本 <code>Version</code></li>
+<li>API 级别 <code>API level</code></li>
+</ul>
+</section>
+<section id="android-open-source-project-aosp" class="slide level2">
+<h2>Android Open Source Project (AOSP)</h2>
+<ul>
+<li>AOSP 包括 Android 开源项目的开发者、工作流程和源代码</li>
+<li><a href="https://source.android.com/setup/start/licenses">大部分 Android 组件源代码都采用 Apache License, Version 2.0</a> ，但也有部分用到的组件采用的其他开源授权协议。例如 Linux 内核补丁相关源代码就采用的 GPLv2 授权协议</li>
+<li>根据上述 AOSP 的授权协议，第三方设备厂商可以自由使用 Android 开源代码于自己的设备</li>
+<li><code>Android Compatibility Program</code> 用于不同厂商生产的设备可以兼容 Android 应用程序的一个认证标准，只有认证设备才可以使用 <code>Android</code> 商标</li>
+<li>只有获得 <code>Android 兼容计划</code> 认证的设备才能向 Google <strong>申请使用</strong> <code>Google Play</code> 服务和随设备分发 <code>Google Mobile Services</code>
+<ul>
+<li><code>Google Play</code> 和 <code>Google Mobile Services</code> 均是 Google 的 <strong>私有闭源软件</strong></li>
+</ul></li>
+</ul>
+</section>
+<section id="经认证支持-gms-的设备清单" class="slide level2">
+<h2><a href="https://storage.googleapis.com/play_public/supported_devices.html">经认证支持 GMS 的设备清单</a></h2>
+<ul>
+<li><code>GMS</code>: Google Mobile Services
+<ul>
+<li>包含 <code>Google Play Services</code>（也被称为 <code>GmsCore</code>）, <code>Google Play Store</code>（应用商店）, <code>Google Search</code>, <code>Chrome</code> 等 <code>Google</code> 预置应用</li>
+</ul></li>
+<li>支持包含 <code>GMS</code> 的 <code>Android</code> 系统才可以使用以上基础设施服务
+<ul>
+<li>定位</li>
+<li>统一消息推送</li>
+</ul></li>
+</ul>
+</section>
+<section id="android-manufactures" class="slide level2">
+<h2>Android 生态圈——厂商</h2>
+<ul>
+<li>设备
+<ul>
+<li>根据 <code>AOSP</code> 授权协议可以制造所有类型设备</li>
+<li>如果需要获得 <code>Android 兼容性认证</code> ，则需要对照认证标准配备必要硬件</li>
+</ul></li>
+<li>系统
+<ul>
+<li>基于开源授权协议标准自行修改和使用</li>
+</ul></li>
+<li>分发渠道
+<ul>
+<li>设备厂商自主控制</li>
+</ul></li>
+</ul>
+</section>
+<section id="android-distributions-domestic" class="slide level2">
+<h2>Android 版本分布情况（国内） 2021.2</h2>
+<p><a href="https://mta.qq.com/mta/data/device/os"><img data-src="images/chap0x05/android-distributions-domestic.jpg" /></a></p>
+</section>
+<section id="android-software-stack" class="slide level2">
+<h2>Android 系统软件技术栈</h2>
+<p><img data-src="images/chap0x05/android-software-framework.png" /></p>
+</section>
+<section id="android-生态圈总结" class="slide level2">
+<h2>Android 生态圈——总结</h2>
+<ul>
+<li>Google 主导的全面开放生态圈</li>
+<li>以 <code>Android</code> 操作系统为核心的全面多行业发展</li>
+<li>多样化的设备、系统与应用</li>
+<li>开发者要面临碎片化应用运行平台</li>
+<li>国内消费者只能使用定制化的安卓系统
+<ul>
+<li>是否能及时升级系统，安装系统级别的安全更新完全取决于设备厂商</li>
+<li>部分设备厂商只知道每年推出多款新设备，却普遍忽视对已有设备上系统的持续更新维护</li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="ios" class="title-slide slide level1">
+<h1>iOS</h1>
+
+</section>
+<section id="apple-ecosystem" class="slide level2">
+<h2>Apple 生态圈</h2>
+<ul>
+<li>移动端、平板、桌面计算平台、可穿戴设备- <a href="https://www.apple.com/macos/continuity/">iOS + iPadOS + macOS + watchOS = continuity</a>
+<ul>
+<li>软硬一体 by Apple</li>
+</ul></li>
+<li>智能电视 - <a href="https://developer.apple.com/tvos/">tvOS</a></li>
+<li>物联网 - 智能家居 - <a href="https://www.apple.com/ios/home/">Apple HomeKit</a>
+<ul>
+<li>通信接口标准 by Apple ， <strong>终端硬件设备第三方生产</strong></li>
+<li>智能音箱 - <a href="https://www.apple.com/homepod/">HomePod</a> , 软硬一体 by Apple</li>
+</ul></li>
+<li>智能无线耳机 - <a href="https://www.apple.com/ae/airpods/">AirPods 系列</a> ：『计算音频』代表作</li>
+<li>智能驾驶
+<ul>
+<li><a href="https://www.apple.com/ae/ios/carplay/">控制软件 CarPlay</a> -&gt; 无人驾驶 -&gt; Apple Car</li>
+</ul></li>
+</ul>
+</section>
+<section id="ios-distributions-official" class="slide level2">
+<h2>iOS 版本分布情况（官方数据） 2020.12</h2>
+<p><a href="https://developer.apple.com/support/app-store/"><img data-src="images/chap0x05/ios-distributions-official.jpg" /></a></p>
+</section>
+<section id="ios-version-tips" class="slide level2">
+<h2>iOS 版本号基础知识</h2>
+<ul>
+<li>2010 年 6 月正式发布的 iOS 4 开始，原 <code>iPhone OS</code> 正式重命名为 <code>iOS</code></li>
+<li>2015 年 9 月正式发布的 iOS 9 开始，原用于 <code>AppleTV</code> 的系统被正式命名为 <code>tvOS</code></li>
+<li>2019 年 9 月正式发布的 iOS 13 开始，用于 <code>iPad</code> 的 <code>iOS</code> 被重命名为 <code>iPadOS</code></li>
+<li>每年发布一次 iOS 大版本更新</li>
+</ul>
+</section>
+<section id="ios-distributions-domestic" class="slide level2">
+<h2>iOS 版本分布情况（国内） 2021.2</h2>
+<p><a href="https://mta.qq.com/mta/data/device/os"><img data-src="images/chap0x05/ios-distributions-domestic.jpg" /></a></p>
+</section>
+<section id="macos-ios-kernel-arch" class="slide level2">
+<h2>macOS vs. iOS 内核架构</h2>
+<p><a href="https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/OSX_Technology_Overview/SystemTechnology/SystemTechnology.html"><img data-src="images/chap0x05/macos-ios-kernel-arch.jpg" /></a></p>
+<blockquote>
+<p>Cocoa –&gt; Cocoa Touch</p>
+</blockquote>
+</section>
+<section id="ios-系统组成与开源" class="slide level2">
+<h2>iOS 系统组成与开源</h2>
+<ul>
+<li><code>Core OS</code>
+<ul>
+<li>基于 <code>FreeBSD</code> 和 <code>Mach</code> 所改写的 <code>Darwin</code>，是开源、符合 <code>POSIX</code> 标准的一个 <code>Unix</code> 核心</li>
+<li>提供了整个 <code>iOS</code> 的一些基础功能
+<ul>
+<li>例如：硬件驱动, 内存管理，程序管理，线程管理（<code>POSIX</code>），文件系统，网络（<code>BSD Socket</code>），以及标准输入输出等等</li>
+<li>所有这些功能都会通过 <code>C</code> 语言的 <code>API</code> 来提供。</li>
+</ul></li>
+</ul></li>
+<li><code>Core OS</code> 层的驱动也提供了硬件和系统框架之间的接口。然而，由于安全的考虑，只有有限的系统框架类能访问内核和驱动</li>
+</ul>
+</section>
+<section id="ios-version-release-date-history" class="slide level2">
+<h2>iOS 版本迭代周期 —— 怎一个快字了得</h2>
+<p><a href="http://www.thinkybits.com/blog/iOS-versions/"><img data-src="images/chap0x05/ios-version-release-date-history.jpg" /></a></p>
+</section>
+<section id="ios-manufactures" class="slide level2">
+<h2>iOS 生态圈——厂商</h2>
+<ul>
+<li>设备
+<ul>
+<li><code>Apple</code> 官方授权允许汽车、智能家居领域厂商</li>
+</ul></li>
+<li>系统
+<ul>
+<li><code>Apple</code> 官方唯一维护
+<ul>
+<li>智能家居领域通过 <code>HomeKit</code> 只定义通信接口标准</li>
+</ul></li>
+</ul></li>
+<li>分发渠道
+<ul>
+<li><code>Apple</code> 官方未授权允许任何第三方应用商店，仅允许企业级应用的自行分发和授权模式</li>
+</ul></li>
+</ul>
+</section>
+<section id="ios-ecosystem-summary" class="slide level2">
+<h2>iOS 生态圈——总结</h2>
+<ul>
+<li><code>Apple</code> 强势主导的有限开放生态圈</li>
+<li>应用多样性发展逐渐落后于 <code>Android</code> 生态圈
+<ul>
+<li>电视、盒子、投影设备、智能家居等</li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="ios-sys-security" class="title-slide slide level1">
+<h1>iOS 系统安全概述</h1>
+
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>过期警告 ⚠️ 本课件使用的 CVE 统计数据服务提供商 <a href="https://www.cvedetails.com/vulnerability-list.php?vendor_id=0&amp;product_id=0&amp;version_id=0&amp;page=1&amp;hasexp=0&amp;opdos=0&amp;opec=0&amp;opov=0&amp;opcsrf=0&amp;opgpriv=0&amp;opsqli=0&amp;opxss=0&amp;opdirt=0&amp;opmemc=0&amp;ophttprs=0&amp;opbyp=0&amp;opfileinc=0&amp;opginf=0&amp;cvssscoremin=0&amp;cvssscoremax=0&amp;year=0&amp;month=0&amp;cweid=0&amp;order=1&amp;trc=123454&amp;sha=3cf9994d68386594f1283fc226cf51dad5fe72b8">https://www.cvedetails.com/</a> 自从 2019 年下半年后就停止了和上游 CVE 数据源的同步更新。</p>
+</blockquote>
+</section>
+<section id="最新-cve-统计数据获取方法" class="slide level2">
+<h2>最新 CVE 统计数据获取方法</h2>
+<ul>
+<li><a href="https://nvd.nist.gov/vuln/search/statistics?form_type=Advanced&amp;results_type=statistics&amp;search_type=all&amp;cpe_vendor=cpe%3A%2F%3AApple&amp;cpe_product=cpe%3A%2F%3Aapple%3Aiphone_os">以 iOS 系统为例 by nvd.nist.gov</a></li>
+<li><a href="https://vuldb.com/?product.apple:ios">以 iOS 系统为例 by vuldb.com</a></li>
+<li><a href="https://vuldb.com/?product.freebsd">以 FreeBSD 系统为例 by vuldb.com</a></li>
+<li><a href="https://vuldb.com/?product.google:android">以 Android 系统为例 by vuldb.com</a></li>
+<li><a href="https://vuldb.com/?product.linux:kernel">以 Linux 内核为例 by vuldb.com</a></li>
+</ul>
+</section>
+<section id="history-cve-of-ios" class="slide level2">
+<h2>iOS 历年 CVE 统计</h2>
+<p><a href="https://www.cvedetails.com/product/15556/Apple-Iphone-Os.html?vendor_id=49"><img data-src="images/chap0x05/cve-of-ios-distributions.png" /></a></p>
+</section>
+<section id="history-cvss-of-ios" class="slide level2">
+<h2>iOS 历年 CVE 统计</h2>
+<p><a href="https://www.cvedetails.com/cvss-score-charts.php?fromform=1&amp;vendor_id=&amp;product_id=15556&amp;startdate=2007-01-01&amp;enddate=2021-01-01"><img data-src="images/chap0x05/cvss-of-ios-distributions.png" /></a></p>
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>由于 <code>iOS</code> 底层的 <code>Core OS</code> 是基于 <code>FreeBSD</code> 和 <code>Mach</code> 所改写的 <code>Darwin</code> ，所以 <code>FreeBSD</code> 的相关漏洞在某些条件下也会影响到 <code>iOS</code></p>
+</blockquote>
+</section>
+<section id="history-cve-of-freebsd" class="slide level2">
+<h2>FreeBSD 历年 CVE 统计</h2>
+<p><a href="https://www.cvedetails.com/product/7/Freebsd-Freebsd.html?vendor_id=6"><img data-src="images/chap0x05/cve-of-freebsd-distributions.png" /></a></p>
+</section>
+<section id="history-cvss-of-freebsd" class="slide level2">
+<h2>FreeBSD 历年 CVE 统计</h2>
+<p><a href="https://www.cvedetails.com/cvss-score-charts.php?fromform=1&amp;vendor_id=&amp;product_id=7&amp;startdate=1999-01-01&amp;enddate=2021-02-01"><img data-src="images/chap0x05/cvss-of-freebsd-distributions.png" /></a></p>
+</section>
+<section id="history-of-ios-security-1" class="slide level2">
+<h2>iOS 系统安全特性发展变迁简史</h2>
+<ul>
+<li>以史为镜，从「操作系统」的版本变更历史学习「系统」与「软件」版本迭代过程中「安全机制」的优先级规划</li>
+<li>通过比较不同产品的安全加固路径，了解移动终端面临的主要安全威胁，学习不同的加固策略与机制</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="ios-4">iOS 4</h3>
+<ul>
+<li>禁止第三方程序访问所有通话历史</li>
+<li>禁止第三方程序拦截呼入和呼出的通话</li>
+<li>GPS定位功能需要用户明确授权</li>
+<li><del>
+限制后台联网程序种类（只允许音乐、VoIP类应用在后台运行）
+</del>
+，iOS 7 开始系统放宽后台静默和联网程序的限制</li>
+<li>限制后台静默运行程序（音乐、GPS 、VoIP 、消息推送守护程序以及周边配件附属的程序）</li>
+<li>系统相机拍摄的照片默认包含GPS位置信息，如果图片未经处理上传到第三方网站或发送给他人，会暴露照片的拍摄位置信息；</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="ios-5">iOS 5</h3>
+<ul>
+<li>禁止第三方程序访问短信收件箱和后台静默发送短信</li>
+<li>推出了iMessage服务，并且很快被黑产盯上，用来群发垃圾信息（通过手机号或电子邮件地址，只要接收者启用了iMessage并绑定了手机号或电子邮件地）；</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="ios-6">iOS 6</h3>
+<ul>
+<li>第三方程序访问通讯录、日历、照片需要用户明确授权</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="ios-7">iOS 7</h3>
+<ul>
+<li>iphone5s引入Touch ID，支持指纹解锁</li>
+<li>设备激活强制使用Apple ID并联网认证身份，防止设备被盗、恶意清空数据和设置等</li>
+<li>USB首次连接时双向身份认证，只有用户处于屏幕解锁状态时，才可以点击信任当前USB连接的电脑（无需输入锁屏密码），杜绝通过USB植入恶意代码</li>
+<li>原生通讯录支持设置电话号码黑名单</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="ios8-1">iOS 8 (2014.9)</h3>
+<ul>
+<li>开放系统全局的第三方输入法，在此之前，系统没有给第三方输入法开放编程接口</li>
+<li>允许第三方程序使用Touch ID来进行身份认证</li>
+<li>iOS 8 设备在扫描WiFi 时，系统会使用随机的 MAC 地址来防止设备被跟踪，只有在连接成功后才会使用真正的设备物理MAC地址</li>
+<li>系统相册在删除照片时，默认是将照片移动到“最近删除”的相册并保留30天后再自动真删除。避免用户误删除照片的同时，可能会导致一些秘密和隐私照片没有被及时删除，其他人一旦可以物理接触到手机，就可以从“最近删除”的相册中恢复出照片。这是一个典型的产品机密性和可用性矛盾调和、妥协的设计与实现；</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="ios8-2">iOS 8 (2014.9)</h3>
+<p>黑产利用新增的 <strong>iOS日历邀请</strong> 功能群发垃圾信息，这种日历弹窗小广告，不显示来源，仅仅显示广告内容、发送人和一个时段。我们往往会下意识地点击「拒绝」，但没想到这个小动作就能把自己的个人名字泄露了给对方。保留iCloud日历同步功能的同时，防止垃圾邀请充斥日历的操作方法如下：</p>
+</section>
+<section class="slide level2">
+
+<h3 id="ios8-3">拒绝 iOS 日历邀请垃圾信息的正确方法</h3>
+<ol type="1">
+<li>登录 iCloud</li>
+<li>左下角齿轮-偏好设置-高级：邀请，选择发送电子邮件给XXX邮箱，保存</li>
+<li>点击编辑，点击＋ 完成</li>
+<li>选择想删除的事件，在弹出框标题旁的颜色点上单击，选择新建的分类，保存</li>
+<li>点击编辑，点击新建分类旁边的－，删除分类，确定这样垃圾事件就被删除了，以后的事件邀请会发送到邮箱，然后使用邮箱的垃圾邮件屏蔽设置即可。</li>
+</ol>
+</section>
+<section class="slide level2">
+
+<h3 id="ios-10-2016.9">iOS 10 (2016.9)</h3>
+<ul>
+<li>iOS 10.3推出了iCloud照片分享功能，黑产利用该功能强制推送包含广告和垃圾信息的相册，其基本原理和iMessage垃圾信息类似。除了系统内置反垃圾信息功能并持续改进之外，普通用户如果深受垃圾信息骚扰只能选择禁用“iCloud照片分享”功能；</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="ios11-1">iOS 11 (2017.9)</h3>
+<ul>
+<li>位置信息访问控制更精细，iOS 10 上的App开发者可以选择向用户隐藏“使用应用时访问位置信息”选项，iOS 11 开始这个选项无法再被隐藏</li>
+<li>照片库访问控制允许开发者申请只读访问授权</li>
+<li>手机即使处于解锁状态通过数据线缆连接到一台陌生电脑时依然需要 <strong>输入设备解锁口令</strong> 才能信任这台电脑（原先只需要在解锁的手机上点击“允许”按钮）</li>
+<li>强制已有的iCloud账户启用 <strong>双因素认证</strong> 来代替原先的 “ <strong>两步认证</strong> ”</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="ios11-2">iOS 11 (2017.9)</h3>
+<ul>
+<li>通过控制中心“关闭”Wi-Fi开关并不是真的关闭Wi-Fi功能，只是让当前设备从当前连接的任何网络断开</li>
+<li>当通过控制中心停用 Wi-Fi 后，自动加入附近任何 Wi-Fi 网络的功能也会被停用，直到：<strong>您步行或驾车到新位置</strong> 和 <strong>当地时间凌晨 5 点</strong> 。这就意味着，<code>EvilTwin</code> 类攻击对于iOS手机用户将有更多机会得手，因为用户手机的Wi-Fi功能将会随着用户位置的变化、系统时间的变化而自动被系统强制开启</li>
+<li>Safari 浏览器更新了禁止追踪功能，默认阻止第三方 Cookie</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="ios-12-2018.9">iOS 12 (2018.9)</h3>
+<ul>
+<li>Safari 浏览器更新了禁止追踪功能。新增对社交媒体共享图标和评论框等的反跟踪功能</li>
+<li>新增对 USB 连接的精细化授权保护。当系统锁定超过一小时后，需要先解锁设备才能允许 USB 配件连接</li>
+<li>新增「自定数字密码」功能，允许设置复杂度更高的解锁口令</li>
+<li>系统内置的「密码」保管箱新增「口令安全建议」：可以检测已泄露的密码</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="ios13-1">iOS 13 (2019.9)</h3>
+<ul>
+<li>系统会每隔一段时间在应用启动后告知该应用最近使用了多少次「位置访问」权限并且询问用户是否需要修改其「位置访问」的授权范围。避免一些应用一旦获得了长期访问位置信息的权限后，滥用该功能。除此之外，还允许用户对应用授权「仅限本次允许应用访问位置信息」的能力</li>
+<li>应用访问蓝牙功能需要获得用户的明确授权</li>
+<li>通讯录的备注字段被禁止第三方应用访问</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="ios13-2">iOS 13 (2019.9)</h3>
+<ul>
+<li>新增「使用 Apple 登录(<code>Sign in with Apple</code>)」功能，苹果会为用户随机生成一个「中转邮箱账号」来规避应用服务提供商对用户数据进行收集和追踪</li>
+<li>分享照片时可以选择「去除照片元数据里的位置信息」功能</li>
+<li>Safari 浏览器更新了禁止追踪功能</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="sign-in-with-apple-gains-1">Sign in with Apple 的优点</h3>
+<ul>
+<li>相比较于其他「第三方授权」登录功能，<code>Sign in with Apple</code> 更注重用户的隐私保护
+<ul>
+<li>用户可以选择向第三方网站提供自己的「假名」和<a href="https://support.apple.com/zh-cn/HT210425">「匿名电邮地址」</a></li>
+<li>苹果通过 <code>私密电子邮件中转服务</code> 帮助用户的「匿名电邮地址」依然可以正确接收到通知邮件</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="sign-in-with-apple-gains-2">Sign in with Apple 的优点</h3>
+<blockquote>
+<p>“通过 Apple 登录”功能既不会跟踪您，也不会分析您的特征。Apple 只会保留必要的信息，以确保您能够登录和管理自己的帐户。</p>
+</blockquote>
+<blockquote>
+<p>“通过 Apple 登录”功能内建了具有双重认证的安全保护机制。如果您在使用 Apple 设备，则可以随时通过面容 ID 或触控 ID 进行登录和重新认证。</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<h3 id="signin-with-apple-1"><a href="https://bhavukjain.com/blog/2020/05/30/zeroday-signin-with-apple/">Sign in with Apple 漏洞被苹果奖励了 $100k</a></h3>
+<blockquote>
+<p>只要知道你在第三方网站登录使用的 <strong>邮箱账号名</strong> 即可通过「Sign in with Apple」功能登录进入你在第三方网站的账号。</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<h3 id="signin-with-apple-2"><a href="https://bhavukjain.com/blog/2020/05/30/zeroday-signin-with-apple/">Sign in with Apple 漏洞被苹果奖励了 $100k</a></h3>
+<p><img data-src="images/chap0x05/flow_apple_auth.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="signin-with-apple-3"><a href="https://bhavukjain.com/blog/2020/05/30/zeroday-signin-with-apple/">Sign in with Apple 漏洞被苹果奖励了 $100k</a></h3>
+<ul>
+<li>苹果在「交换 JWT」时遵循了「最佳安全实践」，对 <code>JWT</code> 又是加密又是签名
+<ul>
+<li>可以防御第三方窃听和篡改 JWT 交换过程中的数据</li>
+<li>但无法防御「攻击者」使用合法用户身份进行正常的「JWT 交换」过程
+<ul>
+<li>苹果认证服务器的认证逻辑认为：既然第一步授权请求检查已经通过，证明了当前和我进行「JWT 交换」的请求端是 <strong>已授权用户</strong> ，那么他提供的「JWT 请求数据」我就不需要再进行 <strong>数据校验</strong> 了</li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="signin-with-apple-4"><a href="https://bhavukjain.com/blog/2020/05/30/zeroday-signin-with-apple/">Sign in with Apple 漏洞被苹果奖励了 $100k</a></h3>
+<p>根据上述 <strong>数据校验</strong> 缺陷：收到的请求数据中的 email 字段和前一步身份认证时使用的 email <strong>未进行匹配验证</strong> ，攻击者只需要篡改「交换 JWT」步骤中的请求数据中的 email 字段为任意目标邮箱，苹果服务器均会签发一个「合法 JWT」给攻击者。</p>
+</section>
+<section class="slide level2">
+
+<h3 id="signin-with-apple-5"><a href="https://bhavukjain.com/blog/2020/05/30/zeroday-signin-with-apple/">Sign in with Apple 漏洞被苹果奖励了 $100k</a></h3>
+<pre ><code class="json">// （伪造电邮地址）请求消息示例
+POST /XXXX/XXXX HTTP/1.1
+Host: appleid.apple.com
+ 
+{"email":"contact@bhavukjain.com"}
+
+// 响应消息示例
+
+{
+  "authorization" : {
+    "id_token" : "eyJraWQiOiJlWGF1bm1MIiwiYWxnIjoiUlMyNTYifQ.XXXXX.XXXXX",
+    "grant_code" : "XXX.0.nzr.XXXX",
+    "scope" : [ "name", "email" ]
+  },
+  "authorizedData" : {
+    "userId" : "XXX.XXXXX.XXXX"
+  },
+  "consentRequired" : false
+}</code></pre>
+</section>
+<section class="slide level2">
+
+<h3 id="上述漏洞的启示">上述漏洞的启示</h3>
+<ul>
+<li>「<strong>系统</strong> 安全」是一个整体，我们在研究「移动终端」系统安全时，并不代表不需要研究协议相关的「网络安全」
+<ul>
+<li>闪回《网络安全》<code>第七章 Web 安全</code> —— <strong>1. 未验证的用户输入</strong></li>
+</ul></li>
+<li>以 <code>JWT</code> 为代表的第三方授权协议本身设计是安全的，但在 <strong>实现</strong> 阶段依然可能引入 <strong>安全漏洞</strong>
+<ul>
+<li>加密和签名并不是系统与网络安全的「银弹」，解密后数据依然需要 <strong>数据校验</strong> ： <strong>防止内部作恶</strong></li>
+</ul></li>
+<li><code>单点登录</code> 和 <code>开放授权登录</code> 从功能设计上就是典型的<a href="https://www.schneier.com/blog/archives/2020/06/sign_in_with_ap.html">「牺牲安全性」（风险集中在一个账号上）「换取便利性」</a>
+<ul>
+<li>类似「遍历」功能设计： <strong>记住登录</strong> ， <strong>保存登录凭据</strong></li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="ios14-1">iOS 14 (2020.9)</h3>
+<ul>
+<li>摄像头和麦克风访问通知。每当应用访问摄像头或麦克风时，信号强度格上面就会出现一个点。绿色的点表示摄像头被访问，橙色的点表示麦克风正在被访问。并且在访问控制中心时，会有通知显示最近访问过摄像头或麦克风的APP。需要注意的是，这个隐私提示功能是无法被关闭的</li>
+<li>系统剪贴板访问通知。当有数据被复制和粘贴时会在屏幕上出现吐司弹出形式的通知，告知用户哪个应用正在访问系统剪贴板。同样，这个隐私提示功能是无法被关闭的</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="ios14-2">iOS 14 (2020.9)</h3>
+<ul>
+<li>应用是否可以获取当前精确位置信息成为一个用户可控开关选项。用户可以选择允许应用访问粗略位置信息而非精确位置信息，可以在系统设置中的设置——隐私——位置服务中设置</li>
+<li>应用请求本地网络访问需要用户明确同意。例如有些应用需要控制蓝牙或 Wi-Fi 工具时，需要用户明确允许才可放行应用继续操作</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="ios14-3">iOS 14 (2020.9)</h3>
+<ul>
+<li>允许用户自主选择是否允许 Wi-Fi 追踪。在系统设置的 Wi-Fi 高级选项设置里，可以找到「私有地址」开关，默认情况下系统是开启「私有地址」功能的，这样可以保证当用户即使连入了无线网络，也依然使用一个随机的 MAC 地址。而在此之前，从 iOS 8 开始的设定是：iOS 8 设备在扫描 Wi-Fi 时，系统会使用随机的 MAC 地址来防止设备被跟踪，只有在连接成功后才会使用真正的设备物理MAC地址。这个功能的一个常见副作用是：如果目标网络启用了「基于 MAC 地址的过滤」功能，则会导致 iOS 14+ 的设备无法连接目标网络。此时，用户可以选择关闭该「私有地址」功能</li>
+</ul>
+</section>
+<section id="千疮百孔修修补补修不完的锁屏漏洞" class="slide level2">
+<h2>千疮百孔，修修补补修不完的「锁屏」漏洞</h2>
+<p><a href="https://nvd.nist.gov/vuln/search/results?form_type=Advanced&amp;results_type=overview&amp;query=+lock+screen&amp;search_type=all&amp;cpe_vendor=cpe%3A%2F%3Aapple&amp;cpe_product=cpe%3A%2F%3Aapple%3Aiphone_os">截止 2021 年 2 月 2 日，CVE 数据库中可检索到 53 个锁屏相关漏洞</a> —— 手机物理安全的保障措施之一</p>
+<p><img data-src="images/chap0x05/ios-lock-screen-cves.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="开放问题">开放问题</h3>
+<blockquote>
+<p>iOS 目前还存在哪些厂商故意设计的「以牺牲安全性」为代价换来「用户体验提升」的设计？</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<h3 id="开放问题回答示例-2021.2">开放问题回答示例 2021.2</h3>
+<ul>
+<li>iOS 8 (2014.9) 引入的 <code>日历邀请</code> 功能依然存在 <code>垃圾邀请</code> 风险</li>
+<li>iOS 8 (2014.9) 引入的 <code>删除照片进入垃圾箱并保留 30 天</code> 功能存在敏感信息残留风险</li>
+<li>iOS 11 (2017.9) 引入的 <code>控制中心软关闭 Wi-Fi 功能</code></li>
+</ul>
+</section>
+<section id="ios-security-trend" class="slide level2">
+<h2>从 iOS 安全特性变更历史看趋势</h2>
+<ul>
+<li>从 <strong>完整性保护</strong> 到 <strong>软/硬件安全</strong> ，再到 <strong>隐私保护</strong> ，这是系统安全的一个新热门研究方向</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="android-sys-security" class="title-slide slide level1">
+<h1>Android 系统安全概述</h1>
+
+</section>
+<section id="history-cve-of-android" class="slide level2">
+<h2>Android 历年 CVE 统计</h2>
+<p><a href="https://www.cvedetails.com/product/19997/Google-Android.html?vendor_id=1224"><img data-src="images/chap0x05/cve-of-android-distributions.png" /></a></p>
+</section>
+<section id="history-cvss-of-android" class="slide level2">
+<h2>Android 历年 CVE 统计</h2>
+<p><a href="https://www.cvedetails.com/cvss-score-charts.php?fromform=1&amp;vendor_id=&amp;product_id=19997&amp;startdate=1999-01-01&amp;enddate=2021-01-01"><img data-src="images/chap0x05/cvss-of-android-distributions.png" /></a></p>
+</section>
+<section id="history-cve-of-linux" class="slide level2">
+<h2>Linux 内核历年 CVE 统计</h2>
+<p><a href="https://www.cvedetails.com/product/47/Linux-Linux-Kernel.html?vendor_id=33"><img data-src="images/chap0x05/cve-of-linux-distributions.png" /></a></p>
+</section>
+<section id="history-cvss-of-linux" class="slide level2">
+<h2>Linux 内核历年 CVE 统计</h2>
+<p><a href="https://www.cvedetails.com/cvss-score-charts.php?fromform=1&amp;vendor_id=&amp;product_id=47&amp;startdate=1999-01-01&amp;enddate=2021-01-01"><img data-src="images/chap0x05/cvss-of-linux-distributions.png" /></a></p>
+</section>
+<section id="history-of-android-security-1" class="slide level2">
+<h2>Android 系统安全特性发展变迁简史</h2>
+<ul>
+<li>Cupcake 1.5，基于ProPolice防止缓冲区溢出攻击，增强内存管理的安全性；</li>
+<li>Froyo (冻酸奶) 2.2，引入安卓设备管理API，支持企业级安全策略实现；</li>
+<li>Gingerbread （姜饼）2.3，引入mmap_min_addr机制防御权限提升类攻击；</li>
+<li>Honeycomb 3.0，文件系统加密。用户口令存储使用更安全的加盐散列算法，对抗暴力破解和还原口令类攻击；</li>
+</ul>
+</section>
+<section id="history-of-android-security-2" class="slide level2">
+<h2>Android 系统安全特性发展变迁简史</h2>
+<ul>
+<li>Ice Cream Sandwich 4.0，实现地址空间随机化（ASLR），对抗内存破坏类攻击。引入KeyChain机制，改进用户密钥存储和证书管理；</li>
+<li>Jelly Bean 4.2，APP使用短信发送权限需要得到用户的显式授权同意。支持应用验证API，安全类APP可以基于此API对APK的下载、安装进行检查和拦截。4.2.2版本引入了“安全USB调试”机制（真机ADB连接强制 <strong>单向身份认证</strong> ：手机认证PC机身份）；</li>
+<li>KitKat 4.4，禁止第三方APP获取电池使用量信息，避免恶意程序恶意消耗手机电量；</li>
+</ul>
+</section>
+<section id="history-of-android-security-3" class="slide level2">
+<h2>Android 系统安全特性发展变迁简史</h2>
+<ul>
+<li>Lolipop 5.0，使用ART 运行时取代 Dalvik 成为平台默认设置。通知现在显示在用户的锁定屏幕上。用户可以选择保护敏感信息不被公开，此时系统会自动删减通知显示的文本。引入了对 64 位系统的支持，64 位支持也可改进用于加密的 OpenSSL 的性能。WebView默认情况下，系统会阻止混合内容和第三方 Cookie。TLSv1.2 和 TLSv1.1 协议现已启用。MD5、3DES、导出和静态密钥 ECDH 加密套件现已停用。首选使用前向保密性（ Forward Secrecy ）加密套件（ECDHE 和 DHE）。</li>
+</ul>
+</section>
+<section id="history-of-android-security-4" class="slide level2">
+<h2>Android 系统安全特性发展变迁简史</h2>
+<ul>
+<li>Marshmallow 6.0，用户可直接在运行时管理应用权限。这种模式让用户能够更好地了解和控制权限，同时为应用开发者精简了安装和自动更新过程。用户可为所安装的各个应用分别授予或撤销权限。对于使用 WLAN API 和 Bluetooth API 的应用，Android 移除了对设备本地硬件标识符的编程访问权。<code>WifiInfo.getMacAddress()</code> 方法和 <code>BluetoothAdapter.getAddress()</code> 方法现在会返回常量值 <code>02:00:00:00:00:00</code> 。当运行 Android 6.0（API 级别 23）的设备发起后台 WLAN 或蓝牙扫描时，在外部设备看来，该操作的发起来源是一个 <strong>随机化 MAC 地址</strong>。</li>
+</ul>
+</section>
+<section id="history-of-android-security-5" class="slide level2">
+<h2>Android 系统安全特性发展变迁简史</h2>
+<ul>
+<li><strong>2016 年 8 月发布的</strong> Nougat 7.0，移除了三项隐式广播，以帮助优化内存使用和电量消耗。</li>
+<li>为了提高私有文件的安全性，面向 Android 7.0 或更高版本的应用私有目录被限制访问(<code>0700</code>)。
+<ul>
+<li><a href="https://discourse.ubuntu.com/t/private-home-directories-for-ubuntu-21-04-onwards/19533">2021 年 4 月发布的 Ubuntu 21.04 开始，默认用户家目录权限设置为 <code>0750</code></a>
+<ul>
+<li>5 年时间，桌面版操作系统对待用户隐私的态度终于“快赶上”移动端</li>
+</ul></li>
+</ul></li>
+<li>名为 Crypto 的 JCA 提供程序已弃用，因为它仅有的 SHA1PRNG 算法为弱加密。应用无法再使用 SHA1PRNG（不安全地）派生密钥。对于面向 Android 7.0 的应用，Android 框架执行的 StrictMode API 政策禁止在应用外部公开 <code>file:// URI</code>。</li>
+</ul>
+</section>
+<section id="history-of-android-security-6" class="slide level2">
+<h2>Android 系统安全特性发展变迁简史</h2>
+<ul>
+<li>Oreo 8.0，后台执行限制（默认情况下，这些限制仅适用于针对 O 的应用。不过，用户可以从 Settings 屏幕为任意应用启用这些限制，即使应用并不是以 O 为目标平台）。后台应用接收位置更新频率被降低。</li>
+<li>实现 HttpsURLConnection 时不会执行不安全的 TLS/SSL 协议版本回退，不再支持 SSLv3。使用安全计算 (<code>SECCOMP</code>) 过滤器来过滤所有应用。允许的系统调用列表仅限于通过 <code>bionic</code> 公开的系统调用。</li>
+<li>应用的 <code>WebView</code> 对象将在多进程模式下运行。网页内容在独立的进程中处理，此进程与包含应用的进程相隔离，以提高安全性。</li>
+</ul>
+</section>
+<section id="history-of-android-security-7" class="slide level2">
+<h2>Android 系统安全特性发展变迁简史</h2>
+<ul>
+<li>Oreo 8.0，在相同设备上运行但具有不同签署密钥的应用将不会再看到相同的 Android ID（即使对于同一用户来说，也是如此）。</li>
+<li>只要签署密钥相同（并且应用未在 OTA 之前安装到某个版本的 O），<code>ANDROID_ID</code> 的值在软件包卸载或重新安装时就不会发生变化。即使系统更新导致软件包签署密钥发生变化，<code>ANDROID_ID</code> 的值也不会变化。</li>
+<li>查询 <code>net.hostname</code> 系统属性返回的结果为空，系统属性 <code>net.dns1</code>、<code>net.dns2</code>、<code>net.dns3</code> 和 <code>net.dns4</code> 不再可用。</li>
+<li>如果应用请求 <code>READ_CONTACTS</code> 权限，查询联系人的使用情况数据得到的是 <strong>近似值</strong> 而不是精确值。</li>
+</ul>
+</section>
+<section id="我们为什么推荐大家少看翻译版技术资料" class="slide level2">
+<h2>我们为什么推荐大家少看「翻译版」技术资料</h2>
+<p><a href="https://source.android.com/security/bulletin/"><img data-src="images/chap0x05/why-read-in-english-is-important.png" /></a></p>
+<blockquote>
+<p>中文翻译版滞后 2 个月!!!</p>
+</blockquote>
+</section>
+<section id="安卓-vs.-android-面临的威胁" class="slide level2">
+<h2>安卓 vs. Android 面临的威胁</h2>
+<ul>
+<li>无法及时安装已知的系统安全漏洞补丁：类似上述中英文翻译滞后的例子， <strong>需要时间移植和测试兼容性</strong></li>
+<li>第三方安卓应用市场数量大且良莠不齐，规模较大的第三方市场的 APP 上架审查机制不严格</li>
+<li>每天新增待审核 APP 数量巨大，人工审查存在疏漏，自动化审查存在技术局限性</li>
+<li>山寨机在出厂时、销售环节被『刷入』恶意代码</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="无法及时安装已知的系统安全漏洞补丁"><a href="https://source.android.com/security/bulletin/">无法及时安装已知的系统安全漏洞补丁</a></h3>
+<blockquote>
+<p>Fixes listed in the public bulletin come from various different sources: the Android Open Source Project (AOSP), the upstream Linux kernel, and system-on-chip (SOC) manufacturers. For device manufacturers:</p>
+</blockquote>
+<ul>
+<li>Android platform fixes are merged into AOSP 24–48 hours after the security bulletin is released and can be picked up directly from there.</li>
+<li>Upstream Linux kernel fixes are linked to directly from the bulletin on release and can be picked up from there.</li>
+<li><strong>Fixes from SOC manufacturers are available directly from the manufacturers</strong>.</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="android-vs-ios-threats" class="title-slide slide level1">
+<h1>Android vs. iOS 面临的威胁</h1>
+
+</section>
+<section id="cve-history-explained" class="slide level2">
+<h2>解读分析历年 CVE 统计数据</h2>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: left;">iOS</th>
+<th style="text-align: left;">Android</th>
+<th style="text-align: left;">FreeBSD</th>
+<th style="text-align: left;">Linux 内核</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">高危漏洞占比</td>
+<td style="text-align: left;">17.3%</td>
+<td style="text-align: left;"><strong>32.3%</strong></td>
+<td style="text-align: left;">7.2%</td>
+<td style="text-align: left;">5.7%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CVSS 平均分</td>
+<td style="text-align: left;">6.7</td>
+<td style="text-align: left;"><strong>7.4</strong></td>
+<td style="text-align: left;">6.3</td>
+<td style="text-align: left;">5.9</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">3年前CVSS平均分</td>
+<td style="text-align: left;">6.8</td>
+<td style="text-align: left;"><strong>8</strong></td>
+<td style="text-align: left;">6.2</td>
+<td style="text-align: left;">5.9</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">近3年CVSS平均分</td>
+<td style="text-align: left;">6.5</td>
+<td style="text-align: left;">6.6</td>
+<td style="text-align: left;"><strong>7.2</strong></td>
+<td style="text-align: left;">6</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>高危漏洞：CVSS 评分大于 9 分</li>
+</ul>
+</section>
+<section id="cve-history-refs" class="slide level2">
+<h2>解读分析历年 CVE 统计数据附录</h2>
+<ul>
+<li><a href="https://www.cvedetails.com/cvss-score-charts.php?fromform=1&amp;vendor_id=&amp;product_id=15556&amp;startdate=2018-01-01&amp;enddate=2021-01-01">iOS 2018-01-01 ~ 2021-01-01 CVSS 评分统计</a></li>
+<li><a href="https://www.cvedetails.com/cvss-score-charts.php?fromform=1&amp;vendor_id=&amp;product_id=19997&amp;startdate=2018-01-01&amp;enddate=2021-01-01">Android 2018-01-01 ~ 2021-01-01 CVSS 评分统计</a></li>
+<li><a href="https://www.cvedetails.com/cvss-score-charts.php?fromform=1&amp;vendor_id=&amp;product_id=7&amp;startdate=2018-01-01&amp;enddate=2021-01-01">FreeBSD 2018-01-01 ~ 2021-01-01 CVSS 评分统计</a></li>
+<li><a href="https://www.cvedetails.com/cvss-score-charts.php?fromform=1&amp;vendor_id=&amp;product_id=47&amp;startdate=2018-01-01&amp;enddate=2021-01-01">Linux 2018-01-01 ~ 2021-01-01 CVSS 评分统计</a></li>
+<li><a href="https://www.cvedetails.com/cvss-score-charts.php?fromform=1&amp;vendor_id=&amp;product_id=15556&amp;startdate=2018-01-01&amp;enddate=2021-01-01">iOS 2018-01-01 以前 CVSS 评分统计</a></li>
+<li><a href="https://www.cvedetails.com/cvss-score-charts.php?fromform=1&amp;vendor_id=&amp;product_id=19997&amp;startdate=1999-01-01&amp;enddate=2018-01-01">Android 2018-01-01 以前 CVSS 评分统计</a></li>
+<li><a href="https://www.cvedetails.com/cvss-score-charts.php?fromform=1&amp;vendor_id=&amp;product_id=47&amp;startdate=1999-01-01&amp;enddate=2018-01-01">Linux 内核 2018-01-01 以前 CVSS 评分统计</a></li>
+<li><a href="https://www.cvedetails.com/cvss-score-charts.php?fromform=1&amp;vendor_id=&amp;product_id=7&amp;startdate=1999-01-01&amp;enddate=2018-01-01">FreeBSD 2018-01-01 以前 CVSS 评分统计</a></li>
+</ul>
+</section>
+<section id="vul-values-1" class="slide level2">
+<h2>从漏洞利用工具“价格”看两个平台的安全性</h2>
+<p><a href="https://vuldb.com/?product"><img data-src="images/chap0x05/mobile-os-exploits-price.jpg" /></a></p>
+</section>
+<section id="vul-values-2" class="slide level2">
+<h2>从漏洞利用工具“价格”看两个平台的安全性</h2>
+<blockquote>
+<p>价格从 <strong>短期</strong> 来看是由 <strong>供需</strong> 决定， <strong><em>长期</em></strong> 来看是围绕 <strong><em>价值</em></strong> 上下波动的。</p>
+</blockquote>
+<blockquote>
+<p>iOS 和 Android 总体安全性「不相上下」，目前 iOS 稍占上风。</p>
+</blockquote>
+</section>
+<section id="具体威胁比较" class="slide level2">
+<h2>具体威胁比较</h2>
+<table>
+<thead>
+<tr class="header">
+<th>威胁</th>
+<th>iOS</th>
+<th>Android</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>钓鱼及鱼叉式(定向)钓鱼，(邮件、网页、文件)</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr class="even">
+<td>短信欺诈 (钓鱼)</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr class="odd">
+<td>应用欺诈 (钓鱼)</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr class="even">
+<td>盗取上传通讯录</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr class="odd">
+<td>越狱、root、越狱伪装</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr class="even">
+<td>SSL漏洞利用</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr class="odd">
+<td>恶意配置文件</td>
+<td>√</td>
+<td>-</td>
+</tr>
+<tr class="even">
+<td>邮件附件未加密</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr class="odd">
+<td>勒索软件</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr class="even">
+<td>备份(数据)劫持</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr class="odd">
+<td>系统(设备)碎片化</td>
+<td>-</td>
+<td>√</td>
+</tr>
+<tr class="even">
+<td>非官方应用(恶意捆绑)</td>
+<td>√*</td>
+<td>√</td>
+</tr>
+<tr class="odd">
+<td>通话和短信记录上传</td>
+<td>-</td>
+<td>√</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="ios-unofficial-apps" class="slide level2">
+<h2>关于iOS上非官方应用风险与威胁</h2>
+<ul>
+<li>苹果的应用分发授权模式主要有2种
+<ul>
+<li>个人应用
+<ul>
+<li>必须且仅允许通过 <code>App Store</code> 审核通过后允许消费者下载安装使用</li>
+</ul></li>
+<li>企业级应用
+<ul>
+<li>无需 <code>App Store</code> 审核，消费者可以直接下载安装使用</li>
+<li><strong>如果企业作恶或者企业的分发证书被盗取滥用呢？</strong></li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section id="evil-profile-on-ios-1" class="slide level2">
+<h2>iOS 上的恶意配置文件</h2>
+<p><img data-src="images/chap0x05/iOSProfile.png" /></p>
+</section>
+<section id="evil-profile-on-ios-2" class="slide level2">
+<h2>iOS 上的恶意配置文件</h2>
+<p><img data-src="images/chap0x05/ios-email-malware.png" /></p>
+<p>通过钓鱼邮件「诱骗」用户安装恶意配置文件。</p>
+</section>
+<section id="evil-profile-on-ios-3" class="slide level2">
+<h2>iOS 上的恶意配置文件</h2>
+<ul>
+<li>攻击者利用配置文件绕过 <code>iOS</code> 的安全机制
+<ul>
+<li>配置文件可以重新定义各种系统功能参数，如运营商、MDM（移动设备管理）和网络设置</li>
+<li>用户可能被诱骗下载这样的恶意配置文件，从而在不知情的情况下被导向攻击者控制的服务器，进一步被安装恶意软件，甚至被解密通信</li>
+</ul></li>
+</ul>
+</section>
+<section id="系统安全与网络安全密不可分" class="slide level2">
+<h2>系统安全与网络安全密不可分</h2>
+<ul>
+<li>系统与系统之间的通信过程时刻存在着监听、劫持等中间人攻击风险
+<ul>
+<li>Wi-Fi 钓鱼</li>
+<li>Wi-Fi 口令破解</li>
+<li>Wi-Fi 中间人攻击</li>
+<li>GSM 监听</li>
+<li>GSM 伪基站</li>
+<li>…</li>
+</ul></li>
+</ul>
+</section>
+<section id="jailbreak-and-root" class="slide level2">
+<h2>越狱？root？</h2>
+<ul>
+<li>本质上都是利用「系统级别」的 <strong>权限提升漏洞</strong> 获得系统的 <code>root</code> 权限代码执行权限
+<ul>
+<li>如果 <strong>越狱</strong> 或 <strong>root</strong> 程序在提升权限后“夹带私货”呢？</li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="setup-android-dev" class="title-slide slide level1">
+<h1>Android 应用安全实验环境搭建</h1>
+
+</section>
+<section id="android-sdk-intro" class="slide level2">
+<h2><a href="https://developer.android.com/studio/command-line?hl=zh-cn">Android SDK</a></h2>
+<ul>
+<li>开发Android平台应用软件所需的工具软件套装</li>
+<li>打开 <a href="https://developer.android.com/studio">Android Studio</a> 的 <code>SDK 管理器</code></li>
+<li>所有软件包都会下载到 <code>Android SDK</code> 目录</li>
+</ul>
+<p><img data-src="images/chap0x06/android-sdk-home.png" /></p>
+</section>
+<section id="android-sdk-tools-intro" class="slide level2">
+<h2>Android SDK 目录结构和工具概述</h2>
+<pre ><code >├── build-tools // 构建 Android 应用所需要的工具，建议总是使用最新版构建工具
+├── emulator // 模拟器运行时环境相关工具
+├── extras // 扩展开发包，如高版本的API在低版本中开发使用用到的兼容包v4、v7、v13等。也会存放Google提供的USB驱动，Intel提供的硬件加速附件工具包
+├── fonts
+├── licenses
+├── patcher
+├── platform-tools // 平台工具，包含 adb 等基本工具。每次更新都向后兼容旧的平台版本
+├── platforms // 平台工具资源文件，配套 build-tools 版本
+├── skins
+├── sources
+├── system-images // 已下载模拟器镜像
+└── tools // 命令行工具，包括 ProGuard, avdmanager 等基本工具</code></pre>
+</section>
+<section class="slide level2">
+
+<h3 id="intel-haxm">Intel HAXM</h3>
+<ul>
+<li>Intel <font color=red>H</font>ardware <font color=red>A</font>ccelerated e<font color=red>X</font>ecution <font color=red>M</font>anager</li>
+<li>英特尔® 硬件加速执行管理器是一个硬件辅助的虚拟化引擎（hypervisor，虚拟机监视器），它使用英特尔® 虚拟化技术加速安卓应用在主机上的模拟</li>
+<li>英特尔® 硬件加速执行管理器与英特尔提供的 Android x86 模拟器映像及官方 <code>Android SDK Manager</code> 相结合，可在启用英特尔虚拟机的系统上更快地模拟 <code>Android OS</code></li>
+</ul>
+</section>
+<section id="android-sdk-tools-for-sec" class="slide level2">
+<h2>Android SDK 自带相关后续安全实验相关工具</h2>
+<ul>
+<li><a href="https://developer.android.com/studio/command-line/adb">adb</a>
+<ul>
+<li>位于 <code>$SDK_ROOT/platform-tools/</code></li>
+<li><a href="https://c4pr1c3.github.io/cuc-mis/chap0x06/exp.html">ADB 相关实验详见课本实验指南</a></li>
+</ul></li>
+<li><a href="https://developer.android.com/studio/command-line/logcat">logcat</a>
+<ul>
+<li><code>adb</code> 的子命令</li>
+<li><a href="https://c4pr1c3.github.io/cuc-mis/chap0x07/exp.html">logcat 应用实验详见第 7 章课本实验指南</a></li>
+</ul></li>
+</ul>
+</section>
+<section id="add-to-path" class="slide level2">
+<h2>建议加入系统 PATH 环境变量的路径</h2>
+<p>提前在对应系统中新建系统环境变量 <code>ANDROID_HOME</code> 设置为 <code>Android SDK</code> 的根路径</p>
+<pre ><code class="bash"># macOS && Linux
+$ANDROID_HOME/platform-tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/emulator
+
+# Windows
+%ANDROID_HOME%/platform-tools:%ANDROID_HOME%/tools/bin:%ANDROID_HOME%/emulator</code></pre>
+</section>
+<section id="download-sdk-tools" class="slide level2">
+<h2>提前下载 SDK Tools</h2>
+<ul>
+<li>当前最新版即可</li>
+</ul>
+</section>
+<section id="download-avd-images" class="slide level2">
+<h2>提前下载 AVD 镜像</h2>
+<ul>
+<li>通过 <code>AVD Manager</code> 先创建 <code>Android</code> 模拟器环境
+<ul>
+<li>带有 <code>Google Play</code> 标志的硬件 <code>Profile</code> 表示支持 <code>Google Play</code> 相关 API 虚拟硬件特性支持</li>
+</ul></li>
+<li>推荐下载当前最新版镜像和 <code>Android 5.1</code> 系统镜像</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="dl-google-com-failed-1">如果在线下载 Android 镜像失败</h3>
+<p><img data-src="images/chap0x06/image-download-failed.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="dl-google-com-failed-2">如果在线下载 Android 镜像失败</h3>
+<ul>
+<li>多重试几次：有时纯粹是偶然的网络连接问题</li>
+<li>使用国内镜像 <code>android dl.google.com 国内镜像</code></li>
+<li>其他渠道获取到指定版本镜像的压缩包 + 离线安装</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="offline-install-sysimage-1">离线安装模拟器系统镜像</h3>
+<ul>
+<li>确认当前 <code>Android SDK</code> 安装路径 <code>$ANDROID_HOME</code></li>
+</ul>
+<p><img data-src="images/chap0x06/android-sdk-home.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="offline-install-sysimage-2">离线安装模拟器系统镜像</h3>
+<ul>
+<li>解压缩下载得到的指定 <code>API 版本号</code> 的系统镜像压缩包文件
+<ul>
+<li>以本节示例下载失败截图中的文件 <code>x86-27_r11.zip</code> 为例</li>
+</ul></li>
+<li>解压缩后得到一个名为 <code>x86</code> 的目录</li>
+<li>将该目录覆盖到 <code>$ANDROID_HOME/system-images/android-27</code> 下包含 <strong>同名</strong> <code>x86</code> 的子目录，形成如下目录层次结构</li>
+</ul>
+<pre ><code class="ini">android-27
+└── google_apis
+    └── x86</code></pre>
+</section>
+<section class="slide level2">
+
+<h3 id="offline-install-sysimage-3">离线安装模拟器系统镜像</h3>
+<ul>
+<li>在 <code>AVD Manager</code> 的镜像列表页面点击「刷新」按钮即可看到镜像已可用</li>
+</ul>
+<p><img data-src="images/chap0x06/avd-offline-install.png" /></p>
+</section>
+</section>
+<section>
+<section id="课后思考题" class="title-slide slide level1">
+<h1>课后思考题</h1>
+
+</section>
+<section class="slide level2">
+
+<ul>
+<li>智能终端操作系统与桌面终端操作系统安全问题与形势的区别与联系，请给出你的分析思路和具体案例配合说明你的评价观点。</li>
+</ul>
+</section>
+</section>
+    </div>
+  </div>
+
+  <script src="lib/reveal.js.v4/dist/reveal.js"></script>
+
+  <!-- reveal.js plugins -->
+  <script src="lib/reveal.js.v4/plugin/notes/notes.js"></script>
+  <script src="lib/reveal.js.v4/plugin/search/search.js"></script>
+  <script src="lib/reveal.js.v4/plugin/zoom/zoom.js"></script>
+  <script src="lib/reveal.js.v4/plugin/math/math.js"></script>
+  <script src="lib/reveal.js.v4/plugin/markdown/markdown.js"></script>
+  <script src="lib/reveal.js.v4/plugin/highlight/highlight.js"></script>
+  <script src="lib/reveal.js.v4/plugin/reveal.js-plugins/menu/menu.js"></script>
+  <script src="lib/reveal.js.v4/plugin/reveal.js-plugins/chalkboard/plugin.js"></script>
+  <script src="lib/reveal.js.v4/plugin/reveal.js-plugins/audio-slideshow/plugin.js"></script>
+
+  <script>
+    
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+      
+        // Display the page number of the current slide
+        slideNumber: true,
+        // Push each slide change to the browser history
+        history: true,
+        // Transition style
+        transition: 'fade', // none/fade/slide/convex/concave/zoom
+        math: {
+          mathjax: '',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+    menu: {
+  		// Specifies which side of the presentation the menu will 
+  		// be shown. Use 'left' or 'right'.
+  		side: 'left',
+  
+  		// Specifies the width of the menu.
+  		// Can be one of the following:
+  		// 'normal', 'wide', 'third', 'half', 'full', or
+  		// any valid css length value
+  		width: 'normal',
+  
+  		// Add slide numbers to the titles in the slide list.
+  		// Use 'true' or format string (same as reveal.js slide numbers)
+  		numbers: true,
+  
+  		// Specifies which slide elements will be used for generating
+  		// the slide titles in the menu. The default selects the first
+  		// heading element found in the slide, but you can specify any
+  		// valid css selector and the text from the first matching
+  		// element will be used.
+  		// Note: that a section data-menu-title attribute or an element
+  		// with a menu-title class will take precedence over this option
+  		titleSelector: 'h1, h2, h3, h4, h5, h6',
+  
+  		// If slides do not have a matching title, attempt to use the
+  		// start of the text content as the title instead
+  		useTextContentForMissingTitles: false,
+  
+  		// Hide slides from the menu that do not have a title.
+  		// Set to 'true' to only list slides with titles.
+  		hideMissingTitles: false,
+  
+  		// Adds markers to the slide titles to indicate the 
+  		// progress through the presentation. Set to 'false'
+  		// to hide the markers.
+  		markers: true,
+  
+  		// Specify custom panels to be included in the menu, by
+  		// providing an array of objects with 'title', 'icon'
+  		// properties, and either a 'src' or 'content' property.
+  		custom: false,
+  
+  		// Specifies the themes that will be available in the themes
+  		// menu panel. Set to 'true' to show the themes menu panel
+  		// with the default themes list. Alternatively, provide an
+  		// array to specify the themes to make available in the
+  		// themes menu panel, for example...
+  		// [
+  		//     { name: 'Black', theme: 'css/theme/black.css' },
+  		//     { name: 'White', theme: 'css/theme/white.css' },
+  		//     { name: 'League', theme: 'css/theme/league.css' }
+  		// ]
+  		themes: false,
+  
+  		// Specifies the path to the default theme files. If your
+  		// presentation uses a different path to the standard reveal
+  		// layout then you need to provide this option, but only
+  		// when 'themes' is set to 'true'. If you provide your own 
+  		// list of themes or 'themes' is set to 'false' the 
+  		// 'themesPath' option is ignored.
+  		themesPath: 'css/theme/',
+  
+  		// Specifies if the transitions menu panel will be shown.
+  		// Set to 'true' to show the transitions menu panel with
+  		// the default transitions list. Alternatively, provide an
+  		// array to specify the transitions to make available in
+  		// the transitions panel, for example...
+  		// ['None', 'Fade', 'Slide']
+  		transitions: false,
+  
+  		// Adds a menu button to the slides to open the menu panel.
+  		// Set to 'false' to hide the button.
+  		openButton: true,
+  
+  		// If 'true' allows the slide number in the presentation to
+  		// open the menu panel. The reveal.js slideNumber option must 
+  		// be displayed for this to take effect
+  		openSlideNumber: false,
+  
+  		// If true allows the user to open and navigate the menu using
+  		// the keyboard. Standard keyboard interaction with reveal
+  		// will be disabled while the menu is open.
+  		keyboard: true,
+  
+  		// Normally the menu will close on user actions such as
+  		// selecting a menu item, or clicking the presentation area.
+  		// If 'true', the sticky option will leave the menu open
+  		// until it is explicitly closed, that is, using the close
+  		// button or pressing the ESC or m key (when the keyboard 
+  		// interaction option is enabled).
+  		sticky: false,
+  
+  		// If 'true' standard menu items will be automatically opened
+  		// when navigating using the keyboard. Note: this only takes 
+  		// effect when both the 'keyboard' and 'sticky' options are enabled.
+  		autoOpen: true,
+  
+  		// If 'true' the menu will not be created until it is explicitly
+  		// requested by calling RevealMenu.init(). Note this will delay
+  		// the creation of all menu panels, including custom panels, and
+  		// the menu button.
+  		delayInit: false,
+  
+  		// If 'true' the menu will be shown when the menu is initialised.
+  		openOnInit: false,
+  
+  		// By default the menu will load it's own font-awesome library
+  		// icons. If your presentation needs to load a different
+  		// font-awesome library the 'loadIcons' option can be set to false
+  		// and the menu will not attempt to load the font-awesome library.
+  		loadIcons: true
+
+    },
+
+    chalkboard: {
+        boardmarkerWidth: 3,
+        chalkWidth: 7,
+        chalkEffect: 1.0,
+        storage: null,
+        src: null,
+        readOnly: undefined,
+        toggleChalkboardButton: { left: "80px" },
+				toggleNotesButton: { left: "130px" },
+        transition: 800,
+        theme: "chalkboard",
+    },
+
+        // reveal.js plugins
+        plugins: [
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom,
+          RevealMarkdown, 
+          RevealMenu, 
+          RevealHighlight,
+          RevealChalkboard
+        ]
+      });
+    </script>
+    </body>
+</html>

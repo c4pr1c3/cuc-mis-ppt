@@ -1,0 +1,1906 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="黄玮">
+  <title>移动互联网安全</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="lib/reveal.js.v4/dist/reset.css">
+  <link rel="stylesheet" href="lib/reveal.js.v4/dist/reveal.css">
+
+  <!-- For syntax highlighting using highlight.js-->
+  <link rel="stylesheet" href="lib/reveal.js.v4/plugin/highlight/monokai.css">
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+  </style>
+  <link rel="stylesheet" href="lib/reveal.js.v4/dist/theme/my-white.css" id="theme">
+
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide">
+  <h1 class="title">移动互联网安全</h1>
+  <p class="author">黄玮</p>
+</section>
+
+<section>
+<section id="第六章-android-系统访问控制策略与机制" class="title-slide slide level1">
+<h1>第六章 Android 系统访问控制策略与机制</h1>
+
+</section>
+<section id="温故" class="slide level2">
+<h2>温故</h2>
+<ul>
+<li>「开放」的 Android 生态</li>
+<li>智能终端操作系统的安全问题与形势特点</li>
+</ul>
+</section>
+<section id="知新" class="slide level2">
+<h2>知新</h2>
+<ul>
+<li>掌握 Android 平台安全设计思想</li>
+<li>了解 Android 平台实现关键技术</li>
+<li>掌握 Android 应用开发基本概念</li>
+<li>了解 Hello World 程序编写</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="android-平台" class="title-slide slide level1">
+<h1>Android 平台</h1>
+
+</section>
+<section id="平台包含的主要组件" class="slide level2">
+<h2>平台包含的主要组件</h2>
+<ul>
+<li>设备硬件：智能手机、平板电脑、手表、汽车、智能电视、OTT 游戏盒和机顶盒等，不包含处理器</li>
+<li>Android 操作系统：来自 <code>AOSP</code> 和设备 <code>OEM</code> 厂商的定制修改</li>
+<li>Android 应用运行时
+<ul>
+<li>预先安装的应用：来自 <code>AOSP</code>、<code>GMS</code> 和设备 <code>OEM</code> 厂商</li>
+<li>用户安装的应用</li>
+</ul></li>
+</ul>
+</section>
+<section id="continuous-devopssec-by-android" class="slide level2">
+<h2>Android 开发团队的「持续」安全改进措施</h2>
+<ul>
+<li>设计审核</li>
+<li>渗透测试和代码审核</li>
+<li>开放源代码和社区审核</li>
+<li>事件响应</li>
+<li><a href="https://source.android.com/security/bulletin/">每月安全更新</a>
+<ul>
+<li>2015 年 8 月开始</li>
+</ul></li>
+<li><a href="https://source.android.com/security/enhancements/?hl=en">Android 各个版本的安全改进汇总</a></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="android-platform-threats" class="title-slide slide level1">
+<h1>Android 平台安全威胁概述</h1>
+
+</section>
+<section class="slide level2">
+
+<p><a href="https://arxiv.org/abs/1904.05572">本章 Android 平台安全相关内容主要基于 Android 官方安全和隐私小组 2020 年 12 月更新的公开论文</a></p>
+</section>
+<section id="different-threats-to-pc" class="slide level2">
+<h2>移动终端区别于 PC 平台的威胁来源</h2>
+<ul>
+<li>物理设备遗失或被盗风险</li>
+<li>连入不可信网络</li>
+<li>更多隐私威胁
+<ul>
+<li>随身携带的移动终端存储和处理更多用户个人隐私信息（例如位置信息、通讯录、通话和聊天记录历史等）</li>
+</ul></li>
+</ul>
+</section>
+<section id="物理安全威胁内涵" class="slide level2">
+<h2>物理安全威胁内涵</h2>
+<ul>
+<li>丰富多样化的硬件设备形态：手机、可穿戴设备、物联网终端、汽车、电视等等</li>
+<li>本课程所指的「物理接触风险」主要包括两种物理接触形式，并统一用 <code>P</code> 来指代物理安全相关风险
+<ul>
+<li>直接接触： <code>physical</code> access ，可以直接通过肢体接触到目标设备</li>
+<li>靠近接触： <code>proximal</code> access ，距离上在设备开启的 <code>WPAN</code> 或 <code>WLAN</code> 有效信号覆盖范围内可以访问到目标设备。
+<ul>
+<li>通过蜂窝网络 <code>伪基站</code> 技术访问到目标设备也属于此类接触类型</li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="物理安全威胁分类定义-t.p1">物理安全威胁分类定义 T.P1</h3>
+<ul>
+<li>屏幕处于锁定或解锁状态的设备，无法被 <strong>直接接触</strong>
+<ul>
+<li>例如通过蓝牙方式攻击设备
+<ul>
+<li><a href="https://www.armis.com/blueborne/">BlueBorne - 2017</a></li>
+<li><a href="https://www.ndss-symposium.org/ndss-paper/badbluetooth-breaking-android-security-mechanisms-via-malicious-bluetooth-peripherals/">BadBluetooth - 2019 on NDSS</a></li>
+<li><a href="https://insinuator.net/2020/02/critical-bluetooth-vulnerability-in-android-cve-2020-0022/">BlueFrag - CVE-2020-0022</a></li>
+<li><a href="https://i.blackhat.com/USA-20/Wednesday/us-20-Xu-Stealthily-Access-Your-Android-Phones-Bypass-The-Bluetooth-Authentication.pdf">BlueRepli - on Blackhat USA 2020</a></li>
+</ul></li>
+<li><code>NFC</code> 通信虽然传输距离通常很短，但也被归属于此类威胁类型</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="物理安全威胁分类定义-t.p2">物理安全威胁分类定义 T.P2</h3>
+<ul>
+<li>已关机设备，被 <strong>直接接触</strong>
+<ul>
+<li>通常需要非常高的攻击技术才能实现漏洞利用的场景</li>
+<li>例如：海关或边境安全检查</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="物理安全威胁分类定义-t.p3">物理安全威胁分类定义 T.P3</h3>
+<ul>
+<li>已锁屏设备，被 <strong>直接接触</strong>
+<ul>
+<li>例如被盗设备</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="物理安全威胁分类定义-t.p4">物理安全威胁分类定义 T.P4</h3>
+<ul>
+<li>已解锁屏幕设备，被分享给非机主使用
+<ul>
+<li>滥用风险</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="网络接入安全威胁分类-t.n1">网络（接入）安全威胁分类 T.N1</h3>
+<ul>
+<li>被动监听和流量分析
+<ul>
+<li>本课程第三章主要内容，例如 <code>Wi-Fi 嗅探</code></li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="网络接入安全威胁分类-t.n2">网络（接入）安全威胁分类 T.N2</h3>
+<ul>
+<li>主动网络流量控制
+<ul>
+<li>本课程第三章主要内容，例如 <code>Wi-Fi 中间人攻击</code></li>
+<li>《网络安全》课程 <code>第四章 网络监听</code> 提到的 SSL/TLS 中间人劫持攻击</li>
+</ul></li>
+<li>和 <code>T.P1</code> 的主要区别
+<ul>
+<li><code>T.P1</code> 依赖于 <strong>距离目标设备较近</strong> ，<code>T.N2</code> 可以在目标设备 <strong>通信链路中任意一个环节</strong> 下手</li>
+<li><code>T.P1</code> 只影响 <strong>目标设备</strong> ，<code>T.N2</code> 可以影响通信链路上 <strong>所有设备</strong></li>
+</ul></li>
+</ul>
+</section>
+<section id="不可信代码执行" class="slide level2">
+<h2>不可信代码执行</h2>
+<ul>
+<li>不同于 <code>iOS</code> 平台对 <code>App</code> 的管控机制：集中验证和封闭分发
+<ul>
+<li>只要 <strong>用户允许</strong>，用户可以从任意应用分发渠道下载并安装应用（ <strong>A</strong>pplication ）</li>
+<li>不同应用分发渠道的应用审核标准和机制 <strong>不统一</strong> ：各自为政、良莠不齐</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="不可信代码执行威胁分类-t.a1">不可信代码执行威胁分类 T.A1</h3>
+<ul>
+<li>滥用 <strong>操作系统提供</strong> 的 API 来完成恶意用途
+<ul>
+<li>例如：间谍软件</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="不可信代码执行威胁分类-t.a2">不可信代码执行威胁分类 T.A2</h3>
+<ul>
+<li>滥用设备上 <strong>其他已安装应用提供</strong> 的 API 来完成恶意用途</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="不可信代码执行威胁分类-t.a3">不可信代码执行威胁分类 T.A3</h3>
+<ul>
+<li>Web 前端脚本代码执行未经用户明确授权
+<ul>
+<li>例如 <code>JavaScript</code></li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="不可信代码执行威胁分类-t.a4">不可信代码执行威胁分类 T.A4</h3>
+<ul>
+<li>仿冒系统或第三方应用「用户界面」或「交互设计」进行钓鱼
+<ul>
+<li>典型如套取用户的口令</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="不可信代码执行威胁分类-t.a5">不可信代码执行威胁分类 T.A5</h3>
+<ul>
+<li>通过「用户界面」读取系统或第三方应用中的（敏感）内容
+<ul>
+<li>例如「截图应用」</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="不可信代码执行威胁分类-t.a6">不可信代码执行威胁分类 T.A6</h3>
+<ul>
+<li>模拟用户交互输入（点击、滑屏、输入等操作）控制系统软件或第三方应用程序的用户界面</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="不可信代码执行威胁分类-t.a7">不可信代码执行威胁分类 T.A7</h3>
+<ul>
+<li>系统漏洞利用程序
+<ul>
+<li>例如利用操作系统内核、驱动或系统服务漏洞实现「提权」</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="不可信内容处理威胁分类-t.d1">不可信内容处理威胁分类 T.D1</h3>
+<ul>
+<li>滥用「唯一标识」用于定向攻击
+<ul>
+<li>即使是在受信任网络内，依然可以通过关联手机号、电子邮件地址和位置信息等实现精准垃圾广告推送</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="不可信内容处理威胁分类-t.d2">不可信内容处理威胁分类 T.D2</h3>
+<ul>
+<li><a href="https://www.kb.cert.org/vuls/id/924951">操作系统或第三方应用在处理不可信内容时触发漏洞执行代码</a>
+<ul>
+<li>典型的漏洞利用方式是将 <code>攻击载荷</code> 嵌入在多媒体文件中，当存在漏洞的播放器打开该恶意多媒体文件时触发漏洞。此类威胁可能导致本地或远程代码执行漏洞
+<ul>
+<li><a href="https://resources.infosecinstitute.com/topic/hack-android-devices-using-stagefright-vulnerability/">2015 年报告的针对 Android 2.2 系统多媒体组件 StageFright 的漏洞利用</a></li>
+<li><a href="https://medium.com/@marcinguy/android-7-9-media-framework-vulnerability-allows-mobile-hacking-6f023881c045">CVE-2019–2107 Android 7–9 的多媒体处理框架漏洞利用</a></li>
+<li><a href="https://source.android.com/security/bulletin/2019-02-01.html">2019 年 2 月 Android 月度更新修复的 PNG 处理框架漏洞影响 Android 7-9</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="android-platform-security-model-design" class="title-slide slide level1">
+<h1>Android 平台安全模型设计</h1>
+
+</section>
+<section id="安全模型设计指导思想" class="slide level2">
+<h2>安全模型设计指导思想</h2>
+<blockquote>
+<p><strong>平衡</strong> 用户与应用、平台之间的安全和隐私需求</p>
+</blockquote>
+</section>
+<section id="安全模型设计基本原则" class="slide level2">
+<h2>安全模型设计基本原则</h2>
+<ol type="1">
+<li>多方许可</li>
+<li>开放生态访问</li>
+<li>安全是兼容性需求之一</li>
+<li>出厂设置能保证恢复设备到安全状态</li>
+<li>应用程序安全为主</li>
+</ol>
+</section>
+<section class="slide level2">
+
+<h3 id="multi-party-consent-1">1. 多方许可</h3>
+<ul>
+<li>多方：（终端）用户、（操作系统和硬件驱动）平台、（应用）开发者
+<ul>
+<li>不同于传统 PC 平台访问控制的经典「主客体」模型
+<ul>
+<li>以自由访问控制模型为例，<code>谁创建、谁有权限使用</code></li>
+</ul></li>
+</ul></li>
+<li>移动终端上的「多方参与」访问控制模型，以数据生命周期为例
+<ul>
+<li>共享存储中的数据由用户管理访问（控制授权）</li>
+<li>应用私有目录和应用虚拟地址空间中的数据由应用管理访问（控制授权）</li>
+<li>在特殊系统目录中的数据由平台管理访问（控制授权）
+<ul>
+<li>例如列举应用被授予的权限列表</li>
+</ul></li>
+</ul></li>
+<li>多方许可意味着「任何数据访问行为均需要所有参与方许可授权」才可执行</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="multi-party-consent-2">1. 多方许可</h3>
+<ul>
+<li>移动终端的「数据所有者」更偏重是一个 <strong>法律</strong> 概念</li>
+<li>多方许可模型不是一个完备模型，存在多种应用场景违反多方许可原则
+<ul>
+<li>数据备份场景中应用私有数据未经应用开发者许可即可被备份</li>
+<li>VPN 应用可以监视和控制系统全局流量无需应用开发者许可</li>
+<li>企业管控场景可以通过定义 <code>Device Owner (DO)</code> 或者 <code>Profile Owner (PO)</code> 来限制用户在设备上安装和使用软件</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="开放生态访问">2. 开放生态访问</h3>
+<ul>
+<li>用户和应用开发者可以自由使用不同渠道的应用商店下载安装应用和上传分发应用</li>
+<li>不限制唯一的应用审核渠道</li>
+<li>允许应用间的协同和互操作</li>
+<li>开发者可以自由定义开放给其他应用的 API</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="安全是兼容性需求之一">3. 安全是兼容性需求之一</h3>
+<ul>
+<li>Android 安全模型本身也是 Android 规范的组成内容
+<ul>
+<li>定义包含在 <a href="https://source.android.com/compatibility/cdd">Compatibility Definition Document (CDD)</a>
+<ul>
+<li>例如 <a href="https://source.android.com/compatibility/10/android-10-cdd#9_security_model_compatibility">Android 10 兼容性定义的第 9 章就是安全模型兼容性</a></li>
+</ul></li>
+<li>由 Compatibility (CTS, Compatibility Test Suite), Vendor (VTS, Vendor Test Suite) 和其他测试规范来检验和确保兼容</li>
+</ul></li>
+<li>不遵循 CDD 且未通过 CTS 的设备不能被称为 Android
+<ul>
+<li><code>root</code> 设备由于破坏了原有的沙盒隔离机制，因此不被认证为 Android</li>
+<li><code>booloader</code> 解锁设备和刷入自定义固件的设备也不被认证为 Android</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="出厂设置能保证恢复设备到安全状态">4. 出厂设置能保证恢复设备到安全状态</h3>
+<ul>
+<li>为了应对系统被攻陷、篡改的风险，依赖于被保护分区的完整性保护机制，出厂设置就是清除或重新格式化可写数据分区</li>
+<li>系统软件无需重新安装</li>
+<li><code>验证启动</code> 机制将决定恢复出厂设置会还原设备到哪个“备份”状态</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="应用程序安全为主">5. 应用程序安全为主</h3>
+<ul>
+<li>和传统 PC 平台应用是运行在「已登录用户」上下文环境
+<ul>
+<li>勒索软件并不需要管理员权限即可感染当前登录用户有权限访问的所有应用和应用数据</li>
+</ul></li>
+<li>移动终端应用默认没有获得完全用户授权
+<ul>
+<li>沙盒化应用程序的进程间隔离、数据存储隔离等</li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="android-platform-security-model-implementation" class="title-slide slide level1">
+<h1>Android 平台安全模型实现</h1>
+
+</section>
+<section id="架构设计基本原则" class="slide level2">
+<h2>架构设计基本原则</h2>
+<ol type="1">
+<li>纵深防御 <code>defense in depth</code> - <code>DiD</code></li>
+<li>设计安全 <code>safe by design</code> - <code>SD</code></li>
+</ol>
+</section>
+<section id="纵深防御四大安全策略" class="slide level2">
+<h2>纵深防御四大安全策略</h2>
+<ol type="1">
+<li>隔离和抑制 <code>isolation and containment</code></li>
+<li>漏洞利用缓解 <code>exploit mitigation</code></li>
+<li>完整性（保护） <code>integrity</code></li>
+<li>补丁/更新 <code>patching/updates</code></li>
+</ol>
+</section>
+<section id="设计安全三大安全策略" class="slide level2">
+<h2>设计安全三大安全策略</h2>
+<ol type="1">
+<li>强制许可制 <code>enforced consent</code></li>
+<li>用户认证 <code>user authentication</code></li>
+<li>缺省存储和传输加密 <code>by-default encryption at rest and in transit</code></li>
+</ol>
+</section>
+</section>
+<section>
+<section id="sd.1-强制许可制" class="title-slide slide level1">
+<h1>SD.1 强制许可制</h1>
+
+</section>
+<section id="确保易于理解的许可" class="slide level2">
+<h2>确保「易于理解」的许可</h2>
+<ul>
+<li><code>许可</code>（<code>授权</code>）的表达方式应 <strong>易于</strong> 「三方」 <strong>无歧义</strong> 正确理解并执行
+<ul>
+<li>用户</li>
+<li>开发者</li>
+<li>Android 平台</li>
+</ul></li>
+<li>三方中的任意一方 <strong>不许可</strong> 则目标操作将无法执行成功</li>
+<li>两个例子
+<ul>
+<li>在不同应用间共享数据</li>
+<li>变更 <code>移动网络运营商配置</code>
+<ul>
+<li>MNO, Mobile Network Operator</li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="sharing-bt-apps-user">在不同应用间共享数据——体现「用户许可」</h3>
+<ul>
+<li><code>用户</code> 在分享对话窗口里「选择」目标应用接受当前分享内容</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="sharing-bt-apps-developer">在不同应用间共享数据——体现「开发者许可」</h3>
+<ul>
+<li>分享 <code>来源</code> 应用的 <code>开发者</code> 通过 <code>UI&amp;UE</code> 设计，告知 <code>用户</code> 当前应用内「哪些内容」 <strong>允许</strong> 被分享出去</li>
+<li>分享 <code>目标</code> 应用的 <code>开发者</code> 自行决定是否接收、如何处理接收到的分享数据内容</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="sharing-bt-apps-platform">在不同应用间共享数据——体现「平台许可」</h3>
+<ul>
+<li>平台通过 <code>访问控制策略和机制</code>
+<ul>
+<li><strong>判定</strong> 不同组件间的数据访问是否被 <strong>允许</strong></li>
+<li><strong>确保</strong> <code>目标</code> 应用只能访问到 <code>来源</code> 应用 <strong>显式</strong> 分享的数据内容
+<ul>
+<li>除了明确分享出来的数据之外，<code>来源</code> 应用的任何其他数据无法被越权访问到</li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="mno-config-by-user">变更移动网络运营商配置——体现「用户许可」</h3>
+<ul>
+<li><code>用户</code> 通过在设置对话窗口中的「开关选项」来变更许可</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="mno-config-by-developer">变更移动网络运营商配置——体现「开发者许可」</h3>
+<ul>
+<li><code>MNO</code> 应用的开发者通过编程：查询平台访问控制策略后，借助 <code>UI&amp;UE</code> 提供给用户可以进行许可变更的选项</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="mno-config-by-platform">变更移动网络运营商配置——体现「平台许可」</h3>
+<ul>
+<li>平台确保 <code>用户</code> 通过 <code>MNO 应用</code> 发起的变更操作是合法、无违规的
+<ul>
+<li>不同国家的无线电频率使用管制策略差异</li>
+<li>配置变更不会影响到平台或网络稳定性</li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="开发者视角的请求用户许可授权" class="title-slide slide level1">
+<h1>开发者视角的请求用户许可授权</h1>
+
+</section>
+<section id="runtime-user-consent" class="slide level2">
+<h2>在 Android 上声明和请求运行时权限的工作流</h2>
+<p><a href="https://developer.android.com/training/permissions/requesting?hl=zh-cn"><img data-src="images/chap0x06/workflow-runtime.png" /></a></p>
+</section>
+<section id="developer-req-consent-from-user-1" class="slide level2">
+<h2>开发者向用户申请代码执行许可 —— 开发阶段</h2>
+<ol type="1">
+<li>在应用的清单文件中，<a href="https://developer.android.com/training/permissions/declaring?hl=zh-cn">声明应用可能需要请求的权限</a>
+<ul>
+<li>如果是安装时权限（例如普通权限或签名权限），系统会在用户安装应用时自动为其授予相应权限</li>
+<li>如果是运行时权限，并且用户将应用安装在 Android 6.0（API 级别 23）或更高版本的设备上，则应用程序开发者必须自己向用户请求权限</li>
+</ul></li>
+<li>设计应用的用户体验，使应用中的特定操作与特定运行时权限相关联。应当让用户知道哪些操作可能会要求他们为您的应用授予访问用户私人数据的权限。</li>
+</ol>
+</section>
+<section id="developer-req-consent-from-user-2" class="slide level2">
+<h2>开发者向用户申请代码执行许可 —— 用户使用阶段</h2>
+<ol start="3" type="1">
+<li>等待用户调用应用中需要访问特定用户私人数据的任务或操作</li>
+<li>每次执行需要该权限的操作时，应用必须检查自己是否具有该权限。如果已授权，那么该应用可以访问用户私人数据。如果没有，则开始『申请用户授权流程』</li>
+<li>Android 平台允许开发者的部分权限申请添加一段 <strong>自我解释说明文本</strong> ，目的是 <strong>便于用户理解</strong> 即将授权当前应用获得哪些权限、意味着什么</li>
+</ol>
+</section>
+<section id="platform-consent-from-user" class="slide level2">
+<h2>开发者向用户申请代码执行许可 —— 平台授权阶段</h2>
+<ol start="6" type="1">
+<li>无论是否使用 <strong>自我解释说明文本</strong> ，<code>平台</code> 会使用 <strong>统一</strong> 的 <strong>系统原生</strong> 运行时权限 <strong>提示对话框</strong> 来将最终授权操作交给 <code>用户</code>
+<ul>
+<li>避免开发者伪造「挂羊头卖狗肉」的权限申请对话框「骗取」用户的过度授权</li>
+<li>开发者向用户发起授权请求，用户依赖于 <code>平台授权</code> 保障体系确保 <strong>正确无误</strong> 的给予（开发者开发的）应用授权
+<ul>
+<li>平台授权依赖于 <strong>不同保护级别</strong> 的 <code>Android 权限</code> 体系，详见 <code>DiD.1 隔离和抑制</code> 一节的 <code>访问控制</code></li>
+</ul></li>
+</ul></li>
+</ol>
+</section>
+<section id="developer-req-consent-from-user-3" class="slide level2">
+<h2>开发者向用户申请代码执行许可 —— 用户完成授权</h2>
+<ol start="7" type="1">
+<li>应用代码检查用户的响应，用户可能会选择同意或拒绝授予运行时权限</li>
+<li>如果用户向当前应用授予权限，则当前应用就可以访问用户私人数据</li>
+</ol>
+</section>
+<section id="developer-req-consent-from-user-4" class="slide level2">
+<h2>开发者向用户申请代码执行许可 —— 用户拒绝授权</h2>
+<ol start="8" type="1">
+<li>如果用户拒绝授予该权限，Android 官方文档建议开发者适当降低应用体验，使应用在未获得受该权限保护的信息时也能向用户提供功能</li>
+</ol>
+</section>
+<section class="slide level2">
+
+<h3 id="permission-tips-1">来自 Android 官方开发指南的特别说明</h3>
+<blockquote>
+<p>从 Android 11（API 级别 30）开始，在应用安装到设备上后，如果用户在使用过程中多次针对某项特定的权限点按拒绝，那么在当前应用再次请求该权限时，用户将不会看到系统权限对话框。该操作表示用户希望“不再询问”。在之前的版本中，除非用户先前已选中“不再询问”对话框或选项，否则每当应用请求权限时，用户都会看到系统权限对话框</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<h3 id="permission-tips-2">来自 Android 官方开发指南的特别说明</h3>
+<blockquote>
+<p>在某些情况下，系统可能会自动拒绝权限，而无需用户执行任何操作（同样，系统也可能会自动授予权限）</p>
+</blockquote>
+<blockquote>
+<p>如果应用以 Android 11（API 级别 30）或更高版本为目标平台并且数月未使用，系统会通过自动重置用户已授予应用的运行时敏感权限来保护用户数据</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<h3 id="来自-android-官方安全和隐私小组-2020-年-12-月更新的公开论文-建议">来自 <a href="https://arxiv.org/abs/1904.05572">Android 官方安全和隐私小组 2020 年 12 月更新的公开论文</a> 建议</h3>
+<blockquote>
+<p>Achieving meaningful user consent is by far the most difficult and nuanced challenge in determining meaningful consent</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<h3 id="来自-android-官方安全和隐私小组-2020-年-12-月更新的公开论文-建议-1">来自 <a href="https://arxiv.org/abs/1904.05572">Android 官方安全和隐私小组 2020 年 12 月更新的公开论文</a> 建议</h3>
+<ul>
+<li>避免过度提醒用户许可：以免用户「弹框疲劳」和「盲目授权」</li>
+<li>用户许可提示应易于理解：避免使用专家型术语</li>
+<li>使用「选择器」和「一次性许可」，避免过度索取许可授权
+<ul>
+<li>举例：访问通讯录中特定联系人信息</li>
+</ul></li>
+<li>操作系统不应将难题丢给用户</li>
+<li>提供用户「反悔」能力：授权是可以随时被 <strong>撤销</strong> 的</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="sd.2-用户认证" class="title-slide slide level1">
+<h1>SD.2 用户认证</h1>
+
+</section>
+<section id="基本需求" class="slide level2">
+<h2>基本需求</h2>
+<ul>
+<li>对于移动终端来说，主要实现方式是系统内置的「锁屏」程序</li>
+<li>典型的「安全性」与「易用性」平衡设计需求</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="多种锁屏认证因素">多种锁屏认证因素</h3>
+<p><img src="images/chap0x06/Screenshots/Screenshot_2021-02-26-10-53-02-073_com.android.settings.jpg" align="right"/></p>
+<ul>
+<li>口令解锁 - what you know, <code>knowledge</code>
+<ul>
+<li>图案/数字/混合（支持字符）</li>
+</ul></li>
+<li>指纹解锁 - what you are <code>biometrics</code></li>
+<li>人脸解锁 - what you are <code>biometrics</code></li>
+<li>蓝牙设备解锁 - what you have</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="定期强制输入口令解锁避免遗忘">定期强制输入口令解锁，避免遗忘</h3>
+<ul>
+<li>口令是设备对用户的「<strong>信任根</strong>」<img src="images/chap0x06/lockscreen-passcode-reminder.png" align="right"/>
+<ul>
+<li>user-to-device <code>U2D</code></li>
+</ul></li>
+<li>分层认证模型（<code>tiered authentication model</code>）
+<ul>
+<li>主认证 <code>Primary</code> Authentication ，只支持 <code>knowledge</code> 因素</li>
+<li>辅助认证 <code>Secondary</code> Authentication，只支持 <code>biometrics</code> 因素</li>
+<li>第三方认证 <code>Tertiary</code> Authentication</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="基于生物认证因素的认证安全性等级划分">基于生物认证因素的认证安全性等级划分</h3>
+<ul>
+<li>等级划分依据
+<ul>
+<li>抗欺骗性：Spoof Acceptance Rate, SAR</li>
+<li>架构安全性：生物特征数据处理的全生命周期抗嗅探和篡改能力</li>
+</ul></li>
+<li>依据上述两方面指标划分成<a href="https://source.android.com/security/biometric/measure">三个安全级别</a>
+<ul>
+<li>strong vs. weak vs. convenience</li>
+</ul></li>
+<li>仅使用基于生物认证因素解锁屏幕后依然无法执行某些特权操作
+<ul>
+<li>基于文件或全盘加密的用户数据分区不会被自动解密（第一次启动系统后，需要先进行口令认证才能解锁加密的用户数据分区）</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="android-11-支持基于生物认证因素的精细化授权"><a href="https://developer.android.com/about/versions/11/features#biometric-auth">Android 11 支持基于生物认证因素的精细化授权</a></h3>
+<ul>
+<li>Android 11 引入了 <a href="https://developer.android.com/reference/kotlin/android/hardware/biometrics/BiometricManager.Authenticators">BiometricManager.Authenticators</a> 接口，开发者可用于声明 <a href="https://developer.android.com/training/sign-in/biometric-auth#declare-supported-authentication-types">应用支持的身份验证类型</a></li>
+<li>未来，通过不同安全性等级的身份认证因素解锁设备可以使用到不同安全等级的功能</li>
+<li>不同安全等级的功能可以强制要求对应安全性等级的身份认证因素</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="基于生物因素的身份认证低安全性级别提示">基于生物因素的身份认证低安全性级别提示</h3>
+<p><img data-src="images/chap0x06/Screenshots/Screenshot_2021-02-26-10-53-41-047_com.android.settings.jpg" /></p>
+</section>
+<section id="android-as-third-auth" class="slide level2">
+<h2>Android 设备本身作为第三方认证因素</h2>
+<ul>
+<li>网页端或其他应用可以使用受信任 Android 7+ 设备作为「辅助认证因素」</li>
+<li>设备间认证凭据：device-to-device, <code>D2D</code> authentication</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="sd.3-数据加密" class="title-slide slide level1">
+<h1>SD.3 数据加密</h1>
+
+</section>
+<section class="slide level2">
+
+<ul>
+<li>持久化存储数据加密</li>
+<li>通信数据加密</li>
+</ul>
+</section>
+<section id="safe-by-rest-1" class="slide level2">
+<h2>持久化存储数据加密</h2>
+<ul>
+<li>当系统内核没有运行或 <strong>被绕过</strong>（例如直接读取持久化存储介质），如何实现 <code>多方许可</code> 和 <code>安全合规</code>
+<ul>
+<li>Anroid 5.0 全盘加密技术（Full Disk Encryption, FDE），拟解决 [T.P2] ，但不解密磁盘无法使用紧急呼叫、无障碍访问辅助服务、闹钟等低安全风险功能</li>
+<li>Android 7.0 引入基于文件的选择加密（File Based Encryption, FBE），解决了上述全盘加密技术的不足之处</li>
+</ul></li>
+</ul>
+</section>
+<section id="safe-by-rest-2" class="slide level2">
+<h2>持久化存储数据加密</h2>
+<ul>
+<li>当系统内核没有运行或 <strong>被绕过</strong>（例如直接读取持久化存储介质），如何实现 <code>多方许可</code> 和 <code>安全合规</code>
+<ul>
+<li>Android 10.0 新增 <a href="https://source.android.com/security/encryption/adiantum">Adiantium</a> 支持，可以在缺少 AES 硬件加速功能的设备上以更低的计算资源消耗获得不变的 AES 加密效果
+<ul>
+<li>Android 9 需要自行手动给内核打补丁并重新编译内核</li>
+</ul></li>
+<li>Android 10 起，默认系统所有数据启用全盘加密</li>
+</ul></li>
+</ul>
+</section>
+<section id="safe-by-rest-3" class="slide level2">
+<h2>持久化存储数据加密</h2>
+<ul>
+<li>开启全盘加密后，实现 <code>出厂设置能保证恢复设备到安全状态</code> 无需再抹除用户数据，只需删除加密用主密钥即可</li>
+</ul>
+</section>
+<section id="network-sandboxing-1" class="slide level2">
+<h2>通信数据加密改进历程</h2>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">引入版本</th>
+<th style="text-align: left;">改进措施</th>
+<th style="text-align: left;"><strong>拟解决</strong> 的威胁</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">6.x</td>
+<td style="text-align: left;"><span class="math inline"><em></em><sup>0</sup></span> 代码级别明文通信声明</td>
+<td style="text-align: left;">[T.N1][T.N2]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">7.x</td>
+<td style="text-align: left;">网络安全配置项增加 TLS 和明文通信设置选项</td>
+<td style="text-align: left;">[T.N1][T.N2]</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><span class="math inline"><em></em><sup>0</sup></span> 清单文件中使用 <a href="https://developer.android.com/guide/topics/manifest/application-element#usesCleartextTraffic"><code>usesCleartextTraffic</code></a> 来显式声明应用是否支持明文通信
+<ul>
+<li>对于目标 API 级别为 27 或更低级别的应用，默认值为 <code>true</code>。对于目标 API 级别为 28 或更高级别的应用，默认值为 <code>false</code></li>
+<li>如果将此属性设为 <code>false</code>，平台组件（例如 HTTP 和 FTP 堆栈、DownloadManager 和 MediaPlayer）将拒绝应用要使用明文流量的请求。但这只是一个 <code>尽力而为</code> 选项，并非所有组件都遵守该字段声明</li>
+</ul></li>
+</ul>
+</section>
+<section id="network-sandboxing-2" class="slide level2">
+<h2>通信数据加密改进历程</h2>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">引入版本</th>
+<th style="text-align: left;">改进措施</th>
+<th style="text-align: left;"><strong>拟解决</strong> 的威胁</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">9.0</td>
+<td style="text-align: left;"><span class="math inline"><em></em><sup>1</sup></span> DNS-over-TLS</td>
+<td style="text-align: left;">[T.N1][T.N2]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">9.0</td>
+<td style="text-align: left;">所有连接默认使用 TLS</td>
+<td style="text-align: left;">[T.N1][T.N2]</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">客户端模式, SoftAP 和 WiFi Direct 模式均默认使用 MAC 地址随机化</td>
+<td style="text-align: left;">[T.N1]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">新增 <code>TLS 1.3</code> 支持</td>
+<td style="text-align: left;">[T.N1][T.N2]</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><span class="math inline"><em></em><sup>1</sup></span> <a href="https://android-developers.googleblog.com/2018/04/dns-over-tls-support-in-android-p.html">DNS-over-TLS</a></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="did.1-隔离和抑制" class="title-slide slide level1">
+<h1>DiD.1 隔离和抑制</h1>
+
+</section>
+<section id="访问控制" class="slide level2">
+<h2>访问控制</h2>
+<ul>
+<li>自由访问控制 Discretionary Access Control (DAC)
+<ul>
+<li>开发者许可</li>
+</ul></li>
+<li>强制访问控制 Mandatory Access Control (MAC)
+<ul>
+<li>平台许可</li>
+</ul></li>
+<li>Android 权限 <a href="https://developer.android.com/guide/topics/permissions/overview">Android permissions</a>
+<ul>
+<li>用户许可</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="android-permissions-1">Android 权限</h3>
+<ul>
+<li>仅审计权限 <code>Audit-only</code> ：应用权限保护级别为 <code>normal</code> ，属于 <code>安装时权限</code></li>
+<li>运行时权限 <code>Runtime</code> ：应用权限保护级别为 <code>dangerous</code> ，既需要在应用代码的清单文件里声明，也需要在代码里定义如何向用户申请授权许可</li>
+<li>特殊访问权限 <code>Special Access</code> ：用户只能通过 <code>系统设置</code> 去变更授权许可，应用代码里无法声明和发起申请</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="android-permissions-2">Android 权限</h3>
+<ul>
+<li>系统级特权 <code>Privileged</code> ：只针对 <code>系统预装</code> 应用，通常是 <code>OEM</code> 通过白名单机制指定特定应用享有的系统级别特权。通常配合 <code>签名</code> 级别权限使用
+<ul>
+<li><code>API Level 23</code> 之前版本，在应用清单文件被声明为 <code>&lt;permission android:protectionLevel=signature|privileged&gt;</code></li>
+<li><code>API Level 23</code> 及之后版本，在应用清单文件被声明为 <code>&lt;permission android:protectionLevel=signatureOrSystem&gt;</code></li>
+</ul></li>
+<li>验证签名权限 <code>Signature</code> ：应用权限保护级别为 <code>signature</code> ，拥有相同签名的（系统或应用）组件才能相互访问/调用，无需告知或征得用户许可即可自动授权
+<ul>
+<li>开发者可以依赖此机制保护自己编写的应用和组件（避免被其他应用或组件非授权访问）</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="android-permissions-3">Android 权限</h3>
+<ul>
+<li><a href="https://developer.android.com/guide/topics/manifest/permission-element">开发者自定义当前应用权限</a> ，用于限制其他应用访问当前应用的特定组件或功能代码
+<ul>
+<li><code>&lt;permission&gt;</code></li>
+<li><code>&lt;permission-group&gt;</code></li>
+<li><code>&lt;path-permission&gt;</code> <code>内容提供者</code> 组件专用的访问控制授权声明</li>
+</ul></li>
+<li><a href="https://developer.android.com/guide/topics/manifest/uses-permission-element">开发者向用户请求授权许可</a>
+<ul>
+<li><code>&lt;uses-permission&gt;</code></li>
+<li><code>&lt;uses-permission-sdk-23&gt;</code> <code>Android 6.0</code> 开始引入的运行时权限申请专用</li>
+</ul></li>
+<li><a href="https://developer.android.com/guide/topics/manifest/uses-feature-element">设备软硬件特性兼容性检查</a>
+<ul>
+<li><code>&lt;uses-feature&gt;</code></li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="android-permissions-milestones">Android 权限发展历史上的里程碑</h3>
+<ul>
+<li><code>Android 6.0</code> (<code>API Level 23</code>) ：新增 <code>运行时权限</code> 类别，用户授权不再是安装时「一锤子买卖」，实现了「精细化授权」和「按需授权」</li>
+<li><code>Android 10.0</code>(<code>API Level 29</code>) ：新增 <code>上下文权限</code> ，在原有二元化的 <code>允许</code> 与 <code>拒绝</code> 选项基础之上增加了 <code>仅在使用中允许</code></li>
+<li><code>Android 11</code> ：新增 <code>每次询问权限</code></li>
+<li><code>Android 10.0</code> ：禁止应用直接读取设备唯一标识（<code>IMEI</code>）</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="domestic-android-1">国产安卓之荣光</h3>
+<ul>
+<li><code>MIUI 12</code>（基于 <code>Android 10</code>）的 <code>空白通行证</code></li>
+<li><code>ColorOS 7</code>（基于 <code>Android 10</code>）的 <code>保护个人信息</code>
+<ul>
+<li>当应用需要读取特定个人信息（通话记录、联系人、短信、日程表）时，系统将提供 <strong>空信息</strong></li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="domestic-android-2">国产安卓之荣光</h3>
+<p><img data-src="images/chap0x06/Screenshots/Screenshot_2021-02-18-16-00-05-987_com.miui.securitycenter.jpg" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="一点思考空信息">一点思考：空信息？</h3>
+<ul>
+<li>真的是返回 <code>空信息</code> 吗？<code>仿真信息</code> 是不是比 <code>空信息</code> 更好？</li>
+</ul>
+</section>
+<section id="app-sandbox-enhancements-1" class="slide level2">
+<h2>应用程序沙盒化改进历程</h2>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">引入版本</th>
+<th style="text-align: left;">改进措施</th>
+<th style="text-align: left;"><strong>拟解决</strong> 的威胁</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">≤ 4.3</td>
+<td style="text-align: left;">进程隔离<span class="math inline"><em></em><sup>0</sup></span></td>
+<td style="text-align: left;">[T.A3] 导致的 [T.N1][T.A2][T.A5][T.A6][T.A7]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">5.x</td>
+<td style="text-align: left;">SELinux<span class="math inline"><em></em><sup>1</sup></span></td>
+<td style="text-align: left;">[T.A7][T.D2]</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">5.x</td>
+<td style="text-align: left;">允许 Webview 组件代码独立更新</td>
+<td style="text-align: left;">[T.A3]</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><span class="math inline"><em></em><sup>0</sup></span> <code>UID 沙盒</code> 是历史最悠久、最基础的应用沙盒安全技术，是实现用户进程间隔离的最基础访问控制技术，不足之处已经通过后续版本的 SELinux 规则更新逐步完善加固</li>
+<li><span class="math inline"><em></em><sup>1</sup></span> 用户空间应用程序全部默认启用 SELinux 规则，大幅度改善了用户进程和系统进程的隔离性。用户进程间隔离还是依赖于 UID 沙盒。SELinux 的主要优点在于 <code>可审计</code> 和 <code>可测试</code> ，从而可以大幅度增加安全需求兼容性测试项目数量</li>
+</ul>
+</section>
+<section id="app-sandbox-enhancements-2" class="slide level2">
+<h2>应用程序沙盒化改进历程</h2>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">引入版本</th>
+<th style="text-align: left;">改进措施</th>
+<th style="text-align: left;"><strong>拟解决</strong> 的威胁</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">6.x</td>
+<td style="text-align: left;">允许运行时用户授权</td>
+<td style="text-align: left;">[T.A1]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">6.x</td>
+<td style="text-align: left;">基于 SELinux 的多用户支持</td>
+<td style="text-align: left;">[T.P4]</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">6.x</td>
+<td style="text-align: left;">应用私有目录缺省目录权限变更 0755 -&gt; 0700</td>
+<td style="text-align: left;">[T.A2]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">6.x</td>
+<td style="text-align: left;">针对 ioctl 增加 SELinux 规则缓解内核漏洞利用</td>
+<td style="text-align: left;">[T.A7][T.D2]</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">6.x</td>
+<td style="text-align: left;">移除应用访问 debugfs 权限缓解内核漏洞利用</td>
+<td style="text-align: left;">[T.A7][T.D2]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">6.x</td>
+<td style="text-align: left;">特殊权限类别定义范围变更<span class="math inline"><em></em><sup>2</sup></span></td>
+<td style="text-align: left;">[T.A1][T.A4]</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><span class="math inline"><em></em><sup>2</sup></span> SYSTEM_ALERT_WINDOW, WRITE_SETTINGS, CHANGE_NETWORK_STATE 变更为特殊权限类别</li>
+</ul>
+</section>
+<section id="app-sandbox-enhancements-3" class="slide level2">
+<h2>应用程序沙盒化改进历程</h2>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">引入版本</th>
+<th style="text-align: left;">改进措施</th>
+<th style="text-align: left;"><strong>拟解决</strong> 的威胁</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">7.x</td>
+<td style="text-align: left;">移除 /proc/<pid> 支持减少侧信道信息泄露</td>
+<td style="text-align: left;">[T.A4]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">7.x</td>
+<td style="text-align: left;">perf事件加固缓解内核漏洞利用</td>
+<td style="text-align: left;">[T.A7]</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">7.x</td>
+<td style="text-align: left;">/proc 文件系统缺省访问规则改进</td>
+<td style="text-align: left;">[T.A1][T.A4]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">7.x</td>
+<td style="text-align: left;">OPA/MITM 方式更新加入的证书缺省不被信任</td>
+<td style="text-align: left;">[T.N2]</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">8.x</td>
+<td style="text-align: left;">/sys 文件系统缺省访问规则改进</td>
+<td style="text-align: left;">[T.A1][T.A4]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">8.x</td>
+<td style="text-align: left;">所有用户进程使用相同的 seccomp 过滤规则以缓解内核攻击面</td>
+<td style="text-align: left;">[T.A7][T.D2]</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">8.x</td>
+<td style="text-align: left;">所有用户进程使用的 Webview 组件被移入独立进程</td>
+<td style="text-align: left;">[T.A3]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">8.x</td>
+<td style="text-align: left;">应用使用明文网络通信协议需用户知情同意</td>
+<td style="text-align: left;">[T.N1]</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="app-sandbox-enhancements-4" class="slide level2">
+<h2>应用程序沙盒化改进历程</h2>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">引入版本</th>
+<th style="text-align: left;">改进措施</th>
+<th style="text-align: left;"><strong>拟解决</strong> 的威胁</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">9.0</td>
+<td style="text-align: left;">应用可以单独设置独立的 SELinux 沙盒</td>
+<td style="text-align: left;">[T.A2][T.A4]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">原则上只允许应用在可见活动窗口中启动新Activity且加入到前台“后退堆栈”</td>
+<td style="text-align: left;">[T.A2][T.A3][T.A4][T.A7]</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">外部存储上的文件访问仅限于应用拥有的文件</td>
+<td style="text-align: left;">[T.A1][T.A2]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">只有当前输入焦点应用或默认输入法应用才能读取剪贴板数据</td>
+<td style="text-align: left;">[T.A5]</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">/proc/net 访问控制进一步严格以缓解侧信道攻击</td>
+<td style="text-align: left;">[T.A1]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">11</td>
+<td style="text-align: left;">不再支持传统模式下的应用访问外部存储上的其他应用文件</td>
+<td style="text-align: left;">[T.A1][T.A2]</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="system-sandboxing-1" class="slide level2">
+<h2>系统进程沙盒化改进历程</h2>
+<p><img data-src="images/chap0x06/changes-to-mediaserver-from6to10.png" /></p>
+<p>拟解决 [T.D2] 威胁</p>
+</section>
+<section id="system-sandboxing-2" class="slide level2">
+<h2>系统进程沙盒化改进历程</h2>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">引入版本</th>
+<th style="text-align: left;">改进措施</th>
+<th style="text-align: left;"><strong>拟解决</strong> 的威胁</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">4.4</td>
+<td style="text-align: left;">强制模式的 SELinux<span class="math inline"><em></em><sup>0</sup></span> 被应用于 4 个 root 权限进程</td>
+<td style="text-align: left;">[T.A1][T.A7][T.D2]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">5.x</td>
+<td style="text-align: left;">用户态所有进程基于 SELinux 的 <code>MAC</code></td>
+<td style="text-align: left;">[T.A1][T.A7]</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">6.x</td>
+<td style="text-align: left;">所有进程基于 SELinux 的 <code>MAC</code></td>
+<td style="text-align: left;">[T.A1][T.A7]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">7.x</td>
+<td style="text-align: left;">架构层面解耦 <code>mediaserver</code> 服务</td>
+<td style="text-align: left;">[T.A1][T.A7][T.D2]</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">7.x</td>
+<td style="text-align: left;">系统组件访问 <code>ioctl</code> 系统调用被限制</td>
+<td style="text-align: left;">[T.A1][T.A7][T.D2]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">8.x</td>
+<td style="text-align: left;"><code>Treble</code> 架构结构解耦<span class="math inline"><em></em><sup>1</sup></span></td>
+<td style="text-align: left;">[T.A1][T.A7][T.D2]</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><span class="math inline"><em></em><sup>0</sup></span> 4 个 root 权限进程被设置了 <code>强制访问控制（MAC, Mandatory Access Control）</code> 规则：installd, netd, vold, zygote</li>
+<li><span class="math inline"><em></em><sup>1</sup></span> <code>HAL((Hardware Abstraction Layer)</code> 组件被拆分为独立进程，减少授权，限制访问硬件驱动</li>
+</ul>
+</section>
+<section id="system-sandboxing-3" class="slide level2">
+<h2>系统进程沙盒化改进历程</h2>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">引入版本</th>
+<th style="text-align: left;">改进措施</th>
+<th style="text-align: left;"><strong>拟解决</strong> 的威胁</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">多媒体软件编解码器被移入到一个受限制沙盒</td>
+<td style="text-align: left;">[T.A7][T.D2]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">引入 <code>BoundSan</code><span class="math inline"><em></em><sup>2</sup></span> ，预防数组越界访问引起的漏洞</td>
+<td style="text-align: left;">[T.A7][T.D2]</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><span class="math inline"><em></em><sup>2</sup></span> <a href="https://source.android.com/devices/tech/debug/bounds-sanitizer">BoundsSanitizer(<code>BoundSan</code>)</a> 将插桩添加到二进制文件，以插入对数组访问的边界检查。如果编译器在 <strong>编译时</strong> 无法证明访问将会是安全的，并且在运行时将会知道数组的大小，便会添加这些检查，以便对数组访问进行检查。Android 10 在蓝牙和编解码器中部署了 <code>BoundSan</code>。<code>BoundSan</code> 由编译器提供，在整个平台的各个组件中默认启用。</li>
+</ul>
+</section>
+<section id="system-sandboxing-4" class="slide level2">
+<h2>系统进程沙盒化改进历程</h2>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">引入版本</th>
+<th style="text-align: left;">改进措施</th>
+<th style="text-align: left;"><strong>拟解决</strong> 的威胁</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">引入 <code>IntSan</code><span class="math inline"><em></em><sup>3</sup></span></td>
+<td style="text-align: left;">[T.A7][T.D2]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">引入 <code>Scudo</code><span class="math inline"><em></em><sup>4</sup></span></td>
+<td style="text-align: left;">[T.A7][T.D2]</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><span class="math inline"><em></em><sup>3</sup></span> <a href="https://source.android.com/devices/tech/debug/intsan">IntSan</a> ，Android 7.0 中添加了 Clang 的 UndefinedBehaviorSanitizer (UBSan) 有符号和无符号整数溢出排错程序，以增强媒体框架。在 Android 9 中， UBSan 被扩展为涵盖更多组件，并改进了对它的编译系统支持。</li>
+<li><span class="math inline"><em></em><sup>4</sup></span> <a href="https://source.android.com/devices/tech/debug/scudo">Scudo</a>，是一个动态的用户模式内存分配器（也称为堆分配器），旨在抵御与堆相关的漏洞（如<a href="https://cwe.mitre.org/data/definitions/122.html">基于堆的缓冲区溢出</a>、<a href="https://cwe.mitre.org/data/definitions/416.html">释放后再使用</a>和<a href="https://cwe.mitre.org/data/definitions/415.html">重复释放</a>），同时保持性能良好</li>
+</ul>
+</section>
+<section id="kernel-sandboxing-1" class="slide level2">
+<h2>系统内核沙盒化改进历程</h2>
+<ul>
+<li>绝大多数内核漏洞利用的都是系统芯片上运行的硬件驱动程序缺陷</li>
+<li>现有的内核漏洞缓解和加固措施集中在减少用户态进程访问内核驱动的机会</li>
+<li>由于 Linux 内核是一个「宏内核」（<code>monolithic kernel</code>）架构，因此无法实现内核沙盒化</li>
+<li>已有的缓解措施总结见下一页课件</li>
+</ul>
+</section>
+<section id="kernel-sandboxing-2" class="slide level2">
+<h2>系统内核沙盒化改进历程</h2>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">引入版本</th>
+<th style="text-align: left;">改进措施</th>
+<th style="text-align: left;"><strong>拟解决</strong> 的威胁</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">5.x</td>
+<td style="text-align: left;">引入 <code>PXN</code><span class="math inline"><em></em><sup>0</sup></span> 机制</td>
+<td style="text-align: left;">[T.A7][T.D2]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">6.x</td>
+<td style="text-align: left;">内核线程被设置为SELinux强制执行模式，限制从内核访问用户态文件</td>
+<td style="text-align: left;">[T.A7][T.D2]</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">8.x</td>
+<td style="text-align: left;">引入 <code>PAN</code><span class="math inline"><em></em><sup>1</sup></span> 和 <code>PAN</code> 模拟机制</td>
+<td style="text-align: left;">[T.A7][T.D2]</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><span class="math inline"><em></em><sup>0</sup></span> <code>PXN</code>, Privileged eXecute Never，内核态进程禁止执行用户态代码，预防 <code>ret2usr</code> 形式的漏洞利用技巧</li>
+<li><span class="math inline"><em></em><sup>1</sup></span> <code>PAN</code>, Privileged Access Never，内核态进程访问用户态内存受到限制，仅允许通过 <code>copy-*-user()</code> 系列函数</li>
+</ul>
+</section>
+<section id="kernel-sandboxing-3" class="slide level2">
+<h2>系统内核沙盒化改进历程</h2>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">引入版本</th>
+<th style="text-align: left;">改进措施</th>
+<th style="text-align: left;"><strong>拟解决</strong> 的威胁</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">9.0</td>
+<td style="text-align: left;">引入 <code>CFI</code><span class="math inline"><em></em><sup>2</sup></span></td>
+<td style="text-align: left;">[T.A7][T.D2]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">引入 <code>SCS</code><span class="math inline"><em></em><sup>3</sup></span></td>
+<td style="text-align: left;">[T.A7][T.D2]</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><span class="math inline"><em></em><sup>2</sup></span> <code>CFI</code>, <a href="https://source.android.com/devices/tech/debug/cfi">Control Flow Integrity</a>，基于控制流「白名单」的函数调用限制</li>
+<li><span class="math inline"><em></em><sup>3</sup></span> <code>SCS</code>, <a href="https://source.android.com/devices/tech/debug/shadow-call-stack">Shadow Call Stack</a>，通过保护返回地址来实现调用堆栈深度回溯保护</li>
+</ul>
+</section>
+<section id="sandboxing-below-the-kernel-1" class="slide level2">
+<h2>内核层以下的沙盒化改进历程</h2>
+<ul>
+<li>要解决的主要安全威胁（假设）：存在内核零日漏洞导致内核态保护隔离机制被攻陷</li>
+<li>涉及到内核层以下的一些组件
+<ul>
+<li>TCB, Trusted Computing Base 可信计算基</li>
+<li>TEE, Trusted Execution Environment 可信执行环境</li>
+<li>硬件驱动</li>
+<li>用户态组件 init, ueventd, and vold</li>
+</ul></li>
+</ul>
+</section>
+<section id="sandboxing-below-the-kernel-2" class="slide level2">
+<h2>内核层以下的沙盒化改进历程</h2>
+<ul>
+<li>Keymaster 重要密钥存储在 TEE</li>
+<li>Strongbox Android 9.0 开始引入的 <code>防篡改硬件（TRH, Tamper Resistant Hardware）</code> 被用来存储重要密钥，属于 TEE 的「纵深防御」补充沙盒防御措施</li>
+<li>Gatekeeper 基于 TEE 或 TRH 实现锁屏解锁后访问 Keymaster 中存储的重要密钥</li>
+<li>Protected Confirmation Android 9.0 引入，部分缓解 [T.A4] 和 [T.A6]</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="did.2-漏洞利用缓解技术" class="title-slide slide level1">
+<h1>DiD.2 漏洞利用缓解技术</h1>
+
+</section>
+<section class="slide level2">
+
+<ul>
+<li>Anrdoid 平台历史上 85% 的漏洞是由于不安全的内存访问引起
+<ul>
+<li>Android 安全团队认为对抗和缓解上述漏洞成因的有效方法是使用「内存安全」的编程语言：Java / Kotlin</li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="did.3-系统完整性保护" class="title-slide slide level1">
+<h1>DiD.3 系统完整性保护</h1>
+
+</section>
+<section class="slide level2">
+
+<ul>
+<li>操作系统和硬件设备层面需要确保自身完整性</li>
+<li>典型实现方式： <code>验证启动</code> (<code>Verified Boot</code>)
+<ul>
+<li>Android KitKat 首次实现，Nougat 开始作为缺省强制启用特性</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<p><img data-src="images/chap0x06/verified-boot.png" /></p>
+</section>
+</section>
+<section>
+<section id="did.4-补丁更新" class="title-slide slide level1">
+<h1>DiD.4 补丁/更新</h1>
+
+</section>
+<section id="概述" class="slide level2">
+<h2>概述</h2>
+<ul>
+<li>定期发布补丁和打补丁
+<ul>
+<li>Android 设备碎片化给补丁管理带来巨大挑战</li>
+</ul></li>
+<li>2015 年 8 月起，Android 每月公开发布一次安全通告和安全补丁</li>
+<li>Android 8 引入 <a href="https://android-developers.googleblog.com/2017/05/here-comes-treble-modular-base-for.html">Treble</a> ：模块化 Android
+<ul>
+<li>加快 Android 新版本系统在所有设备上的普及率</li>
+</ul></li>
+<li>2018 年发布的 <code>Android Enterprise Recommended program</code> （设备、运营商服务以及企业移动管理服务的最低规格要求）：
+<ul>
+<li>普通设备：<code>90 天安全更新</code></li>
+<li>加固型设备：<code>在设备推出后五年内，一旦有安全更新，就会在 90 天内及时安装</code></li>
+</ul></li>
+</ul>
+</section>
+<section id="treble-1" class="slide level2">
+<h2><a href="https://android-developers.googleblog.com/2017/05/here-comes-treble-modular-base-for.html">Treble</a></h2>
+<ul>
+<li><code>CTS</code> (<code>Compatibility Test Suite</code>) 通过设计稳定和一致的 API，解决应用开发者开发应用的多版本、多设备兼容性需求</li>
+<li><code>VTS</code> (<code>Vendor Test Suite</code>) Android 操作系统框架层面的稳定和一致 API 计划，解耦「设备厂商实现代码」和「Android 操作系统框架代码」</li>
+</ul>
+<p><img data-src="images/chap0x06/treble.png" /></p>
+</section>
+<section id="treble-2" class="slide level2">
+<h2><a href="https://android-developers.googleblog.com/2017/05/here-comes-treble-modular-base-for.html">Treble</a></h2>
+<ul>
+<li>通过硬件定义语言（<code>HIDL</code>）、Android <code>VTS</code> 在 <code>HAL</code> 和它的用户之间定义一个清晰的接口
+<ul>
+<li><code>HIDL</code> 的目标是在不重新构建 <code>HAL</code> 的情况下替换操作系统框架</li>
+<li><code>HAL</code> 是由半导体供应商进行构建的，并且构建于设备的供应商分区中，这使得操作系统框架被放置于一个自己的分区中，无需重新编译 <code>HAL</code> 就能够通过 <code>OTA</code> 更新进行替换</li>
+<li>每个 <code>HAL</code> 组件运行在自己独立沙盒且只允许所控制的硬件设备驱动访问，上层应用不允许直接访问设备驱动而是只能访问对应关联的 <code>HAL</code> 组件</li>
+</ul></li>
+</ul>
+</section>
+<section id="treble-3" class="slide level2">
+<h2><a href="https://android-developers.googleblog.com/2017/05/here-comes-treble-modular-base-for.html">Treble</a></h2>
+<ul>
+<li><code>SELinux</code> 策略不再是出厂时固化在框架代码里，改为系统启动时从不同安全分区（<code>system</code> 和 <code>vendor</code>）加载动态组装
+<ul>
+<li>安全策略可以局部、独立更新</li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="android-dev-basics" class="title-slide slide level1">
+<h1>Android 应用开发基础</h1>
+
+</section>
+<section id="开发者工作流程基础知识" class="slide level2">
+<h2><a href="https://developer.android.com/studio/workflow">开发者工作流程基础知识</a></h2>
+<ol type="1">
+<li>设置开发环境</li>
+<li>编写应用代码</li>
+<li>构建并运行</li>
+<li>调试、剖析和测试</li>
+<li>发布应用</li>
+</ol>
+</section>
+<section class="slide level2">
+
+<h3 id="setup-dev-1">1. 设置开发环境</h3>
+<ul>
+<li><a href="https://developer.android.com/studio">安装 Android Studio</a></li>
+<li><a href="https://developer.android.com/studio/projects/create-project">创建项目</a></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="setup-sdk">Android Studio 安装后开发前配置 SDK</h3>
+<p>见课本 <a href="https://c4pr1c3.github.io/cuc-mis/chap0x05/exp.html">第五章 实验</a></p>
+<ul>
+<li>SDK</li>
+<li>AVD</li>
+<li><a href="https://developer.android.com/studio">Gradle 依赖项目 - Offline components</a></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="gradle-download-failed-1">创建项目完毕后大概率会遇到的一个错误</h3>
+<p><img data-src="images/chap0x06/gradle-build-failed-due-to-ssl-shutdown-1.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="gradle-download-failed-2">创建项目完毕后大概率会遇到的一个错误</h3>
+<p><img data-src="images/chap0x06/gradle-build-failed-due-to-ssl-shutdown-2.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="offline-setup-gradle">离线安装 Gradle 依赖项目</h3>
+<ul>
+<li>提前从 <a href="https://developer.android.com/studio">Android Studio 官网</a> 下载好 <code>Offline components</code> （<code>2.7GB+</code>）</li>
+<li><a href="https://stackoverflow.com/questions/60891740/android-studio-gradle-offline-mode-not-found">Android Studio 3.6+ 开启 Gradle 的「离线模式」</a>: 从菜单栏中依次选择 View &gt; Tool Windows &gt; Gradle。然后，在 Gradle 窗口顶部附近，点击 Toggle Offline Mode 图标</li>
+<li>解压缩上述 <code>Gradle 构建依赖压缩包</code> ，并按照压缩包中的 <code>README</code> 进行配置
+<ul>
+<li>其中的可选步骤建议在新创建的项目中也一并完成，此时可能会自动执行一次 gradle 下载</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="使用国内的-maven-仓库镜像">使用国内的 Maven 仓库镜像</h3>
+<ul>
+<li>使用 <a href="https://maven.aliyun.com/mvn/guide">阿里云云效 Maven</a> 提供的 <code>Maven</code> 仓库镜像</li>
+<li>修改 <code>项目</code> <strong>根目录</strong> 下的 <code>build.gradle</code></li>
+</ul>
+<pre ><code class="gradle">//        google()
+//        jcenter()
+maven {
+    url 'https://maven.aliyun.com/repository/google/'
+}
+maven {
+    url 'https://maven.aliyun.com/repository/jcenter/'
+}</code></pre>
+</section>
+<section class="slide level2">
+
+<h3 id="build.gradle-修改前后对比">build.gradle 修改前后对比</h3>
+<p><img data-src="images/chap0x06/maven-mirror-in-build.gradle.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="编写应用代码"><a href="https://developer.android.com/studio/write">2. 编写应用代码</a></h3>
+<p><a href="https://developer.android.com/training/basics/firstapp">开发第一个 Android 应用程序</a></p>
+<blockquote>
+<p>动手编写 Hello World 时间</p>
+</blockquote>
+<ul>
+<li>应用提供多个入口点</li>
+<li>应用可适应不同的设备</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="构建并运行">3. 构建并运行</h3>
+<ul>
+<li><a href="https://developer.android.com/studio/run">在 IDE 中构建和运行</a></li>
+<li><a href="https://developer.android.com/studio/run/managing-avds">管理模拟器/虚拟设备</a></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="调试剖析和测试">4. 调试、剖析和测试</h3>
+<ul>
+<li><a href="https://developer.android.com/studio/debug">官方 Android Studio 调试指南</a></li>
+<li><a href="https://developer.android.com/studio/profile">官方 Android Studio 剖析指南</a></li>
+<li><a href="https://developer.android.com/studio/test">官方 Android Studio 测试指南</a></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="发布应用">5. 发布应用</h3>
+<ul>
+<li><a href="https://developer.android.com/studio/publish/app-signing">应用签名方法</a>
+<ul>
+<li>为上传 Play 应用商店而签名 - <code>Play 应用签名计划</code></li>
+<li>本地自发布应用签名 - <code>自行负责保障签名密钥和密钥库的安全</code></li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h4 id="本地自发布应用签名注意事项">本地自发布应用签名注意事项</h4>
+<p>在应用的预期生命周期内，应当使用同一证书为应用签名</p>
+<ul>
+<li>应用升级：证书匹配才能同名应用升级，否则无法升级</li>
+<li>应用模块化：同一证书签名的多个 APK 可以在同一个进程中运行（如果应用请求这样做），且同一应用的不同模块可以基于此实现独立更新</li>
+<li>通过权限共享代码/数据：基于签名匹配进行更安全的跨应用代码共享和数据交换</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="android-components-basics" class="title-slide slide level1">
+<h1><a href="https://developer.android.com/guide/components/fundamentals">Android 应用程序基础</a></h1>
+
+</section>
+<section id="dev-lang-and-media" class="slide level2">
+<h2>Android 应用开发语言与二进制载体</h2>
+<ul>
+<li>可选应用程序编程语言：Kotlin、 <strong>Java</strong> 和 C++</li>
+<li>Android SDK 工具会将代码连同任何数据和资源文件编译成一个 APK（ <code>Android package</code>），即带有 <code>.apk</code> 后缀的（<code>zip 格式</code>）归档文件</li>
+</ul>
+</section>
+<section id="app-and-process" class="slide level2">
+<h2>Android 应用与进程</h2>
+<ul>
+<li>Android 操作系统是一种多用户 Linux 系统，其中的 <code>每个应用都是一个不同的用户</code></li>
+<li>默认情况下，系统会为每个应用分配一个唯一的 Linux 用户 ID（该 ID 仅由系统使用，应用并不知晓）。系统会为应用中的所有文件设置权限，使得只有分配给该应用的用户 ID 才能访问这些文件；</li>
+<li>每个进程都拥有自己的虚拟机 (VM)，因此应用代码独立于其他应用而运行。</li>
+<li>默认情况下，每个应用都在其自己的 Linux 进程内运行。Android 系统会在需要执行任何应用组件时启动该进程，然后当不再需要该进程或系统必须为其他应用恢复内存时，其便会关闭该进程。</li>
+</ul>
+</section>
+<section id="app-sandbox" class="slide level2">
+<h2>Android 应用沙盒</h2>
+<ul>
+<li><code>最小化授权</code> 的应用
+<ul>
+<li>按照 <code>用户 ID</code> 区分应用彼此属主：相同 <code>用户 ID</code> 的应用可以互相访问，否则被禁止互相访问</li>
+<li>申请许可制：参见前述 <a href="https://developer.android.com/guide/topics/permissions/overview">Android permissions</a></li>
+</ul></li>
+</ul>
+</section>
+<section id="应用组件" class="slide level2">
+<h2>应用组件</h2>
+<blockquote>
+<p>四大组件</p>
+</blockquote>
+<ul>
+<li>Activity</li>
+<li>服务 <code>Service</code></li>
+<li>广播接收器 <code>BroadcastReceiver</code></li>
+<li>内容提供程序 <code>ContentProvider</code></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="activity-1">Activity</h3>
+<ul>
+<li><code>Activity</code> 是 Android 应用中负责与用户交互的组件</li>
+<li><code>View</code> 是所有UI控件、容器控件的基类
+<ul>
+<li>用户看到的部分</li>
+<li>View 组件需要被放到容器组件中或使用 <code>Activity</code> 将它显示出来
+<ul>
+<li><code>setContentView()</code></li>
+</ul></li>
+</ul></li>
+</ul>
+<pre ><code class="java">public class MainActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+    }
+}</code></pre>
+</section>
+<section class="slide level2">
+
+<h3 id="service-1">Service</h3>
+<ul>
+<li>与 <code>Activity</code> 地位并列</li>
+<li>后台运行，一般不需要与用户交互，无图形用户界面</li>
+<li>所有的 <code>Service</code> 组件需要继承 <code>Service</code> 基类</li>
+<li>一个 <code>Service</code> 组件被运行起来之后，拥有自己独立的生命周期
+<ul>
+<li>为其他组件提供后台服务或监控其他组件运行状态</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="BroadcastReceiver-1">BroadcastReceiver</h3>
+<ul>
+<li>类似于事件编程中的事件监听器
+<ul>
+<li>普通事件监听器监听的事件源是程序中的对象</li>
+<li><code>BroadcastReceiver</code> 监听的事件源是 <code>Android</code> 应用中的其他组件</li>
+</ul></li>
+<li>开发者实现自己的 <code>BroadcastReceiver</code> 子类，重写 <code>onReceive(Context cx, Intent it)</code> 方法即可</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="BroadcastReceiver-2">BroadcastReceiver</h3>
+<ul>
+<li>其他组件通过 <code>sendBroadcast()</code>、<code>sendStickyBroadcast()</code> 或 <code>sendOrderedBroadcast()</code> 方法发送广播消息时，如该 <code>BroadcastReceiver</code> 也对该消息『感兴趣』， <code>onReceive</code> 方法会被自动调用
+<ul>
+<li>配置 <code>IntentFilter</code> 实现『感兴趣』</li>
+<li>在 <code>Java</code> 代码中使用 <code>Context.registReceiver()</code> 方法注册 <code>BroadcastReceiver</code></li>
+<li>在 <code>AndroidManifest.xml</code> 中使用 <code>&lt;receiver …/&gt;</code> 元素完成注册</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="BroadcastReceiver-3">BroadcastReceiver</h3>
+<ul>
+<li>借助 <code>BroadcastReceiver</code>，系统能够在常规用户流之外向应用传递事件，从而允许应用响应系统范围内的广播通知</li>
+<li>系统和第三方应用均可以主动发起广播消息</li>
+<li><code>BroadcastReceiver</code> 不会显示界面，但其可以创建状态栏通知</li>
+<li>每条广播都作为 <a href="https://developer.android.com/reference/android/content/Intent">Intent</a> 对象进行传递</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h4 id="intent-1">Intent 和 IntentFilter</h4>
+<ul>
+<li><code>Android</code> 应用内不同组件之间通信的载体
+<ul>
+<li>可以用于启动一个 <code>Activity</code> 或 <code>Service</code> 组件</li>
+<li>还可以发送一条广播消息来触发系统中所有已注册的 <code>BroadcastReceiver</code></li>
+</ul></li>
+<li><code>Intent</code> 封装了当前组件需要启动或触发的目标组件信息
+<ul>
+<li>显式 <code>Intent</code>：明确指定需要启动或触发的组件类名</li>
+<li>隐式 <code>Intent</code>：仅指定需要启动或触发的组件应满足的条件
+<ul>
+<li><code>IntentFilter</code> 声明当前应用能处理哪些隐式 <code>Intent</code></li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h4 id="intent-2">Intent</h4>
+<pre ><code class="java">        Intent intent = new Intent(this, DisplayMessageActivity.class);
+        EditText editText = (EditText) findViewById(R.id.edit_message);
+        String message = editText.getText().toString();
+        intent.putExtra(EXTRA_MSG, message);
+// Save Data
+        editor.putString(getString(R.string.pref_usr_input_msg), message);
+        editor.commit();
+
+        startActivity(intent);</code></pre>
+</section>
+<section class="slide level2">
+
+<h4 id="intentfilter">IntentFilter</h4>
+<pre ><code class="xml">&lt;activity android:name=".MainActivity"&gt;
+    &lt;intent-filter&gt;
+        &lt;action android:name="android.intent.action.MAIN" /&gt;
+        &lt;category android:name="android.intent.category.LAUNCHER" /&gt;
+    &lt;/intent-filter&gt;
+&lt;/activity&gt;</code></pre>
+</section>
+<section class="slide level2">
+
+<h3 id="contentprovider">ContentProvider</h3>
+<ul>
+<li><code>Android OS</code> 限制每个应用运行在自己独立的虚拟机实例中
+<ul>
+<li>应用间需要实时数据交换：<code>ContentProvider</code></li>
+</ul></li>
+<li>开发者实现自己的 <code>ContentProvider</code> 需要实现以下抽象方法
+<ul>
+<li><code>insert</code>、<code>delete</code>、<code>update</code> 和 <code>query</code>
+<ul>
+<li>上述方法的第一个参数都是 <code>URI</code></li>
+</ul></li>
+</ul></li>
+<li><code>应用A</code> 通过 <code>ContentProvider</code> 暴露自己的数据访问接口，<code>应用B</code> 通过 <code>ContentResolver</code> 来访问数据</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="组件间关系">组件间关系</h3>
+<p><img data-src="images/chap0x06/android-app-componets-relationships.png" /></p>
+</section>
+<section id="清单文件" class="slide level2">
+<h2>清单文件</h2>
+<ul>
+<li><a href="https://developer.android.com/guide/topics/manifest/manifest-intro">AndroidManifest.xml</a></li>
+<li>位于应用代码目录的根目录下</li>
+<li>声明应用中的所有组件</li>
+<li>声明组件功能
+<ul>
+<li>配合 <code>IntentFilter</code> 声明</li>
+</ul></li>
+<li>声明应用要求
+<ul>
+<li>确定应用需要的任何用户权限，如互联网访问权限或对用户联系人的读取权限</li>
+<li>根据应用使用的 API，声明应用所需的最低 API 级别</li>
+<li>声明应用使用或需要的硬件和软件功能，如相机、蓝牙服务或多点触摸屏幕</li>
+<li>声明应用需要链接的 API 库（Android 框架 API 除外），如 Google 地图库</li>
+</ul></li>
+</ul>
+</section>
+<section id="应用资源" class="slide level2">
+<h2>应用资源</h2>
+<ul>
+<li>资源是指代码使用的附加文件和静态内容，例如位图、布局定义、界面字符串、动画说明等</li>
+</ul>
+</section>
+<section id="build-android-app-flow" class="slide level2">
+<h2>小结：Android 应用构建流程</h2>
+<p><a href="images/chap0x06/build-process_2x.png"><img data-src="images/chap0x06/build-process.png" /></a></p>
+</section>
+</section>
+<section>
+<section id="课后思考题" class="title-slide slide level1">
+<h1>课后思考题</h1>
+
+</section>
+<section class="slide level2">
+
+<ul>
+<li>真机如何启用 ADB 调试功能？</li>
+<li>真机和电脑建立调试连接过程你有发现哪些「安全策略」和「安全机制」？请思考其保护作用和意义。</li>
+<li>你的手机连接过的 Wifi 信息保存在手机上什么位置？能否从中找到连过的 Wifi 的口令？</li>
+</ul>
+</section>
+</section>
+    </div>
+  </div>
+
+  <script src="lib/reveal.js.v4/dist/reveal.js"></script>
+
+  <!-- reveal.js plugins -->
+  <script src="lib/reveal.js.v4/plugin/notes/notes.js"></script>
+  <script src="lib/reveal.js.v4/plugin/search/search.js"></script>
+  <script src="lib/reveal.js.v4/plugin/zoom/zoom.js"></script>
+  <script src="lib/reveal.js.v4/plugin/math/math.js"></script>
+  <script src="lib/reveal.js.v4/plugin/markdown/markdown.js"></script>
+  <script src="lib/reveal.js.v4/plugin/highlight/highlight.js"></script>
+  <script src="lib/reveal.js.v4/plugin/reveal.js-plugins/menu/menu.js"></script>
+  <script src="lib/reveal.js.v4/plugin/reveal.js-plugins/chalkboard/plugin.js"></script>
+  <script src="lib/reveal.js.v4/plugin/reveal.js-plugins/audio-slideshow/plugin.js"></script>
+
+  <script>
+    
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+      
+        // Display the page number of the current slide
+        slideNumber: true,
+        // Push each slide change to the browser history
+        history: true,
+        // Transition style
+        transition: 'fade', // none/fade/slide/convex/concave/zoom
+        math: {
+          mathjax: '',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+    menu: {
+  		// Specifies which side of the presentation the menu will 
+  		// be shown. Use 'left' or 'right'.
+  		side: 'left',
+  
+  		// Specifies the width of the menu.
+  		// Can be one of the following:
+  		// 'normal', 'wide', 'third', 'half', 'full', or
+  		// any valid css length value
+  		width: 'normal',
+  
+  		// Add slide numbers to the titles in the slide list.
+  		// Use 'true' or format string (same as reveal.js slide numbers)
+  		numbers: true,
+  
+  		// Specifies which slide elements will be used for generating
+  		// the slide titles in the menu. The default selects the first
+  		// heading element found in the slide, but you can specify any
+  		// valid css selector and the text from the first matching
+  		// element will be used.
+  		// Note: that a section data-menu-title attribute or an element
+  		// with a menu-title class will take precedence over this option
+  		titleSelector: 'h1, h2, h3, h4, h5, h6',
+  
+  		// If slides do not have a matching title, attempt to use the
+  		// start of the text content as the title instead
+  		useTextContentForMissingTitles: false,
+  
+  		// Hide slides from the menu that do not have a title.
+  		// Set to 'true' to only list slides with titles.
+  		hideMissingTitles: false,
+  
+  		// Adds markers to the slide titles to indicate the 
+  		// progress through the presentation. Set to 'false'
+  		// to hide the markers.
+  		markers: true,
+  
+  		// Specify custom panels to be included in the menu, by
+  		// providing an array of objects with 'title', 'icon'
+  		// properties, and either a 'src' or 'content' property.
+  		custom: false,
+  
+  		// Specifies the themes that will be available in the themes
+  		// menu panel. Set to 'true' to show the themes menu panel
+  		// with the default themes list. Alternatively, provide an
+  		// array to specify the themes to make available in the
+  		// themes menu panel, for example...
+  		// [
+  		//     { name: 'Black', theme: 'css/theme/black.css' },
+  		//     { name: 'White', theme: 'css/theme/white.css' },
+  		//     { name: 'League', theme: 'css/theme/league.css' }
+  		// ]
+  		themes: false,
+  
+  		// Specifies the path to the default theme files. If your
+  		// presentation uses a different path to the standard reveal
+  		// layout then you need to provide this option, but only
+  		// when 'themes' is set to 'true'. If you provide your own 
+  		// list of themes or 'themes' is set to 'false' the 
+  		// 'themesPath' option is ignored.
+  		themesPath: 'css/theme/',
+  
+  		// Specifies if the transitions menu panel will be shown.
+  		// Set to 'true' to show the transitions menu panel with
+  		// the default transitions list. Alternatively, provide an
+  		// array to specify the transitions to make available in
+  		// the transitions panel, for example...
+  		// ['None', 'Fade', 'Slide']
+  		transitions: false,
+  
+  		// Adds a menu button to the slides to open the menu panel.
+  		// Set to 'false' to hide the button.
+  		openButton: true,
+  
+  		// If 'true' allows the slide number in the presentation to
+  		// open the menu panel. The reveal.js slideNumber option must 
+  		// be displayed for this to take effect
+  		openSlideNumber: false,
+  
+  		// If true allows the user to open and navigate the menu using
+  		// the keyboard. Standard keyboard interaction with reveal
+  		// will be disabled while the menu is open.
+  		keyboard: true,
+  
+  		// Normally the menu will close on user actions such as
+  		// selecting a menu item, or clicking the presentation area.
+  		// If 'true', the sticky option will leave the menu open
+  		// until it is explicitly closed, that is, using the close
+  		// button or pressing the ESC or m key (when the keyboard 
+  		// interaction option is enabled).
+  		sticky: false,
+  
+  		// If 'true' standard menu items will be automatically opened
+  		// when navigating using the keyboard. Note: this only takes 
+  		// effect when both the 'keyboard' and 'sticky' options are enabled.
+  		autoOpen: true,
+  
+  		// If 'true' the menu will not be created until it is explicitly
+  		// requested by calling RevealMenu.init(). Note this will delay
+  		// the creation of all menu panels, including custom panels, and
+  		// the menu button.
+  		delayInit: false,
+  
+  		// If 'true' the menu will be shown when the menu is initialised.
+  		openOnInit: false,
+  
+  		// By default the menu will load it's own font-awesome library
+  		// icons. If your presentation needs to load a different
+  		// font-awesome library the 'loadIcons' option can be set to false
+  		// and the menu will not attempt to load the font-awesome library.
+  		loadIcons: true
+
+    },
+
+    chalkboard: {
+        boardmarkerWidth: 3,
+        chalkWidth: 7,
+        chalkEffect: 1.0,
+        storage: null,
+        src: null,
+        readOnly: undefined,
+        toggleChalkboardButton: { left: "80px" },
+				toggleNotesButton: { left: "130px" },
+        transition: 800,
+        theme: "chalkboard",
+    },
+
+        // reveal.js plugins
+        plugins: [
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom,
+          RevealMarkdown, 
+          RevealMenu, 
+          RevealHighlight,
+          RevealChalkboard
+        ]
+      });
+    </script>
+    </body>
+</html>

@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="黄玮">
+  <title>移动互联网安全</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="lib/reveal.js/css/reveal.css">
+  <style type="text/css">code{white-space: pre;}</style>
+
+
+    <!-- For syntax highlighting using highlight.js-->
+    <link rel="stylesheet" href="lib/reveal.js/lib/css/zenburn.css">
+
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+  </style>
+  <link rel="stylesheet" href="lib/reveal.js/css/theme/white.css" id="theme">
+  <!-- Printing and PDF exports -->
+<link rel="stylesheet" media="print" href="lib/reveal.js/css/print/pdf.css" />
+  <script>
+    var link = document.createElement( 'link' );
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = window.location.search.match( /print-pdf/gi ) ? 'lib/reveal.js/css/print/pdf.css' : 'lib/reveal.js/css/print/paper.css';
+    document.getElementsByTagName( 'head' )[0].appendChild( link );
+  </script>
+  <!--[if lt IE 9]>
+  <script src="lib/reveal.js/lib/js/html5shiv.js"></script>
+  <![endif]-->
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide">
+  <h1 class="title">移动互联网安全</h1>
+  <p class="author">黄玮</p>
+</section>
+
+<section>
+<section id="第八章-移动终端应用攻防与代码安全最佳实践" class="title-slide slide level1">
+<h1>第八章 移动终端应用攻防与代码安全最佳实践</h1>
+
+</section>
+<section id="温故" class="slide level2">
+<h2>温故</h2>
+<ul>
+<li>逆向分析的目标之一是将「黑盒分析」问题转为「白盒分析」</li>
+</ul>
+</section>
+<section id="知新" class="slide level2">
+<h2>知新</h2>
+<ul>
+<li>「白盒分析」是对「源代码」中存在的漏洞进行「攻防」的手段</li>
+<li>本章假设攻击者已经拿到目标程序的所有未经混淆的「源代码」
+<ul>
+<li>如何在「源代码」层面避免留下「安全漏洞」</li>
+</ul></li>
+<li>编写安全可靠 Android 应用的最佳实践方法</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="典型安卓应用代码架构" class="title-slide slide level1">
+<h1>典型安卓应用代码架构</h1>
+
+</section>
+<section id="常见架构原则" class="slide level2">
+<h2>常见架构原则</h2>
+<ul>
+<li>分离关注点</li>
+<li>通过模型驱动界面</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="分离关注点">分离关注点</h3>
+<ul>
+<li>常见误区：将所有代码写入 UI 控件类
+<ul>
+<li>操作系统会针对特定用户操作（例如将应用推入后台）或系统可用计算资源告急等状况对用户界面执行销毁操作</li>
+</ul></li>
+<li>正确做法
+<ul>
+<li>UI 控件类专注于用户界面显示与交互处置</li>
+<li>通过模型驱动界面</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="通过模型驱动界面">通过模型驱动界面</h3>
+<ul>
+<li>此处的模型通常特指「持久化存储模型」</li>
+<li>界面渲染结果来自于「持久化存储模型」中的数据，用户交互结果可以即时反馈到「持久化存储模型」里的数据更新
+<ul>
+<li>即使操作系统“杀死了”用户界面，只要『数据』已持久化存储，则用户不必担心『丢失操作状态和结果』</li>
+</ul></li>
+</ul>
+</section>
+<section id="android-recommend-arch-1" class="slide level2">
+<h2>安卓官方推荐应用架构</h2>
+<p><a href="https://developer.android.com/jetpack/guide?hl=zh-cn"><img data-src="images/chap0x08/final-architecture.png" /></a></p>
+</section>
+<section id="android-recommend-arch-2" class="slide level2">
+<h2>安卓官方推荐应用架构</h2>
+<ul>
+<li>上述应用架构方式 <code>MVVM</code> 非「唯一」选择，只是典型架构 <strong>之一</strong>
+<ul>
+<li>Model-View-ViewModel</li>
+</ul></li>
+<li>分层（级）架构
+<ul>
+<li>每个组件仅依赖于其下一级的组件</li>
+</ul></li>
+</ul>
+</section>
+<section id="android-recommend-arch-3" class="slide level2">
+<h2>安卓官方推荐应用架构</h2>
+<ul>
+<li><code>Model</code> 负责全部的业务逻辑，提供泛化数据，确保业务逻辑独立完整，被不同页面（<code>View</code>）共享</li>
+<li><code>View</code> 负责展示数据，拥有 <code>ViewModel</code> 的引用, 而 <code>ViewModel</code> 独立于 <code>View</code>
+<ul>
+<li><code>View</code> 观察 <code>ViewModel</code> 提供的属性，监视到 <code>ViewModel</code> 有变化可以及时更新 UI</li>
+</ul></li>
+<li><code>ViewModel</code> 是为事件驱动的页面提供数据流，以生命周期方式存储与管理页面相关数据，供 <code>View</code> 绑定，是 <strong>一对多</strong> 关系
+<ul>
+<li>消费者(<code>View</code>)知道生产者(<code>ViewModel</code>)，而生产者只提供数据, 并不关心谁消费</li>
+</ul></li>
+</ul>
+</section>
+<section id="android-recommend-arch-4" class="slide level2">
+<h2>安卓官方推荐应用架构</h2>
+<ul>
+<li><code>Repository</code> 是唯一依赖于其他多个类的类
+<ul>
+<li>本地存储
+<ul>
+<li><code>SQLite</code></li>
+</ul></li>
+<li>远程数据源
+<ul>
+<li><code>RESTful API Service</code></li>
+</ul></li>
+<li>共享偏好（首选项）对象
+<ul>
+<li><code>Shared Preferences</code></li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="页面布局类">页面布局类</h3>
+<ul>
+<li><a href="https://developer.android.com/guide/components/activities/intro-activities">Activity</a></li>
+<li><a href="https://developer.android.com/guide/fragments">Fragment</a>
+<ul>
+<li>表示应用界面中可重复使用的一部分</li>
+<li>独立于 <code>Activity</code> 定义和管理自己的布局，具有自己的生命周期，并且可以处理自己的输入事件</li>
+<li><code>Fragment</code> 不能独立存在，而是必须由 <code>Activity</code> 或另一个 <code>Fragment</code> 托管</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="viewmodel-1">视图生命周期控制类 ViewModel</h3>
+<p><a href="https://developer.android.com/topic/libraries/architecture/viewmodel"><img data-src="images/chap0x08/viewmodel-replace-loader.png" /></a></p>
+</section>
+<section class="slide level2">
+
+<h3 id="viewmodel-2">视图生命周期控制类 ViewModel</h3>
+<ul>
+<li>用户界面状态数据通过 <code>ViewModel</code> 保存到「内存」中，支持保存复杂对象（但存储空间受可用内存限制），读写速度快，在配置更改后继续存在</li>
+<li>系统发起的进程终止后 <code>ViewModel</code> 不复存在</li>
+<li>用户完成 <code>Activity</code> 关闭或触发 <code>onFinish()</code> 方法调用后 <code>ViewModel</code> 不复存在</li>
+<li><a href="https://developer.android.com/topic/libraries/architecture/livedata">LiveData</a> 是一种可观察的数据存储器类
+<ul>
+<li>遵循其他应用组件（如 <code>Activity</code>、<code>Fragment</code> 或 <code>Service</code>）的生命周期。这种感知能力可确保 <code>LiveData</code> 仅更新处于活跃生命周期状态的应用组件观察者</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="安卓应用存储模型">安卓应用存储模型</h3>
+<ul>
+<li><a href="https://developer.android.com/guide/topics/providers/content-provider-creating#DataStorage">应用间数据共享与应用内数据存储</a>
+<ul>
+<li><code>ContentProvider</code> 解决的是「应用间」 <strong>数据共享</strong> 问题</li>
+<li>结构化数据存储：关系型数据库（如 SQLite），非关系型键值数据存储区（如 <a href="https://github.com/google/leveldb">LevelDB</a> ）
+<ul>
+<li><a href="https://developer.android.com/training/data-storage/room">Room</a> 在关系型数据库 <code>SQLite</code> 基础上提供了一个 <code>抽象层</code>，用来在本地保存应用数据</li>
+</ul></li>
+<li>非结构化数据存储：如音频、图像或视频媒体，则通常以文件形式存储数据</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h4 id="using-room-for-local-persistence-1"><a href="https://developer.android.com/training/data-storage/room">使用 Room 将数据保存到本地数据库</a></h4>
+<blockquote>
+<p>相比较于直接调用 SQLite API 和使用 SQL 语句操作本地数据库</p>
+</blockquote>
+<ul>
+<li>一种对象映射（ORM）框架</li>
+<li>编译期（而非运行时）检查 SQL 语句正确性，在代码测试运行前即确保健壮性</li>
+<li>便于注释，可最大程度减少重复和易错的模板代码</li>
+<li>简化数据库迁移路径</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h4 id="using-room-for-local-persistence-2"><a href="https://developer.android.com/training/data-storage/room">使用 Room 将数据保存到本地数据库</a></h4>
+<ul>
+<li><code>Room</code> 支持返回 <code>LiveData</code> 对象的可观察查询</li>
+<li>当数据库更新时，<code>Room</code> 会生成更新 <code>LiveData</code> 对象所需的所有代码。在需要时，生成的代码会在后台线程上异步运行查询</li>
+<li>此模式有助于使界面中显示的数据与存储在数据库中的数据保持同步</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h4 id="使用-retrofit-访问-restful-接口">使用 <a href="https://square.github.io/retrofit/">Retrofit</a> 访问 RESTful 接口</h4>
+<blockquote>
+<p>A type-safe HTTP client for Android and Java</p>
+</blockquote>
+<ul>
+<li>采用注解风格定义接口，面向对象方式访问 <code>RESTful</code> 接口</li>
+<li>同时支持同步和异步执行请求</li>
+<li>简化了网络请求流程，同时内部实现对 <a href="https://square.github.io/okhttp/">OkHttp</a> 做了封装
+<ul>
+<li><code>Retrofit</code> 和 <code>OkHttp</code> 都是 <code>Square</code> 公司的开源解决方案</li>
+</ul></li>
+</ul>
+</section>
+<section id="android-jetpack" class="slide level2">
+<h2><a href="https://developer.android.com/jetpack">Android Jetpack</a></h2>
+<ul>
+<li><code>Android</code> 官方推荐的面向「标准化开发模式」可以使用的一套组件库，独立于 <code>Android</code> 操作系统和开发工具包发布
+<ul>
+<li>同时提供 <code>Java API</code> 和 <code>Kotlin API</code></li>
+</ul></li>
+<li><a href="https://vnhacker.blogspot.com/2019/05/announcement-android-jetpack-security.html">提供了安全性、易用性和高性能之间兼顾的安全组件，同时也可以用于实现最高安全等级需求</a>：提供了与读取和写入静态数据以及密钥创建和验证相关的符合「最佳安全实践」的实现</li>
+<li><a href="https://developer.android.com/jetpack/guide?hl=zh-cn#best-practices">基于 Jetpack 的最佳编程实践指导原则</a></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="本章内容注意事项" class="title-slide slide level1">
+<h1>本章内容注意事项</h1>
+
+</section>
+<section class="slide level2">
+
+<ul>
+<li>持续跟进 <code>Android</code> 官方开发团队推荐的 <strong>最佳安全实践</strong> ，不要局限于本章内容中的一些可能已过时的『经典安全编程实践范式』</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="应用组件安全" class="title-slide slide level1">
+<h1>应用组件安全</h1>
+
+</section>
+<section id="intent-related-risks" class="slide level2">
+<h2>组件访问控制不当风险</h2>
+<table>
+<colgroup>
+<col style="width: 18%" />
+<col style="width: 81%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>攻击手段</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Activity</td>
+<td>构造Intent直接调⽤，实现⾮授权访问 <br/> 后台守护进程通过进程枚举，直接启动新Activity覆盖到当前Activity进⾏『点击』劫持，实现钓鱼攻击（零权限要求）</td>
+</tr>
+<tr class="even">
+<td>Service</td>
+<td>构造Intent直接调⽤，实现⾮授权访问</td>
+</tr>
+<tr class="odd">
+<td>Broadcast Receiver</td>
+<td>构造Intent直接发送虚假⼴播消息，实现⾮授权访问 <br/> 注册同名IntentFilter，实现⼴播消息监听和劫持</td>
+</tr>
+<tr class="even">
+<td>Content Provider</td>
+<td>直接访问暴露的URI，实现⾮授权访问</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="unexpected-call-activity" class="slide level2">
+<h2>TA. 恶意调用 Activity</h2>
+<ul>
+<li>TA.1. 公开可访问的 Activity</li>
+<li>TA.2. Activity （钓鱼）劫持</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="public-callable-activity" class="title-slide slide level1">
+<h1>TA.1. 公开可访问的 Activity</h1>
+
+</section>
+<section id="call-activity-directly" class="slide level2">
+<h2>第三方应用直接唤起目标 Activity</h2>
+<pre class="bash"><code>adb shell am start -n cuc.edu.cn/.MainActivity</code></pre>
+</section>
+<section id="cwe-926-1" class="slide level2">
+<h2>漏洞成因 <a href="https://cwe.mitre.org/data/definitions/926.html">CWE-926</a></h2>
+<p><code>android:exported="true"</code></p>
+<pre class="xml number-lines"><code>&lt;activity
+            android:name=&quot;.LoginActivity&quot;
+            android:label=&quot;@string/app_name&quot;
+            android:exported=&quot;true&quot;&gt;</code></pre>
+</section>
+<section id="cwe-926-2" class="slide level2">
+<h2>漏洞成因 <a href="https://cwe.mitre.org/data/definitions/926.html">CWE-926</a></h2>
+<p><img data-src="images/chap0x08/cwe-926-snapshot-1.png" /></p>
+</section>
+<section id="find-activiy-names-in-a-package" class="slide level2">
+<h2>获取指定应用的 Activity</h2>
+<pre class="bash"><code># 获取系统中所有应用
+adb shell pm list packages
+
+# 获取系统中所有第 3 方应用
+adb shell pm list packages -3
+
+# 查看指定应用的所有可访问 Main Activity 类名
+adb shell dumpsys package | grep Activity | grep -i cuc.edu.cn
+
+# 查看当前打开应用的活动 Activity
+adb shell dumpsys window windows | grep -i cuc.edu.cn
+
+# ref: https://programmer.help/blogs/dumpsys-command-in-android.html</code></pre>
+</section>
+<section id="android-exported-default-history-1" class="slide level2">
+<h2>android:exported 默认值的变迁</h2>
+<ul>
+<li><a href="https://source.android.com/security/enhancements/enhancements42">2012.7 Android 4.2 (API Level 17)</a> 将 <code>ContentProvider</code> 组件包含的 <code>android:exported</code> 属性值默认设置为 <code>false</code></li>
+<li><a href="https://android-developers.googleblog.com/2021/02/android-12-dp1.html">2021.9 Android 12 (API Level 31)</a> 将所有可能包含该属性值的组件对应的 <code>android:exported</code> 默认设置为 <code>false</code> ，即使子元素包含 <code>intent-filter</code> 定义也需要显示设置 <code>android:exported=true</code> ，否则依然为 <code>false</code>
+<ul>
+<li><a href="https://developer.android.com/about/versions/12/behavior-changes-12#exported">如果应用的目标平台被设置为 Android 12，且包含使用 intent 过滤器的 activity、服务或广播接收器，开发者必须为这些应用组件显式声明 android:exported 属性</a></li>
+</ul></li>
+</ul>
+</section>
+<section id="android-exported-default-history-2" class="slide level2">
+<h2>android:exported 默认值的变迁</h2>
+<ul>
+<li><code>Android 12</code> 以前版本三大组件声明时的 <code>android:exported</code> 默认值的一般规则：如果包含 <code>intent-filter</code> 子元素定义，则没有声明 <code>android:exported</code> 属性也视为隐式声明该属性值为 <code>true</code> 。否则，默认值均为 <code>false</code>
+<ul>
+<li><a href="https://developer.android.com/guide/topics/manifest/activity-element#exported">Activity</a></li>
+<li><a href="https://developer.android.com/guide/topics/manifest/service-element.html#exported">Service</a></li>
+<li><a href="https://developer.android.com/guide/topics/manifest/receiver-element#exported">BroadcastReceiver</a></li>
+</ul></li>
+</ul>
+</section>
+<section id="androidexportedtrue-时的真实案例" class="slide level2">
+<h2>android:exported=true 时的真实案例</h2>
+<ul>
+<li><a href="https://hackerone.com/reports/283058">Opening arbitrary URLs/XSS in SAMLAuthActivity</a> 社工钓鱼 $150</li>
+<li><a href="https://hackerone.com/reports/200427">Access of Android protected components via embedded intent 2017-01-23</a> 权限提升 $1,000</li>
+<li><a href="https://hackerone.com/reports/161710">Possible to steal any protected files on Android 2016-08-21</a> 信息泄露 $500</li>
+<li><a href="https://hackerone.com/reports/283063">XSS in ImageViewerActivity 2017-10-26</a> 社工钓鱼 $500</li>
+<li><a href="https://hackerone.com/reports/288955">Theft of arbitrary files leading to token leakage 2017-11-10</a> 隐私泄露 $500</li>
+</ul>
+</section>
+<section id="d.ta.1.-安全加固" class="slide level2">
+<h2>D.TA.1. 安全加固</h2>
+<ul>
+<li>最小化组件暴露 - <a href="https://developer.android.com/docs/quality-guidelines/core-app-quality#SC-5">Google 官方开发者文档中的「核心应用质量」核对清单</a>
+<ul>
+<li>仅导出与其他应用共享数据的应用组件，或应由其他应用调用的组件，这包括 <code>activity</code>、<code>service</code>、<code>广播接收器</code>，尤其是 <code>Content Provider</code></li>
+<li><strong>始终显式设置</strong> <code>android:exported</code> 属性，以尽量避免混淆默认值</li>
+</ul></li>
+<li>基于 <code>Android Permission</code> 机制对被访问 Activity 设置访问控制规则
+<ul>
+<li>暴露组件对应代码的内部运行时检查</li>
+</ul></li>
+</ul>
+</section>
+<section id="androidexportedfalse-时的保护效果" class="slide level2">
+<h2>android:exported=false 时的保护效果</h2>
+<pre class="bash number-lines"><code>adb shell am start -n cuc.edu.cn/.DisplayMessageActivity
+# Starting: Intent { cmp=cuc.edu.cn/.DisplayMessageActivity }
+# Security exception: Permission Denial: starting Intent { flg=0x10000000 cmp=cuc.edu.cn/.DisplayMessageActivity } from null (pid=3804, uid=2000) not exported from uid 10104
+# 
+# java.lang.SecurityException: Permission Denial: starting Intent { flg=0x10000000 cmp=cuc.edu.cn/.DisplayMessageActivity } from null (pid=3804, uid=2000) not exported from uid 10104
+#   at com.android.server.wm.ActivityStackSupervisor.checkStartAnyActivityPermission(ActivityStackSupervisor.java:1043)
+#   at com.android.server.wm.ActivityStarter.startActivity(ActivityStarter.java:760)
+#   at com.android.server.wm.ActivityStarter.startActivity(ActivityStarter.java:583)
+#   at com.android.server.wm.ActivityStarter.startActivityMayWait(ActivityStarter.java:1288)
+#   at com.android.server.wm.ActivityStarter.execute(ActivityStarter.java:514)
+#   at com.android.server.wm.ActivityTaskManagerService.startActivityAsUser(ActivityTaskManagerService.java:1058)
+#   at com.android.server.wm.ActivityTaskManagerService.startActivityAsUser(ActivityTaskManagerService.java:1032)
+#   at com.android.server.am.ActivityManagerService.startActivityAsUser(ActivityManagerService.java:3504)
+#   at com.android.server.am.ActivityManagerShellCommand.runStartActivity(ActivityManagerShellCommand.java:518)
+#   at com.android.server.am.ActivityManagerShellCommand.onCommand(ActivityManagerShellCommand.java:172)
+#   at android.os.ShellCommand.exec(ShellCommand.java:104)
+#   at com.android.server.am.ActivityManagerService.onShellCommand(ActivityManagerService.java:9774)
+#   at android.os.Binder.shellCommand(Binder.java:881)
+#   at android.os.Binder.onTransact(Binder.java:765)
+#   at android.app.IActivityManager$Stub.onTransact(IActivityManager.java:4498)
+#   at com.android.server.am.ActivityManagerService.onTransact(ActivityManagerService.java:2741)
+#   at android.os.Binder.execTransactInternal(Binder.java:1021)
+#   at android.os.Binder.execTransact(Binder.java:994)
+
+# 如果在 AndroidManifest.xml 中没有显式设置 android:exported=&quot;true&quot;
+# Android 6.0 系统默认值视为 true
+# 当 Activity 显式设置 android:exported=&quot;false&quot; 时
+# Android 6.0 系统并不会在终端输出如上异常信息，只是静默唤起 Activity 失败
+
+# Android 10.0 11.0 系统默认值视为 false
+
+# 获取 Android 系统版本信息
+adb shell getprop ro.build.version.release
+# 10
+
+# 获取 Android 系统版本 API Level 
+adb shell getprop ro.build.version.sdk
+# 29
+
+# 获取目标 Android 系统所有运行时信息
+adb shell getprop
+
+# 发送 Intent 时传参数
+adb shell am start -n cuc.edu.cn/.DisplayMessageActivity --es cuc.edu.cn.MESSAGE hello</code></pre>
+</section>
+<section id="protected-activity-1" class="slide level2">
+<h2>D.TA.1. 被访问 Activity 设置访问控制规则</h2>
+<pre class="xml number-lines"><code>&lt;!-- 被访问 Activity 添加 `android:permission` 属性 --&gt;
+&lt;activity android:name=&quot;.Another&quot; android:label=&quot;@string/app_name&quot;
+           android:permission=&quot;com.test.custompermission&quot;&gt;
+&lt;/activity&gt;
+
+&lt;!-- AndroidManifest.xml 中声明自定义权限 --&gt;
+&lt;permission android:description=&quot;test&quot;
+        android:label=&quot;test&quot;
+        android:name=&quot;com.test.custompermission&quot;
+        android:protectionLevel=&quot;normal&quot;&gt;
+&lt;/permission&gt;</code></pre>
+</section>
+<section class="slide level2">
+
+<h3 id="d.ta.1.-androidprotectionlevel">D.TA.1. android:protectionLevel</h3>
+<ul>
+<li><code>protectionLevel</code> 有四种级别 <code>normal</code>、<code>dangerous</code>、<code>signature</code>、<code>signatureOrSystem</code></li>
+<li>声明为 <code>signature</code>、<code>signatureOrSystem</code> 时，只有调用者 <code>apk</code> 和被调用者 <code>apk</code> 具备相同签名时才能调用</li>
+</ul>
+</section>
+<section id="activity-caller-declaration" class="slide level2">
+<h2>D.TA.1. 发起访问的 Activity 声明请求授权</h2>
+<pre class="xml"><code>&lt;uses-permission android:name=&quot;com.test.custompermission&quot; /&gt;</code></pre>
+</section>
+<section id="activity-caller-check-if-granted" class="slide level2">
+<h2>D.TA.1. 发起访问的 Activity 检查用户是否已授权</h2>
+<pre class="java number-lines"><code>if (context.checkCallingOrSelfPermission(&quot;com.test.custompermission&quot;)
+        != PackageManager.PERMISSION_GRANTED) {
+            // The Application requires permission to access the Internet
+} else {
+    // OK to access the Internet
+}</code></pre>
+</section>
+</section>
+<section>
+<section id="activity-phishing" class="title-slide slide level1">
+<h1>TA.2. Activity （钓鱼）劫持</h1>
+
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>所「点」非所得</p>
+</blockquote>
+</section>
+<section id="strandhogg-1" class="slide level2">
+<h2><a href="https://promon.co/security-news/strandhogg/">2019. StrandHogg</a></h2>
+<ul>
+<li><a href="https://s2.ist.psu.edu/paper/usenix15-final-ren.pdf">Ren, C., Zhang, Y., Xue, H., Wei, T., &amp; Liu, P. (2015). Towards discovering and understanding task hijacking in android. 24th USENIX Security Symposium, 945–959.</a></li>
+<li><a href="https://www.cnki.com.cn/Article/CJFDTotal-WHDY201802007.htm">熊璐, 彭国军, &amp; 罗元. (2018). 一种新的基于 APP 启动模式的劫持攻击方案. 武汉大学学报 (理学版), 64(2), 141-149.</a></li>
+<li>挪威安全公司 <code>Promon</code> 根据掌握的「在野」漏洞利用案例情况，报告了该漏洞，并宣称扩展了上述 2015 年发现的任务劫持理论模型，影响 Android 10 及更低版本，Android 开发团队却并不认可该漏洞</li>
+</ul>
+</section>
+<section id="strandhogg-2" class="slide level2">
+<h2><a href="https://promon.co/security-news/strandhogg/">2019. StrandHogg</a></h2>
+<ul>
+<li><code>StrandHogg</code> 维京海盗突袭战术
+<ul>
+<li>界面劫持：当目标应用 <code>lanchMode</code> 为 <code>standard</code> 或 <code>singleTop</code> 时，通过设定恶意程序 <code>taskAffinity</code> 与目标 <code>Activity</code> 所属应用包名一致，并配合使用 <code>android:allowTaskReparenting="true"</code>，将恶意 <code>Activity</code> 置于目标任务栈的内部或顶部，当用户点击受害者应用图标时恶意程序会伪装成正常应用程序的界面迷惑用户实现界面劫持攻击</li>
+<li>任务隐藏：对任意已运行目标程序，如果设定恶意程序的程序名称及 <code>taskAffinity</code> 与目标程序保持一致，且 <code>lanchMode</code> 设定为 <code>singleInstance</code> ，则恶意程序运行后可以构建与目标程序同名的返回栈，并以不同任务 ID 存在于后台，从而可将任务隐藏于后台</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="taskAffinity-1">taskAffinity 示意</h3>
+<p><img data-src="images/chap0x08/activities-history-8.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="taskAffinity-2">taskAffinity 示意</h3>
+<p><img data-src="images/chap0x08/activities-history-11.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="taskAffinity-3">taskAffinity 示意</h3>
+<pre class="bash number-lines"><code>adb shell getprop ro.build.version.release
+# 8.1.0
+
+adb shell dumpsys activity | grep -i &quot;running activities&quot; -A6
+#    Running activities (most recent first):
+#      TaskRecord{a771cb #19 A=cuc.edu.cn U=0 StackId=1 sz=2}
+#        Run #5: ActivityRecord{8e9b1ab u0 cuc.edu.cn/.DisplayMessageActivity t19}
+#        Run #4: ActivityRecord{8ba91c8 u0 cuc.edu.cn/.MainActivity t19}
+#      TaskRecord{b0ed9f0 #11 A=com.android.settings U=0 StackId=1 sz=3}
+#        Run #3: ActivityRecord{6ec9472 u0 com.android.settings/.SubSettings t11}
+#        Run #2: ActivityRecord{f817f74 u0 com.android.settings/.Settings$NetworkDashboardActivity t11}
+
+adb shell dumpsys activity activities | head -n 70
+# ACTIVITY MANAGER ACTIVITIES (dumpsys activity activities)
+# Display #0 (activities from top to bottom):
+#   Stack #1:
+#   mFullscreen=true
+#   isSleeping=false
+#   mBounds=null
+#     Task id #19
+#     mFullscreen=true
+#     mBounds=null
+#     mMinWidth=-1
+#     mMinHeight=-1
+#     mLastNonFullscreenBounds=null
+#     * TaskRecord{a771cb #19 A=cuc.edu.cn U=0 StackId=1 sz=2}
+#       userId=0 effectiveUid=u0a79 mCallingUid=2000 mUserSetupComplete=true mCallingPackage=null
+#       affinity=cuc.edu.cn
+#       intent={act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10000000 cmp=cuc.edu.cn/.MainActivity}
+#       realActivity=cuc.edu.cn/.MainActivity
+#       autoRemoveRecents=false isPersistable=true numFullscreen=2 taskType=0 mTaskToReturnTo=1
+#       rootWasReset=false mNeverRelinquishIdentity=true mReuseTask=false mLockTaskAuth=LOCK_TASK_AUTH_PINNABLE
+#       Activities=[ActivityRecord{8ba91c8 u0 cuc.edu.cn/.MainActivity t19}, ActivityRecord{8e9b1ab u0 cuc.edu.cn/.DisplayMessageActivity t19}]
+#       askedCompatMode=false inRecents=true isAvailable=true
+#       lastThumbnail=null lastThumbnailFile=/data/system_ce/0/recent_images/19_task_thumbnail.png
+#       stackId=1
+#       hasBeenVisible=true mResizeMode=RESIZE_MODE_RESIZEABLE_VIA_SDK_VERSION mSupportsPictureInPicture=false isResizeable=true firstActiveTime=1622768158264 lastActiveTime=1622768169700 (inactive for 54s)
+#       * Hist #1: ActivityRecord{8e9b1ab u0 cuc.edu.cn/.DisplayMessageActivity t19}
+#           packageName=cuc.edu.cn processName=cuc.edu.cn
+#           launchedFromUid=10079 launchedFromPackage=cuc.edu.cn userId=0
+#           app=ProcessRecord{9f97da8 9061:cuc.edu.cn/u0a79}
+#           Intent { cmp=cuc.edu.cn/.DisplayMessageActivity (has extras) }
+#           frontOfTask=false task=TaskRecord{a771cb #19 A=cuc.edu.cn U=0 StackId=1 sz=2}
+#           taskAffinity=cuc.edu.cn
+#           realActivity=cuc.edu.cn/.DisplayMessageActivity
+#           baseDir=/data/app/cuc.edu.cn-qLptM63CTI1Wt0oFxe2RRg==/base.apk
+#           dataDir=/data/user/0/cuc.edu.cn
+#           stateNotNeeded=false componentSpecified=true mActivityType=0
+#           compat={560dpi} labelRes=0x7f0e001b icon=0x7f0c0001 theme=0x7f0f019c
+#           mLastReportedConfigurations:
+#            mGlobalConfig={1.0 310mcc260mnc [en_US] ldltr sw411dp w411dp h659dp 560dpi nrml port finger qwerty/v/v -nav/h appBounds=Rect(0, 0 - 1440, 2392) s.6}
+#            mOverrideConfig={1.0 310mcc260mnc [en_US] ldltr sw411dp w411dp h659dp 560dpi nrml port finger qwerty/v/v -nav/h appBounds=Rect(0, 0 - 1440, 2392) s.6}
+#           CurrentConfiguration={1.0 310mcc260mnc [en_US] ldltr sw411dp w411dp h659dp 560dpi nrml port finger qwerty/v/v -nav/h appBounds=Rect(0, 0 - 1440, 2392) s.6}
+#           taskDescription: iconFilename=null label=&quot;null&quot; primaryColor=ff6200ee
+#             backgroundColor=ffffffff
+#             statusBarColor=ff3700b3
+#             navigationBarColor=ff000000
+#           launchFailed=false launchCount=1 lastLaunchTime=-54s318ms
+#           haveState=false icicle=null
+#           state=RESUMED stopped=false delayedResume=false finishing=false
+#           keysPaused=false inHistory=true visible=true sleeping=false idle=true mStartingWindowState=STARTING_WINDOW_NOT_SHOWN
+#           fullscreen=true noDisplay=false immersive=false launchMode=0
+#           frozenBeforeDestroy=false forceNewConfig=false
+#           mActivityType=APPLICATION_ACTIVITY_TYPE
+#           waitingVisible=false nowVisible=true lastVisibleTime=-53s785ms
+#           resizeMode=RESIZE_MODE_RESIZEABLE_VIA_SDK_VERSION
+#           mLastReportedMultiWindowMode=false mLastReportedPictureInPictureMode=false
+#       * Hist #0: ActivityRecord{8ba91c8 u0 cuc.edu.cn/.MainActivity t19}
+#           packageName=cuc.edu.cn processName=cuc.edu.cn
+#           launchedFromUid=2000 launchedFromPackage=null userId=0
+#           app=ProcessRecord{9f97da8 9061:cuc.edu.cn/u0a79}
+#           Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10000000 cmp=cuc.edu.cn/.MainActivity }
+#           frontOfTask=true task=TaskRecord{a771cb #19 A=cuc.edu.cn U=0 StackId=1 sz=2}
+#           taskAffinity=cuc.edu.cn
+#           realActivity=cuc.edu.cn/.MainActivity
+#           baseDir=/data/app/cuc.edu.cn-qLptM63CTI1Wt0oFxe2RRg==/base.apk
+#           dataDir=/data/user/0/cuc.edu.cn
+#           stateNotNeeded=false componentSpecified=true mActivityType=0
+#           compat={560dpi} labelRes=0x7f0e001b icon=0x7f0c0001 theme=0x7f0f019c
+#           mLastReportedConfigurations:
+#            mGlobalConfig={1.0 310mcc260mnc [en_US] ldltr sw411dp w411dp h659dp 560dpi nrml port finger qwerty/v/v -nav/h appBounds=Rect(0, 0 - 1440, 2392) s.6}
+#            mOverrideConfig={1.0 310mcc260mnc [en_US] ldltr sw411dp w411dp h659dp 560dpi nrml port finger qwerty/v/v -nav/h appBounds=Rect(0, 0 - 1440, 2392) s.6}
+#           CurrentConfiguration={1.0 310mcc260mnc [en_US] ldltr sw411dp w411dp h659dp 560dpi nrml port finger qwerty/v/v -nav/h appBounds=Rect(0, 0 - 1440, 2392) s.6}</code></pre>
+</section>
+<section class="slide level2">
+
+<h3 id="StrandHogg-explained-1">简化版漏洞利用过程</h3>
+<ol type="1">
+<li>包含 <code>StrandHogg</code> 攻击方法的恶意应用被安装到用户手机上</li>
+<li>用户主动打开该恶意应用</li>
+<li>用户通过 <code>Home</code> 键退出应用
+<ul>
+<li>此时恶意应用成功获得在后台运行机会，并将自己置于系统默认的任务堆栈顶部，并监视「目标应用」被打开事件</li>
+</ul></li>
+</ol>
+</section>
+<section class="slide level2">
+
+<h3 id="StrandHogg-explained-2">简化版漏洞利用过程</h3>
+<ol start="4" type="1">
+<li>用户点击打开「目标应用」，但由于 <code>Android</code> 多任务调度机制特性，后台恶意应用可以被唤起到前台
+<ul>
+<li>只要恶意应用伪装成「目标应用」界面，用户无法察觉出自己正在操作的是仿冒应用</li>
+<li>如果用户此时输入用户名密码到界面中控件，则恶意应用就成功实现了数据钓鱼</li>
+<li>如果此时后台恶意应用申请运行时敏感权限（例如读取通讯录、通话历史记录、相册访问等），用户会误以为是「目标应用」在向自己申请授权，大概率会同意授权，实际上是恶意应用得到了授权</li>
+</ul></li>
+</ol>
+</section>
+<section class="slide level2">
+
+<h3 id="简化版界面劫持漏洞原理">简化版界面劫持漏洞原理</h3>
+<p><img data-src="images/chap0x08/activity-phishing.svg" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="漏洞影响范围">漏洞影响范围</h3>
+<ul>
+<li>早在 2017 年就已经被安全公司 <code>Lookout</code> 发现 36 款恶意软件有利用该漏洞进行攻击的事件</li>
+<li>漏洞发现者 <code>Promon</code> 公司的研究人员测试了 <code>Top 500</code> 应用均证明受该漏洞影响
+<ul>
+<li>应用情报公司 <code>42matters</code> 提供的应用排名榜单</li>
+</ul></li>
+<li>无需 root 权限即可利用该漏洞</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="impacts-of-strandhogg-1">漏洞利用可造成的危害</h3>
+<ul>
+<li>界面劫持（实现社工钓鱼）
+<ul>
+<li>盗取用户名和密码</li>
+<li>偷取银行账号</li>
+</ul></li>
+<li>（任务隐藏后）通过权限申请伪装获得敏感数据读取权限
+<ul>
+<li>盗取私人 SMS 信息</li>
+<li>盗取/访问私人照片和文件</li>
+<li>盗录通话内容</li>
+<li>通过手机摄像头和麦克风进行间谍活动</li>
+<li>跟踪受害者的移动和位置</li>
+<li>访问受害者的联系人信息、电话日志、电邮</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="impacts-of-strandhogg-2">界面劫持</h3>
+<p><img data-src="images/chap0x08/StrandHogg-Phishing.jpg" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="impacts-of-strandhogg-3">权限申请伪装</h3>
+<p><img data-src="images/chap0x08/StrandHogg-Permission-Harvesting.jpg" /></p>
+</section>
+<section id="strandhogg-2.0---the-evil-twin" class="slide level2">
+<h2><a href="https://promon.co/strandhogg-2-0/">2020.5.26. StrandHogg 2.0 - The ‘evil twin’</a></h2>
+<ul>
+<li><a href="https://nvd.nist.gov/vuln/detail/CVE-2020-0096">CVE-2020-0096</a> 影响 Android 9/8.1/8.0</li>
+</ul>
+<p><img data-src="images/chap0x08/covid19attack2.jpg" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="strandhogg-2-diffs-1">StrandHogg 2.0 vs. StrandHogg</h3>
+<ul>
+<li><code>StrandHogg 2.0</code> 无法完全依赖于应用商店审核机制发现恶意应用
+<ul>
+<li><code>StrandHogg</code> 会在恶意应用的清单文件中留下明显痕迹
+<ul>
+<li>权限申请伪装：需要声明使用哪些权限，易被静态分析发现（应用商店普遍使用静态分析工具检查「滥用权限」的应用，并限制上架）</li>
+</ul></li>
+<li><code>StrandHogg 2.0</code> 无需在应用清单文件中申请任何特殊权限或设置设置 <code>taskAffinity</code> 属性，而是在代码运行时利用 Java 的反射机制执行恶意代码</li>
+</ul></li>
+</ul>
+</section>
+<section id="d.ta.2-1" class="slide level2">
+<h2>D.TA.2. 安全加固 - StrandHogg</h2>
+<ul>
+<li><code>Google</code> 之所以不认可针对 <code>StrandHogg</code> 为代表的 <code>taskAffinity</code> 属性字段 <strong>滥用</strong> 导致的 <code>UI 欺骗与劫持</code> 风险为有效漏洞，是因为 <code>Google</code> 认为这是一个正常的 <code>feature</code> ，<code>Google</code> 认为开发者无需进行代码级别安全加固（官方自然也不会发布什么代码级别修复补丁，无需代码级别补丁的缺陷报告是不会被 <code>Google</code> 认定为是安全漏洞的），只需要 <strong>应用商店</strong> 在审核应用时对第三方应用设置 <code>taskAffinity</code> 为非自家开发应用时给予禁止上架处理即可
+<ul>
+<li><code>Google</code> 观点：用户只要没有渠道能下载安装包含 <code>StrandHogg</code> 攻击方式的恶意应用，则不存在上述安全风险</li>
+</ul></li>
+</ul>
+</section>
+<section id="d.ta.2-2" class="slide level2">
+<h2>D.TA.2. 安全加固 - StrandHogg</h2>
+<ul>
+<li>在 <code>Android</code> 系统中，<code>taskAffinity</code> 与 <code>launchMode</code> 均为正常的属性，且在 <code>Android</code> 应用中有较多的应用，尤其在第三方插件中使用较为广泛，实际依赖于人工检测工作量肯定太大，必定要依赖于自动化检测程序</li>
+<li>如果 <strong>应用商店</strong> 没有尽到应用安全审查责任或没有相应自动化检测能力，那么用户只能通过 <code>每次启动新应用</code> 之前清理一遍所有后台任务方式来自保了</li>
+<li><a href="https://androidexplained.github.io/security/android/malware/2020/09/23/strandhogg.html">一个可能会影响用户交互体验的第三方代码级别安全加固方案</a> ：在应用清单文件中对欲保护 <code>Activity</code> 设置属性 <code>android:taskAffinity=""</code></li>
+</ul>
+</section>
+<section id="d.ta.2-3" class="slide level2">
+<h2>D.TA.2. 安全加固 - StrandHogg 2.0</h2>
+<ul>
+<li><a href="https://androidexplained.github.io/security/android/malware/2020/09/23/strandhogg.html">一个可能会影响用户交互体验的第三方代码级别安全加固方案</a> ：对每一个可被第三方应用公开调用的 <code>Activity</code> 添加 <code>singleTask</code> 或 <code>singleInstance</code> 属性字段</li>
+<li>依赖于用户升级 <code>Android</code> 系统到不受该漏洞影响版本是从根本上进行安全加固</li>
+</ul>
+</section>
+<section id="可选实验-漏洞复现" class="slide level2">
+<h2>（可选实验） 漏洞复现</h2>
+<ul>
+<li><a href="https://github.com/Ivan-Markovic/Android-Task-Injection">Ivan-Markovic/Android-Task-Injection</a></li>
+<li><a href="https://github.com/BoxFighter/Android-StrandHogg-Vulnerability">BoxFighter/Android-StrandHogg-Vulnerability</a></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="数据安全" class="title-slide slide level1">
+<h1>数据安全</h1>
+
+</section>
+<section id="概述" class="slide level2">
+<h2>概述</h2>
+<ul>
+<li>存储安全</li>
+<li><a href="https://c4pr1c3.github.io/cuc-mis/chap0x06/main.html#%E5%AF%86%E9%92%A5%E5%AD%98%E5%82%A8%E4%B8%8E%E5%AF%86%E7%A0%81%E5%AD%A6%E7%AE%97%E6%B3%95">密钥认证</a></li>
+<li><a href="https://c4pr1c3.github.io/cuc-mis/chap0x06/main.html#%E8%AF%81%E4%B9%A6%E4%B8%8Epki">传输（通信）</a></li>
+<li>ROM 安全</li>
+<li>边信道信息泄露</li>
+</ul>
+</section>
+<section id="数据和文件存储类型" class="slide level2">
+<h2>数据和文件存储类型</h2>
+<ul>
+<li>应用专属存储空间：存储仅供指定应用使用的文件，可以存储到内部存储卷中的专属目录或外部存储空间中的其他专属目录。使用内部存储空间中的目录保存其他应用不应访问的敏感信息</li>
+<li>共享存储：存储应用打算与其他应用共享的文件，包括媒体、文档和其他文件</li>
+<li>偏好设置：以键值对形式存储私有原始数据</li>
+<li>数据库：使用 <code>Room</code> 持久化库将结构化数据存储在专用数据库中</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="存储位置类别">存储位置类别</h3>
+<ul>
+<li>内部存储空间</li>
+<li>外部存储空间
+<ul>
+<li>可移除卷（例如 SD 卡）在文件系统中属于外部存储空间。<code>Android</code> 使用路径（例如 <code>/sdcard</code> ）表示这些存储设备</li>
+</ul></li>
+</ul>
+<blockquote>
+<p>⚠️ 注意：可用于保存文件的确切位置可能因设备而异。因此，请勿使用硬编码的文件路径。</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<h3 id="外部存储安全">外部存储安全</h3>
+<ul>
+<li>在较低版本的 <code>Android</code> 系统中，应用需要声明这些权限才能访问位于外部存储空间中应用专属目录之外的任何文件</li>
+<li>Android 系统的版本越新，就越依赖于文件的用途而不是位置来确定应用对文件的访问能力
+<ul>
+<li>这种基于用途的存储模型可增强用户隐私保护，因为应用只能访问其在设备文件系统中实际使用的区域</li>
+</ul></li>
+</ul>
+<pre class="xml"><code>&lt;!-- API Level &gt;= 19 需要声明以下权限才能读取外部存储空间中的数据 --&gt;
+&lt;!-- API Level &lt; 19  无需声明以下权限就能读取外部存储空间中的数据 --&gt;
+&lt;uses-permission android:name=&quot;android.permission.READ_EXTERNAL_STORAGE &quot;&gt;
+
+&lt;!-- 应用获得了 WRITE_EXTERNAL_STORAGE 授权则自动获得 READ_EXTERNAL_STORAGE 授权 --&gt;
+&lt;uses-permission android:name=&quot;android.permission.WRITE_EXTERNAL_STORAGE&quot;&gt;</code></pre>
+</section>
+<section class="slide level2">
+
+<h3 id="内部存储安全">内部存储安全</h3>
+<ul>
+<li>应用使用内部存储时，数据默认是只能被当前应用访问（基于文件访问权限设置）</li>
+<li>一旦系统被 <code>root</code> 或代码编写错误，受保护数据将被其他程序访问到</li>
+<li>受保护的数据需要开放给第三方应用访问时应优先正确使用 <a href="https://developer.android.com/training/articles/security-tips?hl=zh-cn#ContentProviders">ContentProvider</a> 方式而不是通过对数据文件设置读写权限</li>
+</ul>
+<pre class="java number-lines"><code>try {
+    // 确保该文件被保存到应用专属目录下，且文件属主被设置为应用属主，其他人无法访问
+    FileOutputStream fos = openFileOutput(&quot;config.txt&quot;, MODE_PRIVATE);
+    fors.write(&quot;hello world&quot;.getBytes());
+    fos.close();
+} catch (Exception e) {
+    e.printStackTrace();
+}</code></pre>
+</section>
+<section class="slide level2">
+
+<h3 id="关于存储安全的延伸阅读">关于存储安全的延伸阅读</h3>
+<ul>
+<li><a href="https://developer.android.com/training/articles/security-tips?hl=zh-cn#StoringData">数据存储安全最佳实践</a></li>
+</ul>
+</section>
+<section id="rom-security" class="slide level2">
+<h2>ROM 安全</h2>
+<ul>
+<li>原生 ROM - 直接使用 <code>AOSP</code> 源代码编译出来的系统镜像</li>
+<li>设备厂商定制 ROM - 消费者实际能够购买到的设备基本都是来自设备厂商预装了厂商基于上游 <code>AOSP</code> 源代码修改定制之后的系统</li>
+<li>第三方 ROM - <code>独立于设备厂商的个人或社区团队组织基于 AOSP 代码修改编译出来的系统镜像</code></li>
+</ul>
+<blockquote>
+<p>⚠️ 小心第三方 ROM 内置的后门</p>
+</blockquote>
+</section>
+<section id="边信道信息泄露" class="slide level2">
+<h2>边信道信息泄露</h2>
+<ul>
+<li>日志</li>
+<li>系统剪贴板信息</li>
+<li>URL缓存和浏览器Cookie对象</li>
+<li>第三方统计数据</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="official-android-security-dev" class="title-slide slide level1">
+<h1>官方 Android 安全编码最佳实践</h1>
+
+</section>
+<section id="应用安全编码最佳实践" class="slide level2">
+<h2><a href="https://developer.android.com/topic/security/best-practices">应用安全编码最佳实践</a></h2>
+<ul>
+<li>强制采用安全通信方式</li>
+<li>提供恰当的权限</li>
+<li>安全地存储数据</li>
+<li>确保服务和依赖项处于最新状态</li>
+</ul>
+</section>
+<section id="应用安全性改进计划---asi" class="slide level2">
+<h2><a href="https://developer.android.com/google/play/asi">应用安全性改进计划 - ASI</a></h2>
+<ul>
+<li>App Security Improvement program</li>
+<li><code>Google Play</code> 对已知重要漏洞和缺陷代码模式建立的 <strong>改进指南</strong> 案例库</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="延伸阅读" class="title-slide slide level1">
+<h1>延伸阅读</h1>
+
+</section>
+<section class="slide level2">
+
+<ul>
+<li><a href="https://www.jssec.org/dl/android_securecoding_en/index.html">Android Application Secure Design/Secure Coding Guidebook</a></li>
+</ul>
+</section>
+</section>
+    </div>
+  </div>
+
+  <script src="lib/reveal.js/lib/js/head.min.js"></script>
+  <script src="lib/reveal.js/js/reveal.js"></script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        // Display the page number of the current slide
+        slideNumber: true,
+        // Push each slide change to the browser history
+        history: true,
+        // Transition style
+        transition: 'fade', // none/fade/slide/convex/concave/zoom
+        math: {
+          mathjax: '',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+menu: {
+		// Specifies which side of the presentation the menu will 
+		// be shown. Use 'left' or 'right'.
+		side: 'left',
+
+		// Specifies the width of the menu.
+		// Can be one of the following:
+		// 'normal', 'wide', 'third', 'half', 'full', or
+		// any valid css length value
+		width: 'normal',
+
+		// Add slide numbers to the titles in the slide list.
+		// Use 'true' or format string (same as reveal.js slide numbers)
+		numbers: true,
+
+		// Specifies which slide elements will be used for generating
+		// the slide titles in the menu. The default selects the first
+		// heading element found in the slide, but you can specify any
+		// valid css selector and the text from the first matching
+		// element will be used.
+		// Note: that a section data-menu-title attribute or an element
+		// with a menu-title class will take precedence over this option
+		titleSelector: 'h1, h2, h3, h4, h5, h6',
+
+		// If slides do not have a matching title, attempt to use the
+		// start of the text content as the title instead
+		useTextContentForMissingTitles: false,
+
+		// Hide slides from the menu that do not have a title.
+		// Set to 'true' to only list slides with titles.
+		hideMissingTitles: false,
+
+		// Adds markers to the slide titles to indicate the 
+		// progress through the presentation. Set to 'false'
+		// to hide the markers.
+		markers: true,
+
+		// Specify custom panels to be included in the menu, by
+		// providing an array of objects with 'title', 'icon'
+		// properties, and either a 'src' or 'content' property.
+		custom: false,
+
+		// Specifies the themes that will be available in the themes
+		// menu panel. Set to 'true' to show the themes menu panel
+		// with the default themes list. Alternatively, provide an
+		// array to specify the themes to make available in the
+		// themes menu panel, for example...
+		// [
+		//     { name: 'Black', theme: 'css/theme/black.css' },
+		//     { name: 'White', theme: 'css/theme/white.css' },
+		//     { name: 'League', theme: 'css/theme/league.css' }
+		// ]
+		themes: false,
+
+		// Specifies the path to the default theme files. If your
+		// presentation uses a different path to the standard reveal
+		// layout then you need to provide this option, but only
+		// when 'themes' is set to 'true'. If you provide your own 
+		// list of themes or 'themes' is set to 'false' the 
+		// 'themesPath' option is ignored.
+		themesPath: 'css/theme/',
+
+		// Specifies if the transitions menu panel will be shown.
+		// Set to 'true' to show the transitions menu panel with
+		// the default transitions list. Alternatively, provide an
+		// array to specify the transitions to make available in
+		// the transitions panel, for example...
+		// ['None', 'Fade', 'Slide']
+		transitions: false,
+
+		// Adds a menu button to the slides to open the menu panel.
+		// Set to 'false' to hide the button.
+		openButton: true,
+
+		// If 'true' allows the slide number in the presentation to
+		// open the menu panel. The reveal.js slideNumber option must 
+		// be displayed for this to take effect
+		openSlideNumber: false,
+
+		// If true allows the user to open and navigate the menu using
+		// the keyboard. Standard keyboard interaction with reveal
+		// will be disabled while the menu is open.
+		keyboard: true,
+
+		// Normally the menu will close on user actions such as
+		// selecting a menu item, or clicking the presentation area.
+		// If 'true', the sticky option will leave the menu open
+		// until it is explicitly closed, that is, using the close
+		// button or pressing the ESC or m key (when the keyboard 
+		// interaction option is enabled).
+		sticky: false,
+
+		// If 'true' standard menu items will be automatically opened
+		// when navigating using the keyboard. Note: this only takes 
+		// effect when both the 'keyboard' and 'sticky' options are enabled.
+		autoOpen: true,
+
+		// If 'true' the menu will not be created until it is explicitly
+		// requested by calling RevealMenu.init(). Note this will delay
+		// the creation of all menu panels, including custom panels, and
+		// the menu button.
+		delayInit: false,
+
+		// If 'true' the menu will be shown when the menu is initialised.
+		openOnInit: false,
+
+		// By default the menu will load it's own font-awesome library
+		// icons. If your presentation needs to load a different
+		// font-awesome library the 'loadIcons' option can be set to false
+		// and the menu will not attempt to load the font-awesome library.
+		loadIcons: true
+	},
+
+
+        // Optional reveal.js plugins
+        dependencies: [
+          { src: 'lib/reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'lib/reveal.js/plugin/zoom-js/zoom.js', async: true },
+          { src: 'lib/reveal.js/plugin/math/math.js', async: true },
+          { src: 'lib/reveal.js/plugin/menu/menu.js'},
+          { src: 'lib/reveal.js/plugin/markdown/marked.js'},
+          { src: 'lib/reveal.js/plugin/markdown/markdown.js'},
+          { src: 'lib/reveal.js/plugin/search/search.js'},
+          { src: 'lib/reveal.js/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+          { src: 'lib/reveal.js/plugin/notes/notes.js', async: true },
+        ]
+      });
+    </script>
+    </body>
+</html>

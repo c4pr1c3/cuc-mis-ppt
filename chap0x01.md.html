@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="黄玮">
+  <title>移动互联网安全</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="lib/reveal.js/css/reveal.css">
+  <style type="text/css">code{white-space: pre;}</style>
+
+
+    <!-- For syntax highlighting using highlight.js-->
+    <link rel="stylesheet" href="lib/reveal.js/lib/css/zenburn.css">
+
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+  </style>
+  <link rel="stylesheet" href="lib/reveal.js/css/theme/white.css" id="theme">
+  <!-- Printing and PDF exports -->
+<link rel="stylesheet" media="print" href="lib/reveal.js/css/print/pdf.css" />
+  <script>
+    var link = document.createElement( 'link' );
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = window.location.search.match( /print-pdf/gi ) ? 'lib/reveal.js/css/print/pdf.css' : 'lib/reveal.js/css/print/paper.css';
+    document.getElementsByTagName( 'head' )[0].appendChild( link );
+  </script>
+  <!--[if lt IE 9]>
+  <script src="lib/reveal.js/lib/js/html5shiv.js"></script>
+  <![endif]-->
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide">
+  <h1 class="title">移动互联网安全</h1>
+  <p class="author">黄玮</p>
+</section>
+
+<section>
+<section id="第一章-无线网络安全基础" class="title-slide slide level1">
+<h1>第一章 无线网络安全基础</h1>
+
+</section>
+<section id="提纲" class="slide level2">
+<h2>提纲</h2>
+<ul>
+<li>移动互联网基础</li>
+<li>无线网络基础</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="移动互联网基础" class="title-slide slide level1">
+<h1>移动互联网基础</h1>
+
+</section>
+<section class="slide level2">
+
+<figure>
+<img data-src="images/chap0x01/mobile_net_arch.jpg" alt="" /><figcaption>云管端三层架构</figcaption>
+</figure>
+</section>
+<section class="slide level2">
+
+<figure>
+<img data-src="images/chap0x01/mobile_net_arch-in-class.jpg" alt="" /><figcaption>本课程聚焦</figcaption>
+</figure>
+</section>
+</section>
+<section>
+<section id="无线网络基础" class="title-slide slide level1">
+<h1>无线网络基础</h1>
+
+</section>
+<section class="slide level2">
+
+<ul>
+<li>无线网络是什么？（协议基础）</li>
+<li>无线网络有什么？（设备基础）</li>
+<li>无线网络的路由？（系统基础）</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="无线网络是什么" class="title-slide slide level1">
+<h1>无线网络是什么？</h1>
+
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>Wi-Fi？WLAN？802.11？蓝牙？NFC？</p>
+</blockquote>
+</section>
+<section id="wi-fi" class="slide level2">
+<h2><a href="https://www.wi-fi.org/who-we-are">Wi-Fi</a></h2>
+<blockquote>
+<p>Wi-Fi Alliance® is the worldwide network of companies that brings you Wi-Fi®</p>
+</blockquote>
+<blockquote>
+<p>Our work includes the development of innovative technologies, requirements, and test programs that help ensure Wi-Fi provides users the <strong>interoperability</strong>, security, and reliability they have come to expect.</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p><a href="https://www.cisco.com/c/en/us/products/wireless/what-is-wifi.html">Wi-Fi is not an acronym; it is a <strong>brand name</strong> created by a marketing firm that’s meant to serve as an <strong>interoperability</strong> seal for marketing efforts.</a></p>
+</blockquote>
+</section>
+<section id="wlan" class="slide level2">
+<h2>WLAN</h2>
+<ul>
+<li>Wireless Local Area Networks, 无线局域网</li>
+<li>使用 <code>射频（Radio Frequency, RF）</code> 技术建立的不依赖可见物理传输介质的无线通信局域网络</li>
+</ul>
+</section>
+<section id="无线网络通信协议家谱" class="slide level2">
+<h2>无线网络通信协议家谱</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;">⽆线⽹络类别</th>
+<th style="text-align: center;">IEEE</th>
+<th style="text-align: center;">ITU</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">蜂窝通信（2G, 2.5G）<br/>最后几公⾥, Kbps</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">GSM, CDMA,GPRS,EDGE</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">3G(WMAN)<br/>最后几公里，1~xx Mbps</td>
+<td style="text-align: center;">WiMax(802.16e)</td>
+<td style="text-align: center;">WCDMA(欧洲)<br/>CDMA2000(美国)<br/>TD-SCDMA(中国)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">4G(WMAN)<br/>最后几公里，1~100 Mbps</td>
+<td style="text-align: center;">WiMax(802.16m)</td>
+<td style="text-align: center;">LTE(FDD/TDD)</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">5G<br/>最后1公里，xxxMbps~xxGbps</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">IMT-2020</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">WPAN<br/>10米,Kbps~Mbps</td>
+<td style="text-align: center;">蓝牙(802.15.1)/UWB(802.15.4a)/ZigBee(802.15.4)</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">WLAN<br/>100米,10Mbps~xxGbps</td>
+<td style="text-align: center;">Wi-Fi(802.11)</td>
+<td style="text-align: center;"></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><a href="https://www.itu.int/dms_pubrec/itu-r/rec/m/R-REC-M.2083-0-201509-I!!PDF-E.pdf">IMT: International Mobile Telecommunications</a></p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<h3 id="5g-app">5G 应用场景</h3>
+<p><img data-src="images/chap0x01/5g-app-1.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="5g-kpi">5G 技术关键指标</h3>
+<p><img data-src="images/chap0x01/5g-app-2.png" /></p>
+</section>
+</section>
+<section>
+<section id="ieee-802.11" class="title-slide slide level1">
+<h1>IEEE 802.11</h1>
+
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p><a href="https://ieeexplore.ieee.org/document/7786995">IEEE Standard for Information technology - Telecommunications and information exchange between systems Local and metropolitan area networks—Specific requirements-Part 11: Wireless LAN Medium Access Control (MAC) and Physical Layer (PHY) Specifications</a></p>
+</blockquote>
+</section>
+<section id="arch-of-802.11" class="slide level2">
+<h2>802.11 技术架构</h2>
+<p><img data-src="images/chap0x01/ieee-802.11-2016-arch.png" /></p>
+</section>
+<section id="components-of-802.11" class="slide level2">
+<h2>802.11 技术组件</h2>
+<ul>
+<li>STA</li>
+<li>AP</li>
+<li>Portal</li>
+<li>BSS / IBSS / PBSS</li>
+<li>SS</li>
+<li>ESS</li>
+<li>DS</li>
+<li>802.x LAN</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="wireless-station-sta">Wireless station (STA)</h3>
+<ul>
+<li>可寻址的设备（非固定位置）
+<ul>
+<li>固定地址、可移植地址、动态地址
+<ul>
+<li>⽆线客户端</li>
+<li>⽆线路由器</li>
+<li>⽆线接⼊点</li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="无线介质带来的局域网组网新挑战">无线介质带来的局域网组网新挑战</h3>
+<ul>
+<li>没有可靠的物理层连接质量保障</li>
+<li>拓扑 <strong>动态性</strong> 和 <strong>位置移动性</strong> 更强</li>
+<li>普遍的电池供电：电源管理和低功耗需求</li>
+<li>共享的物理层传输介质：嗅探和中间人劫持风险</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="和-ieee-802-协议-家族的互联互通需求">和 <code>IEEE 802® 协议</code> 家族的互联互通需求</h3>
+<ul>
+<li>logical link control (LLC)：抽象层，解决物理层连接可靠性质量管理</li>
+<li>robust security network association (RSNA)：抽象层，解决共享物理传输介质带来的安全性挑战</li>
+<li><code>IEEE 802.11 QoS</code>：解决 <strong>动态性</strong> 和 <strong>位置移动性</strong> 需求</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="ap">AP</h3>
+<ul>
+<li>Access Point
+<ul>
+<li>STA的⼀种</li>
+<li>对已关联（<code>associated</code>）的 <code>STA</code> 基于⽆线介质（WM, <code>Wireless Medium</code>）提供接⼊分布式服务</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="bss">BSS</h3>
+<ul>
+<li>Basic Service Set
+<ul>
+<li>STA 加⼊的集合</li>
+<li>STA 之间是否可以相互可见（通信）取决于接⼊点设备的配置</li>
+</ul></li>
+<li>BSA: basic service area
+<ul>
+<li>BSS 的覆盖区域</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="ibss">IBSS</h3>
+<ul>
+<li>infrastructure BSS
+<ul>
+<li><code>BSS</code> 默认就是指的的 <code>基础设施 BSS</code> ，<code>IBSS</code> 特指 <code>Independent BSS</code></li>
+<li>⾄少包含 1 个接⼊点（<code>Access Point</code>, AP）</li>
+<li><code>Portal</code>（门户）是可选项
+<ul>
+<li>⽆线服务的逻辑接⼊点，例如学校的⽆线认证页面</li>
+</ul></li>
+</ul></li>
+<li>Independent BSS
+<ul>
+<li>最基本的 IEEE 802.11 局域网</li>
+<li>Ad-hoc</li>
+<li>最少包含 2 个 <code>STA</code></li>
+<li>不支持接⼊分布式系统</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="pbss">PBSS</h3>
+<ul>
+<li>personal BSS</li>
+<li>类似 IBSS ，STA 之间直接通信</li>
+<li>不同于 IBSS
+<ul>
+<li>STA 扮演 <code>PBSS 控制点（PBSS control point, PCP）</code></li>
+<li>仅限 IEEE 802.11ad 协议中定义的 <code>DMG</code> (Directional <strong>multi-gigabit</strong>) 客户端
+<ul>
+<li>使用 <code>60GHz</code> 频谱资源，也可使用 2.4G/5G 频谱</li>
+<li>有效通信距离小于5米</li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="mbss">MBSS</h3>
+<ul>
+<li>Mesh BSS, IEEE 802.11s</li>
+<li>一个典型的 MBSS 是由 <code>AP</code> 同时扮演 <code>BSS</code> 中的数据转发者和另一个 <code>BSS</code> 中的客户端，从而实现跨 BSS 的通信、多物理 AP 组成一个 <code>ESS</code></li>
+<li>相对固定的分布式基础设施模式无线网络</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="ss">SS</h3>
+<ul>
+<li>Station Service（站点服务）</li>
+<li>在⼀个指定BSS内提供 <code>数据链路层通信</code> 服务
+<ul>
+<li>支持在 BSS 内不同 STA 之间传输 <code>MSDU</code> 的服务集合
+<ul>
+<li>MSDU: medium access control (<strong>M</strong>AC) <strong>S</strong>ervice <strong>D</strong>ata <strong>U</strong>nits</li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="ess">ESS</h3>
+<ul>
+<li>Extended Service Set（扩展服务集合）</li>
+<li>物理上独立的 <code>BSS</code> 组成的⼀个逻辑上的独立服务集合
+<ul>
+<li>使用相同的ESSID</li>
+<li>⽆线热点扩展
+<ul>
+<li>CUC-WiFi、CUC-Guest、CMCC、ChinaNet …</li>
+</ul></li>
+<li>支持漫游</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="ds-dss">DS / DSS</h3>
+<ul>
+<li>Distribution System （分布式系统）
+<ul>
+<li>增加 <code>BSS</code> 的覆盖范围（面积）</li>
+<li>又被称为 <code>WDS</code>（Wireless DS）</li>
+</ul></li>
+<li>Distribution System Service (DSS)</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="x-lan">802.x LAN</h3>
+<ul>
+<li>802.3: wired local area network
+<ul>
+<li>以太网使用双绞线作为传输媒介</li>
+<li>在没有中继的情况下，最远可以覆盖 200 米的范围</li>
+<li>支持数据传输速率范围：100Mbps ~ 10Gbps</li>
+</ul></li>
+<li>802.11: wireless local area network
+<ul>
+<li>802.11a/b/g/n/ac/ad/ax</li>
+<li>802.11i</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h4 id="ieee-802-家族主要协议对应-osi-模型归属关系">IEEE 802 家族主要协议对应 OSI 模型归属关系</h4>
+<p><img data-src="images/chap0x01/IEEE_802_family.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="ieee-802.11-家族协议历史">IEEE 802.11 家族协议历史</h3>
+<p><img data-src="images/chap0x01/802.11.timeline.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="ieee-802.11g-第1-14信道的频谱屏蔽范围定义">IEEE 802.11g 第1-14信道的频谱屏蔽范围定义</h3>
+<p><img data-src="images/chap0x01/802.11.2.4.svg.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="wi-fi-世代与-ieee-802.11-家族">Wi-Fi 世代与 IEEE 802.11 家族</h3>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Wi-Fi 世代</th>
+<th style="text-align: center;">发布时间</th>
+<th style="text-align: center;">IEEE 版本</th>
+<th style="text-align: center;">频谱</th>
+<th style="text-align: center;">理论最大传输速率</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">Wi-Fi 1 (非官方）</td>
+<td style="text-align: center;">1999</td>
+<td style="text-align: center;">802.11b</td>
+<td style="text-align: center;">2.4GHz</td>
+<td style="text-align: center;">11Mbps</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">Wi-Fi 2 (非官方）</td>
+<td style="text-align: center;">1999</td>
+<td style="text-align: center;">802.11a</td>
+<td style="text-align: center;">5GHz</td>
+<td style="text-align: center;">54Mbps</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">Wi-Fi 3 (非官方）</td>
+<td style="text-align: center;">2003</td>
+<td style="text-align: center;">802.11g</td>
+<td style="text-align: center;">2.4GHz</td>
+<td style="text-align: center;">54Mbps</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">Wi-Fi 4</td>
+<td style="text-align: center;">2009</td>
+<td style="text-align: center;">802.11n</td>
+<td style="text-align: center;">2.4GHz &amp;&amp; 5GHz（可选）</td>
+<td style="text-align: center;">600Mbps</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">Wi-Fi 5</td>
+<td style="text-align: center;">2014</td>
+<td style="text-align: center;">802.11ac</td>
+<td style="text-align: center;">5GHz</td>
+<td style="text-align: center;">≈7Gbps</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">Wi-Fi 6</td>
+<td style="text-align: center;">2021</td>
+<td style="text-align: center;">802.11ax</td>
+<td style="text-align: center;">2.4GHz &amp;&amp; 5GHz</td>
+<td style="text-align: center;">≈10Gbps</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">WiGig</td>
+<td style="text-align: center;">2012</td>
+<td style="text-align: center;">802.11ad</td>
+<td style="text-align: center;">60GHz</td>
+<td style="text-align: center;">≈7Gbps</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section class="slide level2">
+
+<h3 id="bssid">BSSID</h3>
+<ul>
+<li><code>BSS</code> 模式下是 <code>AP</code> 的 <code>MAC 地址</code></li>
+<li>对于 <code>IBSS</code> 来说是随机的 <code>MAC 地址</code></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="essid-1">ESSID</h3>
+<ul>
+<li>⼀般简称为 <code>SSID</code> ，⽆线⽹络的接⼊唯⼀标识
+<ul>
+<li>仅作为⼀种声明</li>
+<li><font color="red">可任意声明（伪造）</font></li>
+</ul></li>
+<li>STA 与 AP 关联（<code>Associate</code>）使用的标识</li>
+<li>区分⼤小写、2-32 字节</li>
+<li>单个 AP 可以支持多个 ESSID
+<ul>
+<li>取决于设备与系统的支持情况</li>
+<li>常见的：客⼈⽹络</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="essid-2">ESSID</h3>
+<ul>
+<li>取消 SSID ⼴播 / 隐藏 SSID
+<ul>
+<li>客户端不能“主动发现”</li>
+<li>并不能增强⽆线⽹络安全性
+<ul>
+<li>且听第三章分解</li>
+</ul></li>
+</ul></li>
+<li>构建 ESS 时，所有的 BSS 必须使用相同的 ESSID</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="why-bssid">为什么需要 BSSID</h3>
+<ul>
+<li>增强识别 BSS 的准确性</li>
+<li>同名 ESSID 时，通过 BSSID 区分不同的 BSS</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="工作模式">802.11 工作模式</h3>
+<ul>
+<li>基础设施
+<ul>
+<li>BSS / ESS / MBSS</li>
+</ul></li>
+<li>Ad-Hoc
+<ul>
+<li>IBSS / PBSS</li>
+</ul></li>
+<li>监听（monitor）模式
+<ul>
+<li>第⼆章讲解</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="关联过程无加密开放认证">802.11 关联过程（无加密，开放认证）</h3>
+<p><img data-src="images/chap0x01/802.11.open.association.png" /></p>
+<blockquote>
+<p>可选步骤，AP 如果开启了 SSID ⼴播，则 STA 可以通过 <code>beacon frame</code> 得到认证相关信息</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<h3 id="wireshark-抓包分析实例">Wireshark 抓包分析实例</h3>
+<p><img data-src="images/chap0x01/cuc.open.association.demo.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="无线网络连接状态实例">无线网络连接状态实例</h3>
+<p><img data-src="images/chap0x01/wifi5-ex.png" /></p>
+<blockquote>
+<p>如图所示的信号来自于位置相近的 2 台无线路由器，可见 2.4GHz 无线信号穿墙效果好于 5GHz 无线信号</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<h3 id="sta-join-ap-1">STA 加⼊（关联）AP 的策略</h3>
+<ul>
+<li>历史关联记录优先</li>
+<li>先发现，先关联</li>
+<li>信号强度⾼者优先
+<ul>
+<li><code>RSSI</code>：received signal strength indicator
+<ul>
+<li>接收信号的强度指示，负值</li>
+<li>RSS = 10*lgP ，P 是接收到的信号功率，⼀般以 1mW 作为分母</li>
+</ul></li>
+<li>dBm：功率绝对值，0 表示最强，越近 0 功率值越大
+<ul>
+<li>对于 RSSI 来说，高 dBm 意味着更好的接收效果</li>
+<li>对于噪声值来说，高 dBm 意味着更强的干扰</li>
+</ul></li>
+<li>dB：功率相对值</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="sta-join-ap-2">STA 加⼊（关联）AP 的策略</h3>
+<ul>
+<li>（常见可选）应用层连接质量检查
+<ul>
+<li>检测当前无线网络是否可以访问预置受信任网络服务：预防网络劫持和投毒</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="cts-rssi">抓包结果中的信号强度值实例</h3>
+<p><img data-src="images/chap0x01/cts.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="rssi-variation">抓包结果中的信号强度值实例</h3>
+<p><img data-src="images/chap0x01/rssi_sample.png" /></p>
+</section>
+</section>
+<section>
+<section id="无线网络设备基础" class="title-slide slide level1">
+<h1>无线网络设备基础</h1>
+
+</section>
+<section id="无线网络有什么" class="slide level2">
+<h2>无线网络有什么？</h2>
+<ul>
+<li>AP？路由器？热点？</li>
+<li>上⽹卡？电⼒猫？3G？4G？5G?</li>
+<li>⼿机？平板？笔记本？台式机？空调？插座？WiFi-SD 卡？</li>
+</ul>
+</section>
+<section id="常见术语与概念" class="slide level2">
+<h2>常见术语与概念</h2>
+<ul>
+<li>（⽹卡）芯片</li>
+<li>厂商</li>
+<li>驱动程序</li>
+<li>ROM / Flash</li>
+<li>RAM / 内存</li>
+<li>天线</li>
+</ul>
+</section>
+<section id="good-usb-dongle" class="slide level2">
+<h2>支持本课程实验的常见 USB 无线网卡</h2>
+<ul>
+<li><a href="https://c4pr1c3.github.io/cuc-mis/chap0x02/wifi_card_list.html">已验证支持网卡清单</a>
+<ul>
+<li><a href="https://c4pr1c3.github.io/cuc-mis/chap0x02/rt3572l_explained.html">结合 iw phy 输出参数详解无线网卡硬件特性</a></li>
+</ul></li>
+<li>支持无线数据帧 <code>自定义接收</code>： <strong>嗅探</strong> （<code>monitor</code>）</li>
+<li>支持无线数据帧 <code>自定义发送</code>： <strong>注入</strong> （<code>frame injection</code>）
+<ul>
+<li>网卡进入 <code>monitor</code> 模式之后使用 <code>aireplay-ng --test wlan0</code> 测试</li>
+</ul></li>
+<li>支持工作在 AP 模式</li>
+</ul>
+<p><img data-src="images/chap0x01/injection-test.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="常用-usb-无线网卡信息调试指令kali">常用 USB 无线网卡信息调试指令（Kali）</h3>
+<pre class="bash"><code># 查看物理网卡的硬件和软件特性支持情况
+iw phy
+iw list
+
+# 查看 USB 端口上已连接设备基本信息
+lsusb
+
+# 查看USB设备所使用的驱动信息及其他详细信息（即使系统没有支持当前无线网卡的驱动程序，但通过该命令可以看到所有连接成功的USB设备）
+lsusb -v
+
+# 以树形结构打印输出USB设备基本信息及其驱动加载情况
+lsusb -t
+
+# 查看PCI接口设备所使用驱动的详细信息
+lspci -k
+
+# 查看硬件驱动和配置详细信息
+# 需要手工安装： apt-get install lshw
+lshw
+
+# 简要模式打印输出设备中的所有硬件设备及其对应驱动信息
+lshw -short
+
+# 上一条命令输出结果里的class字段标识的设备类型，在此处可以作为筛选条件过滤输出结果
+lshw -class bus
+
+
+# 查看所有无线网卡的接口标识信息
+iw dev
+
+# 查看最近加载的（硬件）驱动日志信息
+dmesg</code></pre>
+</section>
+<section id="常见网卡芯片厂商名单" class="slide level2">
+<h2>常见网卡芯片厂商名单</h2>
+<p><img data-src="images/chap0x01/wifi-nwcard-vendors.png" /></p>
+</section>
+<section id="以-atheros-ar9271-为例" class="slide level2">
+<h2>以 <a href="https://deviwiki.com/wiki/Atheros_AR9271">Atheros AR9271</a> 为例</h2>
+<ul>
+<li>查询 <a href="https://deviwiki.com/wiki/Atheros_AR9271#Properties">支持硬件属性</a></li>
+<li>查询 <a href="https://deviwiki.com/wiki/Atheros_AR9271#Linux_support">Linux 不同发行版的 <strong>驱动支持</strong> 情况</a></li>
+<li>查询 <a href="https://deviwiki.com/wiki/Atheros_AR9271#Table_of_Systems">哪些设备使用该网卡控制芯片</a></li>
+</ul>
+</section>
+<section id="天线antenna" class="slide level2">
+<h2>天线（Antenna）</h2>
+<ul>
+<li>⽆源器件</li>
+<li>通过控制信号发射的角度，来获得信号“增益”
+<ul>
+<li>信号的总能量由 AP 决定</li>
+<li>天线决定信号如何传播出去
+<ul>
+<li>全向（Omni）天线：覆盖角度大，能量聚集度低，覆盖距离短。适用于室内环境</li>
+<li>定向（directional）天线：覆盖角度小，能量聚集度高，覆盖距离长。适用于户外环境</li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="无线网络系统基础" class="title-slide slide level1">
+<h1>无线网络系统基础</h1>
+
+</section>
+<section id="知名的路由器操作系统" class="slide level2">
+<h2>知名的路由器操作系统</h2>
+<ul>
+<li><a href="https://openwrt.org/">OpenWrt</a></li>
+<li><a href="https://dd-wrt.com/">dd-wrt</a></li>
+<li><a href="http://www.polarcloud.com/tomato">Tomato</a></li>
+<li><a href="https://mikrotik.com/software">RouterOS</a></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="openwrt">OpenWrt</h3>
+<ul>
+<li>基于 GNU/Linux 的嵌⼊式设备（主要是⽆线路由器）操作系统，采用 GNU GPLv2 授权协议</li>
+<li><a href="https://openwrt.org/toh/start">官⽅硬件兼容性表格</a> 列举了超过 1600 种市面上的⽆线路由器（数据统计截止：2020-12）</li>
+<li><a href="https://c4pr1c3.github.io/cuc-mis/chap0x01/exp.html#openwrt-on-virtualbox">在 VirtualBox 中体验 OpenWrt</a></li>
+<li>一段分分合合的小插曲
+<ul>
+<li>2016 年 OpenWrt 中的一部分开发者因「开发理念不同」基于主干代码创建了一个新分支项目 LEDE ，主打「稳定性」、「规律的版本发布周期」和「透明决策机制」</li>
+<li>2018 年 1 月，LEDE 开发小组成员和 OpenWrt 开发小组成员达成和解，LEDE 项目重新回归 OpenWrt 社区，终止 LEDE 项目</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="dd-wrt-1">DD-WRT</h3>
+<ul>
+<li>用于⽆线路由器的的第三⽅固件，采用 GPL 协议，支持基于 Broadcom 或 Atheros 芯片参考设计的许多 IEEE 802.11a/b/g/n ⽆线路由器</li>
+<li>固件是由 BrainSlayer 来维护的，放在 dd-wrt.com
+<ul>
+<li>DD-WRT 的第⼀个版本基于Sveasoft Inc 公司的 Alchemy 开发出来的, ⽽Alchemy 又是基于 GPL 的 Linksys固件及许多其它开源程序</li>
+<li>由于后来⼈们需要向 Sveasoft 支付 20 美元才能下载 Alchemy 固件，直接的后果就是发展出了 DD-WRT</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="dd-wrt-2">DD-WRT</h3>
+<ul>
+<li>DD-WRT 的新版本 (v24) 是⼀个全新的项目
+<ul>
+<li>DD-WRT 提供了在 OEM 固件，甚⾄ Sveasoft 收费的固件中没有的⾼级特性</li>
+<li>此外它去除了 Sveasoft 固件的产品激活和跟踪功能。</li>
+</ul></li>
+<li><a href="https://wiki.dd-wrt.com/wiki/index.php/Supported_Devices">官⽅支持设备列表</a></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="tomato">tomato</h3>
+<ul>
+<li>以 HyperWRT 为基础的⽆线路由器固件，支持的路由器型号较少，如下：
+<ul>
+<li>Linksys WRT54GL v1.x, WRT54G v1-v4, WRT54GS v1-v4, WRTSL54GS (no USB support)</li>
+<li>Buffalo WHR-G54S, WHR-HP-G54, WZR-G54, WBR2-G54, WBR-G54, WZR-HP-G54, WZR-RS-G54, WZR-RS-G54HP, WVR-G54-NF, WHR2-A54-G54, WHR3-AG54</li>
+<li>Asus WL520GU (no USB support), WL500G Premium (no USB support), WL500GE</li>
+<li>Sparklan WX6615GT, Fuji RT390W, Microsoft MN-700</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="routeros">RouterOS</h3>
+<ul>
+<li>MikroTik 公司基于 Linux 内核开发的路由器操作系统，可以安装在其私有硬件产品 <code>RouterBOARD</code> 系列或标准 <code>x86 计算机</code></li>
+<li><code>RouterBOARD</code> 系列设备在出厂时即预置了RouterOS产品授权秘钥</li>
+<li>PC 设备安装 RouterOS 需要额外获取授权秘钥，授权等级见 <a href="https://wiki.mikrotik.com/wiki/Manual:License%23License_Levels">官⽅ Wiki</a></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="本章小结" class="title-slide slide level1">
+<h1>本章小结</h1>
+
+</section>
+<section class="slide level2">
+
+<ul>
+<li>无线网络和 IEEE 802.11 协议家族之间的关系</li>
+<li>基于 IEEE 802.11 构建的无线网络的基本组件</li>
+<li>无线网络设备基础（无线网卡和无线接入设备）：如何选购符合本课程实验要求的无线网卡</li>
+<li><strong>课后作业</strong> 在虚拟机中安装 OpenWrt ，搭建「无线软路由」，为第二章学习准备好「无线 AP」实验环境
+<ul>
+<li><a href="exp/chap0x01/setup-vm.sh">macOS 上可用的一键下载并安装好 OpenWrt 19.07.5 虚拟机环境脚本，注意先检查脚本代码和注释，理解后再执行</a></li>
+</ul></li>
+</ul>
+</section>
+</section>
+    </div>
+  </div>
+
+  <script src="lib/reveal.js/lib/js/head.min.js"></script>
+  <script src="lib/reveal.js/js/reveal.js"></script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        // Display the page number of the current slide
+        slideNumber: true,
+        // Push each slide change to the browser history
+        history: true,
+        // Transition style
+        transition: 'fade', // none/fade/slide/convex/concave/zoom
+        math: {
+          mathjax: '',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+menu: {
+		// Specifies which side of the presentation the menu will 
+		// be shown. Use 'left' or 'right'.
+		side: 'left',
+
+		// Specifies the width of the menu.
+		// Can be one of the following:
+		// 'normal', 'wide', 'third', 'half', 'full', or
+		// any valid css length value
+		width: 'normal',
+
+		// Add slide numbers to the titles in the slide list.
+		// Use 'true' or format string (same as reveal.js slide numbers)
+		numbers: true,
+
+		// Specifies which slide elements will be used for generating
+		// the slide titles in the menu. The default selects the first
+		// heading element found in the slide, but you can specify any
+		// valid css selector and the text from the first matching
+		// element will be used.
+		// Note: that a section data-menu-title attribute or an element
+		// with a menu-title class will take precedence over this option
+		titleSelector: 'h1, h2, h3, h4, h5, h6',
+
+		// If slides do not have a matching title, attempt to use the
+		// start of the text content as the title instead
+		useTextContentForMissingTitles: false,
+
+		// Hide slides from the menu that do not have a title.
+		// Set to 'true' to only list slides with titles.
+		hideMissingTitles: false,
+
+		// Adds markers to the slide titles to indicate the 
+		// progress through the presentation. Set to 'false'
+		// to hide the markers.
+		markers: true,
+
+		// Specify custom panels to be included in the menu, by
+		// providing an array of objects with 'title', 'icon'
+		// properties, and either a 'src' or 'content' property.
+		custom: false,
+
+		// Specifies the themes that will be available in the themes
+		// menu panel. Set to 'true' to show the themes menu panel
+		// with the default themes list. Alternatively, provide an
+		// array to specify the themes to make available in the
+		// themes menu panel, for example...
+		// [
+		//     { name: 'Black', theme: 'css/theme/black.css' },
+		//     { name: 'White', theme: 'css/theme/white.css' },
+		//     { name: 'League', theme: 'css/theme/league.css' }
+		// ]
+		themes: false,
+
+		// Specifies the path to the default theme files. If your
+		// presentation uses a different path to the standard reveal
+		// layout then you need to provide this option, but only
+		// when 'themes' is set to 'true'. If you provide your own 
+		// list of themes or 'themes' is set to 'false' the 
+		// 'themesPath' option is ignored.
+		themesPath: 'css/theme/',
+
+		// Specifies if the transitions menu panel will be shown.
+		// Set to 'true' to show the transitions menu panel with
+		// the default transitions list. Alternatively, provide an
+		// array to specify the transitions to make available in
+		// the transitions panel, for example...
+		// ['None', 'Fade', 'Slide']
+		transitions: false,
+
+		// Adds a menu button to the slides to open the menu panel.
+		// Set to 'false' to hide the button.
+		openButton: true,
+
+		// If 'true' allows the slide number in the presentation to
+		// open the menu panel. The reveal.js slideNumber option must 
+		// be displayed for this to take effect
+		openSlideNumber: false,
+
+		// If true allows the user to open and navigate the menu using
+		// the keyboard. Standard keyboard interaction with reveal
+		// will be disabled while the menu is open.
+		keyboard: true,
+
+		// Normally the menu will close on user actions such as
+		// selecting a menu item, or clicking the presentation area.
+		// If 'true', the sticky option will leave the menu open
+		// until it is explicitly closed, that is, using the close
+		// button or pressing the ESC or m key (when the keyboard 
+		// interaction option is enabled).
+		sticky: false,
+
+		// If 'true' standard menu items will be automatically opened
+		// when navigating using the keyboard. Note: this only takes 
+		// effect when both the 'keyboard' and 'sticky' options are enabled.
+		autoOpen: true,
+
+		// If 'true' the menu will not be created until it is explicitly
+		// requested by calling RevealMenu.init(). Note this will delay
+		// the creation of all menu panels, including custom panels, and
+		// the menu button.
+		delayInit: false,
+
+		// If 'true' the menu will be shown when the menu is initialised.
+		openOnInit: false,
+
+		// By default the menu will load it's own font-awesome library
+		// icons. If your presentation needs to load a different
+		// font-awesome library the 'loadIcons' option can be set to false
+		// and the menu will not attempt to load the font-awesome library.
+		loadIcons: true
+	},
+
+
+        // Optional reveal.js plugins
+        dependencies: [
+          { src: 'lib/reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'lib/reveal.js/plugin/zoom-js/zoom.js', async: true },
+          { src: 'lib/reveal.js/plugin/math/math.js', async: true },
+          { src: 'lib/reveal.js/plugin/menu/menu.js'},
+          { src: 'lib/reveal.js/plugin/markdown/marked.js'},
+          { src: 'lib/reveal.js/plugin/markdown/markdown.js'},
+          { src: 'lib/reveal.js/plugin/search/search.js'},
+          { src: 'lib/reveal.js/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+          { src: 'lib/reveal.js/plugin/notes/notes.js', async: true },
+        ]
+      });
+    </script>
+    </body>
+</html>
