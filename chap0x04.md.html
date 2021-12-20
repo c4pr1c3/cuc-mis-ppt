@@ -1,0 +1,1766 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="黄玮">
+  <title>移动互联网安全</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="lib/reveal.js/css/reveal.css">
+  <style type="text/css">code{white-space: pre;}</style>
+
+
+    <!-- For syntax highlighting using highlight.js-->
+    <link rel="stylesheet" href="lib/reveal.js/lib/css/zenburn.css">
+
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+  </style>
+  <link rel="stylesheet" href="lib/reveal.js/css/theme/white.css" id="theme">
+  <!-- Printing and PDF exports -->
+<link rel="stylesheet" media="print" href="lib/reveal.js/css/print/pdf.css" />
+  <script>
+    var link = document.createElement( 'link' );
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = window.location.search.match( /print-pdf/gi ) ? 'lib/reveal.js/css/print/pdf.css' : 'lib/reveal.js/css/print/paper.css';
+    document.getElementsByTagName( 'head' )[0].appendChild( link );
+  </script>
+  <!--[if lt IE 9]>
+  <script src="lib/reveal.js/lib/js/html5shiv.js"></script>
+  <![endif]-->
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide">
+  <h1 class="title">移动互联网安全</h1>
+  <p class="author">黄玮</p>
+</section>
+
+<section>
+<section id="第四章-移动通信与物联网安全概述" class="title-slide slide level1">
+<h1>第四章 移动通信与物联网安全概述</h1>
+
+</section>
+<section id="温故" class="slide level2">
+<h2>温故</h2>
+<ul>
+<li>WPA/WPA2/WPA3 个人版和企业版面临的安全威胁主要有哪些
+<ul>
+<li>无线网络全生命周期不同阶段面临的不同威胁</li>
+</ul></li>
+<li><code>Evil Twin</code> 和 <code>Rogue AP</code> 是无线网络威胁顽疾</li>
+<li><code>WPA2</code> —&gt; <code>WPA3</code> 演进过渡阶段，降级攻击是新安全机制的主要威胁</li>
+<li>对于个人版无线网络安全协议来说，口令安全是重中之重</li>
+<li>对于企业版无线网络安全协议来说，<code>802.1X</code> 配置、用户安全意识教育是重中之重</li>
+</ul>
+</section>
+<section id="知新" class="slide level2">
+<h2>知新</h2>
+<ul>
+<li>移动通信安全的昨天、今天和明天</li>
+<li>物联网威胁模型</li>
+<li>蓝牙安全案例</li>
+<li>“智能”硬件安全案例</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="移动通信安全的昨天今天和明天" class="title-slide slide level1">
+<h1>移动通信安全的昨天、今天和明天</h1>
+
+</section>
+<section id="移动通信极简史" class="slide level2">
+<h2>移动通信极简史</h2>
+<ul>
+<li>1G/2G/3G/4G/5G 中的 G : Generation ，第几 <strong>代</strong> 移动通信技术，属于人为定义</li>
+<li>每 10 年左右更新迭代一个大版本</li>
+<li>当前 2021 年进行中的是 5G 通信技术</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="generation-1">第一代移动通信技术</h3>
+<ul>
+<li>1986 年，第一代移动通讯系统（1G）在美国芝加哥诞生，采用 <strong>模拟</strong> 信号传输</li>
+<li>1G 通信技术并没有实现全球统一标准
+<ul>
+<li>全球主要有 2 种制式：美洲的 <code>AMPS</code> 和来自欧洲的 <code>TACS</code></li>
+</ul></li>
+<li>传输容量小，仅能传输语音信号和少量文本短信，且话音质量低、安全性差（串号和盗号事件时有发生）</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="generation-2">第二代移动通信技术</h3>
+<ul>
+<li>1994 年，前中国邮电部长吴基传用诺基亚 2110 拨通了中国移动通信史上第一个 GSM 电话，中国开始进入 <code>2G</code> 时代</li>
+<li>依然没有全球统一标准化组织的统一标准
+<ul>
+<li>全球主要的制式也是 2 种，分别是来自欧洲 <code>ETSI</code> 组织的 <code>GSM(GPRS/EDGE)</code> 和来自美洲以高通公司为主力的 <code>TIA</code> 组织的 <code>CDMA IS95/CDMA2000 1x</code></li>
+</ul></li>
+<li>手机首次实现上网，但带宽极其有限（9.6~14.4kb/s）。GPRS/EDGE 等 2.5G 技术使得传输带宽提升到了 64kb/s</li>
+<li>虽然协议设计支持加密技术，但在市场化实现时普遍未开启加密功能</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="经典的-2g时代-漏洞">经典的 <code>2G时代</code> 漏洞</h3>
+<ul>
+<li>伪基站
+<ul>
+<li>只有基站认证用户，缺少用户对基站的认证
+<ul>
+<li><code>WPA-个人</code> 同样也是此类单向认证，因此饱受 <code>Evil Twin</code> 危害</li>
+</ul></li>
+</ul></li>
+<li>明文网络传输链路
+<ul>
+<li>监听</li>
+<li>（匿名）查询HLR/AuC</li>
+</ul></li>
+<li><span class="math inline"><em>K</em><sub><em>c</em></sub></span> 更新周期太长
+<ul>
+<li>算法和 <span class="math inline"><em>K</em><sub><em>i</em></sub></span> 均存储在 <code>SIM</code> 卡中，存在复制 <code>SIM</code> 卡的风险</li>
+</ul></li>
+</ul>
+<blockquote>
+<p>更多内容（包括3G/4G安全概述）请查阅 <a href="https://c4pr1c3.github.io/cuc-wiki/courses/2017/misLecture0x04.pdf">2017版课件</a></p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<h3 id="generation-3">第三代移动通信技术</h3>
+<ul>
+<li>1996 年在 <code>ITU</code> 带领下，建立了全球 <code>3G</code> 技术标准框架：<code>IMT-2000</code>，并明确命名了 <code>4G</code> 技术标准框架：<code>IMT-Advanced</code> ，<code>5G</code> 技术标准框架：<code>IMT-2020</code></li>
+<li>1998 年 <code>3GPP</code> 成立，在其主导下制定了全球 3G 技术主要标准和后续的 4G, 5G 技术标准</li>
+<li>2007 年乔布斯发布 <code>iPhone</code> ，智能手机时代到来</li>
+<li>CDMA 2000, WCDMA, TD-SCDMA, WiMax 等一度同台竞技</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="generation-4">第四代移动通信技术</h3>
+<ul>
+<li>全球统一的 <code>LTE(Long Term Evolution)</code> 技术标准</li>
+<li>2013 年 12 月，工信部向我国三大电信运营商颁发了 TD-LTE 经营许可，标志我国的 4G 商用时代开始</li>
+<li>以 <code>iPhone</code> 为代表的智能终端设备的全球快速普及促使移动通信技术发展方向进一步聚焦
+<ul>
+<li>移动网络用于传送数据，移动终端集成一切电子设备</li>
+</ul></li>
+<li>2009 年，物联网概念出现，且终端数量增长速度远远超过了移动互联网终端</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="第五代通信技术" class="title-slide slide level1">
+<h1>第五代通信技术</h1>
+
+</section>
+<section id="第五代移动通信技术愿景" class="slide level2">
+<h2>第五代移动通信技术愿景</h2>
+<blockquote>
+<p>信息随心至，万物触手及</p>
+</blockquote>
+</section>
+<section id="generation-5-1" class="slide level2">
+<h2>应用场景</h2>
+<p><img data-src="images/chap0x01/5g-app-1.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="g-三大应用场景">5G 三大应用场景</h3>
+<ul>
+<li>增强移动宽带：eMBB (enhanced Mobile Broadband)</li>
+<li>海量机器通信：mMTC (massive Machine Type Communications
+<ul>
+<li>专门针对物联网场景的适配</li>
+</ul></li>
+<li>超可靠低时延通信：URLLC (Ultra Reliable Low Latency Communications)</li>
+</ul>
+</section>
+<section id="generation-5-2" class="slide level2">
+<h2>关键指标改善</h2>
+<p><img data-src="images/chap0x01/5g-app-2.png" /></p>
+</section>
+<section id="net-arch-of-5g" class="slide level2">
+<h2>5G 网络架构</h2>
+<p><a href="http://www.caict.ac.cn/kxyj/qwfb/bps/202002/P020200204353105445429.pdf"><img data-src="images/chap0x04/5g-net-arch.png" /></a></p>
+</section>
+<section id="第五代移动通信技术的关键特征" class="slide level2">
+<h2>第五代移动通信技术的关键特征</h2>
+<ul>
+<li>软件定义一切
+<ul>
+<li>服务化架构</li>
+<li>网络功能虚拟化（NFV）</li>
+<li>网络（拓扑）切片：基于软件定义网络（SDN）技术，在共享资源上实现逻辑隔离</li>
+<li>边缘计算：分布式节点的安全管控</li>
+<li>网络能力开放</li>
+<li>可按需扩展的接入网关键技术</li>
+</ul></li>
+</ul>
+</section>
+<section id="第五代移动通信技术的网络与系统安全面临的风险关键特征" class="slide level2">
+<h2>第五代移动通信技术的网络与系统安全面临的风险关键特征</h2>
+<ul>
+<li>继承了以虚拟化为代表的软件与系统安全风险</li>
+<li>继承了 IP 网络、云计算相关安全风险</li>
+<li>继承了以物联网为代表的分布式功耗敏感型计算架构的安全风险</li>
+<li>继承了以互联网为代表的开放服务安全风险</li>
+</ul>
+</section>
+<section id="第五代移动通信技术安全框架" class="slide level2">
+<h2>第五代移动通信技术安全框架</h2>
+<ul>
+<li>5G 继承了 4G 网络分层分域的安全架构
+<ul>
+<li>分层：传送层、归属层/服务层和应用层，各层间相互隔离</li>
+<li>分域：接入域安全、网络域安全、用户域安全、应用域安全、服务域安全、安全可视化和配置安全六个域
+<ul>
+<li>其中，服务域安全是 5G 安全框架新增</li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section id="sec-enhancements-of-5g-1" class="slide level2">
+<h2><a href="http://www.jos.org.cn/html/2018/6/5547.htm">第五代移动通信技术在安全方面的主要改进</a></h2>
+<ul>
+<li>延续 4G 安全需求（确保至少提供与4G同等的安全性，<del>像极了 <code>WEP</code> 的愿景？</del>）
+<ol type="1">
+<li>用户和网络的双向认证</li>
+<li>基于USIM卡的密钥管理</li>
+<li>信令消息的机密性和完整性保护</li>
+<li>用户数据的机密性保护</li>
+<li>安全的可视性和可配置性</li>
+</ol></li>
+</ul>
+</section>
+<section id="sec-enhancements-of-5g-2" class="slide level2">
+<h2><a href="http://www.jos.org.cn/html/2018/6/5547.htm">第五代移动通信技术在安全方面的主要改进</a></h2>
+<ul>
+<li>新增 4G 缺失的安全机制
+<ol type="1">
+<li>防 IMSI 窃取的保护</li>
+<li>用户数据的完整性保护</li>
+<li>服务请求的不可否认性</li>
+<li>支持多样化身份认证和认证凭据全生命周期管理方式</li>
+</ol></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="第六代移动通信技术愿景" class="title-slide slide level1">
+<h1><a href="https://arxiv.org/pdf/1905.04983.pdf">第六代移动通信技术愿景</a></h1>
+
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>一念天地，万物随心</p>
+</blockquote>
+</section>
+<section id="第六代移动通信技术展望" class="slide level2">
+<h2>第六代移动通信技术展望</h2>
+<ul>
+<li>预计 2030 年后商用</li>
+<li>智慧连接：智能响应（5G 时代是 <code>5G+AI</code>，<code>AI</code> 技术主要用于优化 <code>5G</code> 网络架构和应用；6G 时代是 <code>AI+6G</code> ，<code>6G</code> 网络架构和应用将构建在 <code>AI</code> 技术基础之上）</li>
+<li>深度连接</li>
+<li>全息连接：沉浸式全息交互体验</li>
+<li>泛在连接：空天地海一体化</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="智慧连接之于-6g-安全的意义">智慧连接之于 6G 安全的意义</h3>
+<ul>
+<li>现在以及可以预计的未来，智慧落地实现的途径必然是「代码」</li>
+<li>从硬件底层到业务应用顶层， <strong>可编程</strong> 将无处不在</li>
+<li>网络与系统安全的核心就是「代码」安全</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="the-danger-of-complexity-more-code-more-bugs"><a href="https://www.techrepublic.com/blog/it-security/the-danger-of-complexity-more-code-more-bugs/">The danger of complexity: More code, more bugs</a></h3>
+<ul>
+<li>「代码」行数越多，「缺陷（<code>bug</code>）」越多</li>
+<li><a href="https://ieeexplore.ieee.org/document/7180086"><code>bug ≠ vulnerability</code></a> | <code>缺陷 ≠ 安全漏洞</code>
+<ul>
+<li>对于一个确定的软件、确定的源代码文件来说，缺陷数量高不一定代表着其中的安全漏洞数量也多
+<ul>
+<li>但是对于一个确定的软件、确定的源代码文件来说，「代码」行数越多，「漏洞」越多这个经验趋势是普遍成立的</li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="为什么本课程不再展开移动通信安全内容">为什么本课程不再展开移动通信安全内容</h3>
+<ul>
+<li>缺少实验条件
+<ul>
+<li>硬件设备相比较于无线网络安全实验所需要的 <code>USB 无线网卡</code> <del>价格更高、获取渠道受限</del></li>
+</ul></li>
+<li>技术复杂度更高
+<ul>
+<li><code>Software Defined Radio, SDR</code></li>
+</ul></li>
+<li>危害性更大
+<ul>
+<li>无线网络可以禁用或使用有线网络替代，蜂窝通信在民用长距离通信方面无可替代技术</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="硬件设备关键词举例">硬件设备关键词举例</h3>
+<p><img data-src="images/chap0x04/sdr-search.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="物联网是未来网络安全绝对的主战场">物联网是未来网络安全绝对的主战场</h3>
+<ul>
+<li>根据中国信息通信研究院 <a href="http://www.caict.ac.cn/kxyj/qwfb/bps/202012/t20201215_366162.htm">物联网白皮书（2020年）</a> 的统计数据
+<ul>
+<li>2019年全球物联网总连接数达到120亿，预计到2025年，全球物联网总连接数规模将达到246亿，年复合增长率高达13% 。</li>
+<li>2019年我国物联网连接数全球占比高达 30% ，其中移动物联网连接数占比接近 1/3</li>
+<li>预计到 2025 年，我国物联网连接总数将达到 80.1 亿，年复合增长率14.1%
+<ul>
+<li>“设备数量” 远超 “人口数量”</li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="物联网概述" class="title-slide slide level1">
+<h1>物联网概述</h1>
+
+</section>
+<section id="iot-1" class="slide level2">
+<h2>术语与关键特性</h2>
+<ul>
+<li>物联网（<code>Internet of Things</code>，<code>IoT</code>）是互联网、传统电信网等信息承载体，让所有能行使独立功能的普通物体实现互联互通的网络</li>
+<li><code>Machine To Machine</code>, <code>M2M</code>
+<ul>
+<li>依赖于“通信技术”</li>
+</ul></li>
+<li>智能
+<ul>
+<li>自动化（<code>Autonomous</code>）</li>
+<li>智能化（<code>人工智能</code>, <code>Artificial Intelligence</code>, <code>AI</code>）</li>
+</ul></li>
+</ul>
+</section>
+<section id="iot-2" class="slide level2">
+<h2>术语与关键特性</h2>
+<ul>
+<li>泛在（<code>Ubiquitous</code>）网络: 具备 <code>4A</code> 级别通信能力
+<ul>
+<li>4A：Anytime, Anywhere, Anyone, Anything</li>
+</ul></li>
+<li>继承了IP网络基本组网和通信模型
+<ul>
+<li>通信架构
+<ul>
+<li>分层结构</li>
+</ul></li>
+<li>通信模式
+<ul>
+<li>点对点，组播，广播，任播</li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section id="物联网总体架构" class="slide level2">
+<h2>物联网总体架构</h2>
+<p><img data-src="images/chap0x04/IOT.png" /></p>
+</section>
+<section id="回顾第一章内容无线网络是什么" class="slide level2">
+<h2>回顾第一章内容：无线网络是什么？</h2>
+<blockquote>
+<p>无线局域网（WLAN）是使用 <code>射频（Radio Frequency, RF）</code> 技术建立的 <strong>不</strong> 依赖 <strong>可见物理传输介质</strong> 的无线通信局域网络</p>
+</blockquote>
+<ul>
+<li>不可见物理传输介质：电磁波</li>
+</ul>
+</section>
+<section id="物联网接入层常见通信协议" class="slide level2">
+<h2>物联网接入层常见通信协议</h2>
+<ul>
+<li>蓝牙 (<code>IEEE 802.15.1</code>)</li>
+<li>NFC (<code>ISO 13157等</code>)</li>
+<li>ZigBee (<code>IEEE 802.15.4</code>)</li>
+<li>NB-IoT</li>
+</ul>
+</section>
+<section id="物联网感知层常见设备" class="slide level2">
+<h2>物联网感知层常见设备</h2>
+<ul>
+<li>RFID 读写器 (物联网的基础设施技术之一，可以通过蓝牙、NFC技术来实现）</li>
+<li>红外</li>
+<li>激光</li>
+<li>定位（例如 GPS、北斗定位等）</li>
+<li>温度</li>
+<li>湿度</li>
+<li>摄像头（音频、图像和视频采集，条形码、物体识别等）</li>
+</ul>
+</section>
+<section id="rfid-brief" class="slide level2">
+<h2>电子标签（RFID）</h2>
+<ul>
+<li>Radio Frequency Identification, 射频标识</li>
+<li>属于无线通信技术范畴</li>
+<li>通过无线电信号识别特定目标并读写相关数据，无需识别系统与特定目标之间建立机械或光学接触</li>
+</ul>
+</section>
+<section id="rfid-internals" class="slide level2">
+<h2>RFID 工作原理</h2>
+<ul>
+<li>无线电的信号是通过调成无线电频率的电磁场，把数据从附着在物品上的标签上传送出去，以自动辨识与追踪该物品
+<ul>
+<li>无源 RFID: 某些标签在识别时从识别器发出的电磁场中就可以得到能量，并不需要电池</li>
+<li>有源 RFID: 也有标签本身拥有电源，并可以主动发出无线电波（调成无线电频率的电磁场）</li>
+<li>标签包含了电子存储的信息，数米之内都可以识别。与条形码不同的是，射频标签不需要处在识别器视线之内，也可以嵌入被追踪物体之内</li>
+</ul></li>
+</ul>
+</section>
+<section id="rfid-state-of-the-art" class="slide level2">
+<h2>RFID 技术现状和趋势</h2>
+<ul>
+<li>越来越多的应用
+<ul>
+<li>原本只是以条形码的替代者面目出现</li>
+</ul></li>
+<li>飞快的发展速度</li>
+<li>小型化,低成本化</li>
+<li>协议和标准泛滥
+<ul>
+<li>各国可以制定本国 RFID 标准，不同应用、不同频段</li>
+</ul></li>
+</ul>
+</section>
+<section id="bands-in-use-of-rfid" class="slide level2">
+<h2>RFID 使用的频段</h2>
+<p><img data-src="images/chap0x04/RFID_Freq.png" /></p>
+</section>
+<section id="applications-of-rfid" class="slide level2">
+<h2>RFID 的应用领域</h2>
+<ul>
+<li>钞票及产品防伪技术</li>
+<li>身份证、通行证（包括门票）</li>
+<li>电子收费系统，如公交卡</li>
+<li>家畜或野生动物识别</li>
+<li>病人识别及电子病历</li>
+<li>物流管理</li>
+<li>行李分类</li>
+<li>门禁系统</li>
+</ul>
+</section>
+<section id="rfid-readable-or-writable" class="slide level2">
+<h2>RFID 分类：是否可写？</h2>
+<ul>
+<li>可读写卡( <code>RW</code> )
+<ul>
+<li><code>Read Write</code> , 相当于 <code>CDRW</code>
+<ul>
+<li>第二代身份证</li>
+</ul></li>
+</ul></li>
+<li>一次写入卡( <code>WORM</code> )
+<ul>
+<li><code>Write Once, Read Many</code>, 相当于 <code>CDR</code>
+<ul>
+<li>航空行李标签、特殊身份证件标签等</li>
+</ul></li>
+</ul></li>
+<li>只读卡( <code>RO</code> )
+<ul>
+<li><code>Read Only</code>, 相当于 <code>CD</code>
+<ul>
+<li>门禁</li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section id="rfid-without-power-supply" class="slide level2">
+<h2>RFID 分类：不带电源</h2>
+<ul>
+<li>无源 <code>RFID</code> ( <code>Passive RFID</code>，<code>被动 RFID</code>)
+<ul>
+<li>依靠和阅读器的电磁耦合供能</li>
+<li>读取距离取决于
+<ul>
+<li>阅读器耦合线圈的尺寸</li>
+</ul></li>
+<li>工作频率: 0.5W：0.7m 、 4W：2m 、30W：5.5m</li>
+<li>成本低,应用广泛</li>
+</ul></li>
+</ul>
+</section>
+<section id="rfid-with-power-supply" class="slide level2">
+<h2>RFID 分类：带电源</h2>
+<ul>
+<li>有源 <code>RFID</code> (<code>Active RFID</code>，<code>主动RFID</code>)
+<ul>
+<li>自带电源供能
+<ul>
+<li>使用锂电池通常可工作3~10年</li>
+</ul></li>
+<li>读取距离 10 米 ~ 30 米或更远</li>
+<li>目前的应用数量相比 <code>无源 RFID</code> 要少
+<ul>
+<li>需要远距离识别的场合：如高速公路 <code>ETC</code></li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section id="rfid-in-use" class="slide level2">
+<h2>我们身边的 RFID</h2>
+<ul>
+<li>门禁</li>
+<li>第二代身份证
+<ul>
+<li>无源读写卡</li>
+<li>ISO 14443 TYPE B</li>
+<li>载波频率 13.56 MHz、副载波频率 847 KHz</li>
+<li>身份证号、姓名、性别、居住地址、照片</li>
+</ul></li>
+<li>食堂饭卡、水卡、校园一卡通</li>
+</ul>
+</section>
+<section id="risks-of-rfid" class="slide level2">
+<h2>RFID 的安全风险</h2>
+<ul>
+<li>伪造、假冒和非法篡改</li>
+<li>泄露隐私
+<ul>
+<li>我的口红里有 <code>RFID</code> 吗?</li>
+</ul></li>
+<li>植入人体?
+<ul>
+<li>技术上已经成熟</li>
+<li><a href="https://www.fda.gov/regulatory-information/search-fda-guidance-documents/cpg-sec-400210-radiofrequency-identification-feasibility-studies-and-pilot-programs-drugs">美国国会于 2004 年已通过了相关法律</a></li>
+</ul></li>
+</ul>
+</section>
+<section id="无线键盘和无线鼠标" class="slide level2">
+<h2>无线键盘和无线鼠标</h2>
+<ul>
+<li>红外键盘鼠标
+<ul>
+<li>唯一的访问控制就是红外设备的距离特性</li>
+</ul></li>
+<li>无线鼠标键盘(不包括蓝牙鼠标/键盘)
+<ul>
+<li>27 MHz</li>
+<li>256 个 ID + 2个频道就是所有识别措施</li>
+</ul></li>
+<li>蓝牙键盘鼠标
+<ul>
+<li>安全性优于无线键盘鼠标</li>
+</ul></li>
+</ul>
+</section>
+<section id="电磁辐射泄露" class="slide level2">
+<h2>电磁辐射泄露</h2>
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Van_Eck_phreaking">Van Eck phreaking: CRT/LCD 显示器画面还原</a>
+<ul>
+<li>1985 年验证了 CRT 显示器画面还原</li>
+<li>2004 年验证了 LCD 显示器画面还原</li>
+</ul></li>
+<li>普通键盘和鼠标的电磁泄露问题</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="tempestsdr"><a href="https://github.com/martinmarinov/TempestSDR">TempestSDR</a></h3>
+<p><a href="https://www.bilibili.com/video/BV1Vt4y1X7rF"><img data-src="images/chap0x04/TempestSDR.png" /></a></p>
+</section>
+</section>
+<section>
+<section id="智能卡" class="title-slide slide level1">
+<h1>智能卡</h1>
+
+</section>
+<section id="智能体现在" class="slide level2">
+<h2>“智能”体现在</h2>
+<ul>
+<li>内置“存储器”，对存储的数据可以进行访问控制，阻止未授权访问</li>
+<li>内置“微处理器”和RAM
+<ul>
+<li>密码学计算</li>
+<li><strong>可编程计算</strong></li>
+</ul></li>
+<li>支持组件式架构
+<ul>
+<li>指纹识别</li>
+<li>OTP</li>
+<li>传感器</li>
+</ul></li>
+</ul>
+</section>
+<section id="智能卡与读卡器之间的通信方式" class="slide level2">
+<h2>智能卡与读卡器之间的通信方式</h2>
+<p><img data-src="images/chap0x04/SmartCard-1.png" /></p>
+<p>接触式 VS. 非接触式（RFID 为主）</p>
+</section>
+<section id="usb-tokens" class="slide level2">
+<h2>USB 令牌</h2>
+<ul>
+<li>除了接口和外观形状不同，其他物理和软件技术架构和智能卡无差异
+<ul>
+<li>接口：使用 USB，无需专用的“读卡设备”</li>
+</ul></li>
+</ul>
+<p><img data-src="images/chap0x04/usb-tokens.png" /></p>
+</section>
+<section id="智能卡主要应用场景" class="slide level2">
+<h2>智能卡主要应用场景</h2>
+<ul>
+<li>信息存储卡
+<ul>
+<li>通常用于保存个人（隐私）信息，例如个人医疗记录卡</li>
+</ul></li>
+<li>储值卡
+<ul>
+<li>代替小额现金支付场景，无需在线联网校验，直接读写卡内余额（次数）
+<ul>
+<li>自动贩卖机卡、预付费一次性电话卡、公交卡</li>
+</ul></li>
+</ul></li>
+<li>认证令牌卡
+<ul>
+<li>内置加密芯片，提供散列值、数字签名和加解密能力</li>
+</ul></li>
+<li>多功能卡
+<ul>
+<li>内置操作系统（Windows for Smart Cards, MULTOS, Java Card）</li>
+<li>支持灵活丰富的应用场景</li>
+</ul></li>
+</ul>
+</section>
+<section id="智能卡威胁分析" class="slide level2">
+<h2>智能卡威胁分析</h2>
+<ul>
+<li>差分功耗分析（<code>Differential Power Analysis</code>）
+<ul>
+<li>基于密码学计算过程中的功耗变化统计数据来推导卡片上存储的密钥</li>
+</ul></li>
+<li>计时攻击（<code>Timing Attacks</code>）
+<ul>
+<li>类似的攻击手段我们已在 <code>SQL 盲注攻击</code> 中见识过</li>
+</ul></li>
+<li>芯片逆向（<code>Reverse Engineering of the Chips</code>）
+<ul>
+<li>专家/富人/国家级研发能力和成本投入</li>
+</ul></li>
+<li>设计/实现缺陷
+<ul>
+<li>通用/缺省加密口令/密钥</li>
+</ul></li>
+</ul>
+</section>
+<section id="智能卡威胁建模" class="slide level2">
+<h2>智能卡威胁建模</h2>
+<ul>
+<li>人：遗失、外借、设置PIN码等</li>
+<li>软件：软件设计与实现漏洞</li>
+<li>操作系统
+<ul>
+<li>固定文件系统 VS. 动态文件系统</li>
+</ul></li>
+<li>网络：明文传输风险，<code>MITM</code>，嗅探器调试</li>
+<li>硬件：直接读取或破坏（改变电压/温度/酸碱度/电路板重新焊接搭线等）<code>EEPROM</code></li>
+<li>环境: 钓鱼风险</li>
+</ul>
+</section>
+<section id="smart-card-sec-1" class="slide level2">
+<h2>智能卡操作系统安全</h2>
+<ul>
+<li>固定文件系统
+<ul>
+<li>通常只被用于可信安全计算环境</li>
+<li>所有文件权限都是出厂时设置好无法修改的：例如员工信息卡</li>
+</ul></li>
+<li>动态文件系统
+<ul>
+<li><code>JavaCard®</code> 和 <code>MULTOS</code> ，操作系统和应用软件解耦</li>
+<li><code>GSM</code> 的 <code>SIM</code> 卡，支持 <code>OTA</code> 更新</li>
+<li>适用于频繁需要更新数据/软件的场景，例如密钥协商</li>
+</ul></li>
+</ul>
+</section>
+<section id="smart-card-sec-2" class="slide level2">
+<h2>智能卡操作系统安全</h2>
+<pre><code>                                MF (Master File)          
+                                       |
+                          -------------+--------------
+                          |            |             |
+               EF (Elementary File)    EF   DF (Dedicated File)
+                                                     |
+                                            ---------+--------
+                                            |        |       |
+                                            EF       DF      EF
+                                                     |
+                                                     EF</code></pre>
+</section>
+<section id="smart-card-sec-3" class="slide level2">
+<h2>智能卡操作系统安全</h2>
+<ul>
+<li><code>MF(Master File)</code> 和 <code>DF(Dedicated File)</code> 相当于“目录”，但 <code>DF</code> 依然可以独立存储数据</li>
+<li><code>EF(Elementary File)</code> 相当于“文件”</li>
+<li><code>MF</code>/<code>DF</code>/<code>EF</code>的文件头包含安全属性（相当于访问控制信息）
+<ul>
+<li>只要有“权限”就 可以遍历所有文件</li>
+<li>5类安全属性（权限）</li>
+</ul></li>
+</ul>
+</section>
+<section id="智能卡文件系统安全属性" class="slide level2">
+<h2>智能卡文件系统安全属性</h2>
+<ul>
+<li><code>Always</code>(<code>ALW</code>)</li>
+<li><code>Card holder verification 1</code> (<code>CHV1</code>)
+<ul>
+<li>使用 <code>PIN1</code> 验证，用户设置的</li>
+</ul></li>
+<li><code>Card holder verification 2</code> (<code>CHV2</code>)
+<ul>
+<li>使用 <code>PIN2</code> 验证，设备商设置的用于解封设置（<code>PIN1</code> 和 <code>PIN2</code>是相互独立的 <code>PIN</code>）</li>
+</ul></li>
+<li><code>Administrative</code> (<code>ADM</code>)</li>
+<li><code>Never</code> (<code>NEV</code>)</li>
+</ul>
+</section>
+<section id="智能卡操作系统的-pin-码安全机制" class="slide level2">
+<h2>智能卡操作系统的 PIN 码安全机制</h2>
+<ul>
+<li>防暴力破解锁定机制
+<ul>
+<li>触发锁定的错误尝试认证次数和锁定时间取决于操作系统设置</li>
+<li><code>PIN2</code> 用于解封 <code>PIN1</code> 被锁定状态</li>
+<li><code>PIN2</code> 被锁定通常就只能返厂维修了</li>
+<li><code>PIN1</code> 被锁定时所有文件均被设置 <code>CHV1</code> 属性，禁止访问</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="sim-pin1-demo-1">《一部手机失窃引发的惊心动魄的战争》</h3>
+<ul>
+<li>脆弱的信任根：手机短信验证码、手机开机/锁屏密码、被（风控系统）信任的旧手机</li>
+<li>脆弱的隐私信息保护
+<ul>
+<li>XX 社保 App: 使用手机短信验证码即可获得社保绑定的真实姓名、身份证号</li>
+</ul></li>
+<li>服务提供商的业务逻辑漏洞
+<ul>
+<li>XX电信: 只要对方能提供服务密码，正常就是可以「解除挂失」手机号通信服务</li>
+<li>形同虚设的大数据风控: 凌晨4点的贷款申请、绑定银行卡操作等被 <strong>自动审批通过</strong></li>
+<li>有争议的“快捷绑卡”逻辑
+<ul>
+<li>允许用不同的手机号码注册相同实名认证的支付账号</li>
+<li>允许两个账号绑定相同的银行卡</li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="sim-pin1-demo-2">《一部手机失窃引发的惊心动魄的战争》</h3>
+<ul>
+<li>安全建议：给自己的手机 SIM 卡设置一个新的 PIN 码</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>以上安全建议真的足够安全了吗？</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<h3 id="sim-pin1-demo-3">《一部手机失窃引发的惊心动魄的战争》</h3>
+<p><img data-src="images/chap0x04/sim-pin1-demo.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="sim-pin1-demo-4">《一部手机失窃引发的惊心动魄的战争》</h3>
+<ul>
+<li>PUK 码就是 <code>PIN2</code> 码，用来解封 <code>PIN1</code> 的锁定状态 <img align="right" width="10%" height="10%" src="images/chap0x04/sim-puk-demo.png"/>
+<ul>
+<li>通常是 8 位数字，印刷在 SIM 实体卡上（刮开涂层可见）</li>
+</ul></li>
+<li>某运营商的手机 App（ <strong><em>2021-01-26 验证</em></strong> ）可以直接查询到当前登录手机号的 <strong>原始</strong> <code>PUK</code> 码和 <code>PIN</code> 码
+<ul>
+<li><code>PIN</code> 码允许用户通过手机自行修改，修改后不会同步到该 App</li>
+<li>但 <code>PUK</code> 码用户是无法自行修改的</li>
+<li>通过 <strong>手机号</strong> + <strong>服务密码</strong> 即可登录手机 App</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="sim-pin1-demo-5">《一部手机失窃引发的惊心动魄的战争》</h3>
+<ul>
+<li><code>ICCID</code>: Integrate Circuit Card IDentity, 集成电路卡识别码。手机 <code>SIM</code> 卡上的 <code>ICCID</code> 即为 <code>SIM</code> 卡的全球唯一编号，相当于手机号码的身份证</li>
+<li>根据 <code>ICCID</code> 可以查询到对应的 <strong>手机号</strong></li>
+</ul>
+<p><img data-src="images/chap0x04/number-lookup-by-iccid.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="sim-pin1-demo-6">《一部手机失窃引发的惊心动魄的战争》</h3>
+<ul>
+<li>自己手机号对应的 <strong>服务密码</strong> <img align="right" height=600 src="images/chap0x04/reset-psw-of-10010.jpeg"/> 一定要妥善 <strong>牢记</strong>
+<ul>
+<li>不要将查询服务密码的短信保留在手机的短信收件箱</li>
+</ul></li>
+<li>SIM 实体卡要妥善保管，不要随手丢弃，不要随身携带
+<ul>
+<li>避免 <code>ICCID</code> 和 <code>PUK 码</code> 泄露</li>
+</ul></li>
+<li>在以上基础之上修改 SIM 卡的默认 PIN 码才是 <strong>更安全</strong> 的
+<ul>
+<li>SIM 卡的默认 PIN 码建议自行联系运营商确认</li>
+</ul></li>
+</ul>
+</section>
+<section id="mifare" class="slide level2">
+<h2>MIFARE</h2>
+<ul>
+<li><code>MIFARE</code> 是恩智浦半导体公司（NXP Semiconductors）在非接触式智能卡及近场感应卡领域的注册商标</li>
+<li><code>MIFARE</code> 是依循 <code>ISO/IEC 14443-A</code> 规格创建的非接触式智能卡，利用无线射频识别（频率为 13.56MHz）来完成验证</li>
+<li>近年来 <code>MIFARE</code> 已经普遍在日常生活当中使用，如大众运输系统付费、商店小额消费、门禁安全系统、借书证等</li>
+</ul>
+</section>
+<section id="mifare-classic" class="slide level2">
+<h2>MIFARE Classic</h2>
+<ul>
+<li><code>Unique Identifier(UID)</code> 只读</li>
+<li>读取设备和卡片双向认证通过之后使用协商出的会话秘钥加密通信数据</li>
+<li>使用私有的 <code>CRYPTO1</code> 加密算法（依赖于算法保密来“提升”密码学算法的安全性）</li>
+<li>奇偶校验位信息混淆</li>
+<li>仅硬件实现（依赖于硬件化“提升”防逆向能力）</li>
+</ul>
+</section>
+<section id="dark-history-of-mifare" class="slide level2">
+<h2>MIFARE 的黑历史</h2>
+<ul>
+<li>2007 年 12 月两个德国人 <code>Nohl</code> 和 <code>Plötz</code> 在 <code>Chaos Communication Congress</code> 上展示了通过 <code>Crypto-1</code> 的一些缺陷部分逆向了其算法</li>
+<li>2008 年 3 月来自荷兰 <code>Radbond</code> 大学的研究者完全逆向了 <code>Crypto-1</code> 算法并予以公开</li>
+<li><code>NXP</code> 试图通过法律途径禁止上述公开行为，但在 2008 年 7 月被当地法庭以言论自由原因驳回了申诉</li>
+<li>2008 年 10 月 <code>Radbond</code> 大学以 <code>GNU GPL v2</code> 协议开源了<code>Crypto-1</code> 算法代码</li>
+<li>大量针对 <code>MIFARE Classic</code> 卡的黑客工具被公开</li>
+</ul>
+</section>
+<section id="proxmark3" class="slide level2">
+<h2>Proxmark3</h2>
+<ul>
+<li><code>Jonathan Westhues</code> 设计并且开发的 <strong>开源硬件</strong> ，其主要用 <code>RFID</code> 的嗅探、读取以及克隆等的操作
+<ul>
+<li>低频(125kHz)～高频(13.56MHz)</li>
+</ul></li>
+<li>可类比 <code>IEEE 802.11</code> 类嗅探和注入实验</li>
+<li>内置了对 Crypto-1 算法的 <a href="https://github.com/Proxmark/proxmark3/tree/master/common/crapto1">破解支持</a></li>
+</ul>
+</section>
+<section id="开放式讨论" class="slide level2">
+<h2>开放式讨论</h2>
+<ul>
+<li>接触式智能卡比非接触式智能卡更安全？更不安全？
+<ul>
+<li>调试和逆向工具的完备性、成本</li>
+<li>卡片设计安全性</li>
+<li>卡片制造与实现安全性</li>
+</ul></li>
+<li>类似的：无线网络和有线网络谁更安全？</li>
+</ul>
+</section>
+<section id="案例基于智能卡的应用系统风险" class="slide level2">
+<h2>案例：<a href="https://www.freebuf.com/news/topnews/80786.html">基于智能卡的应用系统风险</a></h2>
+<p><img data-src="images/chap0x04/smart-card-case.png" /></p>
+</section>
+</section>
+<section>
+<section id="智能硬件" class="title-slide slide level1">
+<h1>智能硬件</h1>
+
+</section>
+<section id="概述" class="slide level2">
+<h2>概述</h2>
+<ul>
+<li>没有一个公认的统一定义</li>
+<li>本课程接下来要介绍的“智能”硬件其“智能”主要体现在至少具备其一特性
+<ul>
+<li>具备通用或专用计算能力</li>
+<li>具有可编程性，支持软件定义硬件</li>
+<li>具备感知外界的能力</li>
+<li>低功耗或节能型</li>
+</ul></li>
+</ul>
+</section>
+<section id="代表产品" class="slide level2">
+<h2>代表产品</h2>
+<ul>
+<li>DIY 硬件</li>
+<li>机器人、无人机</li>
+<li>智能家电</li>
+<li>豆浆机，热水器，空调，净水器，电源开关，电源插座，电视，摄像机等等</li>
+<li>智能家居</li>
+<li>可穿戴设备（健康医疗、VR/AR等等）</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="diy-硬件">DIY 硬件</h3>
+<ul>
+<li>Raspberry Pi
+<ul>
+<li>微尺寸、全功能 Linux 主机</li>
+<li>英国剑桥大学出品，原设计用于教学计算机硬件维修实验对象：满足物美价廉、可定制的全功能计算机硬件特性</li>
+<li><a href="https://github.com/samyk/poisontap">基于 Raspberry Pi 通过 USB 接口连接 Hack 掉一台电脑 - samyk/poisontap</a></li>
+</ul></li>
+<li>Arduino
+<ul>
+<li>微控制器</li>
+<li>意大利一所交互设计专业教师出品，原设计同样用于教学：快速硬件产品原型构建</li>
+</ul></li>
+</ul>
+</section>
+<section id="再看-rogue-access-point" class="slide level2">
+<h2>再看 Rogue Access Point</h2>
+<ul>
+<li>通过物理联入的一个无线热点实现远程接入一个安全隔离的有线网络
+<ul>
+<li>有线网络的安全性可以通过物理安全保障，但恶意 <code>AP</code> 的接入打破了原有的物理隔离和限制措施</li>
+<li>一个可编程的恶意 <code>AP</code> 可以实现自动化的局域网攻击</li>
+<li>智能手机、使用开源路由器固件（例如 <code>OpenWrt</code> 等）的无线路由器/ <code>AP</code> / <code>Raspberry Pi</code></li>
+</ul></li>
+</ul>
+</section>
+<section id="vulnerabilities-of-smart-router-1" class="slide level2">
+<h2>智能路由器风险</h2>
+<ul>
+<li>路由器厂商预留的“调试”后门
+<ul>
+<li><a href="https://www.cert.org.cn/publish/main/9/2014/20140210091555248367162/20140210091555248367162_.html">关于多款路由器设备存在预置后门漏洞的情况通报 2014.02.10 from CNCERT</a></li>
+</ul></li>
+<li>固件更新设计与实现缺陷
+<ul>
+<li>仅使用简单的 <code>Hash</code> 算法校验下载文件完整性，未使用数字签名算法鉴别文件真实性</li>
+</ul></li>
+<li>配置信息保存不当（明文）</li>
+<li>固件防逆向能力的高低</li>
+</ul>
+</section>
+<section id="vulnerabilities-of-smart-router-2" class="slide level2">
+<h2>智能路由器风险</h2>
+<ul>
+<li>不安全的默认设置
+<ul>
+<li><code>WPS</code> 功能未默认关闭</li>
+<li>默认 SSID</li>
+<li>默认 WEB 管理界面的缺省管理员密码</li>
+</ul></li>
+<li>WEB 管理系统安全性
+<ul>
+<li><a href="https://c4pr1c3.github.io/cuc-mis/chap0x04/cve-2019-12272.html">CVE-2019-12272 实验</a></li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="蓝牙安全" class="title-slide slide level1">
+<h1>蓝牙安全</h1>
+
+</section>
+<section id="bluetooth-intro" class="slide level2">
+<h2>概述</h2>
+<ul>
+<li>WPAN 实现技术之一</li>
+<li>支持服务能力描述/声明配置文件
+<ul>
+<li>声明蓝牙设备所具备的应用能力
+<ul>
+<li>输入（键盘、鼠标）、输出（音频、文件传送、打印机）</li>
+</ul></li>
+<li>设备和能力发现</li>
+</ul></li>
+<li>越来越多的物联网应用采用蓝牙（特别是蓝牙低功耗）作为底层通信协议
+<ul>
+<li>例如各种智能锁、智能家居产品等</li>
+</ul></li>
+</ul>
+</section>
+<section id="蓝牙设备功耗等级分类" class="slide level2">
+<h2>蓝牙设备功耗等级分类</h2>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">设备类型</th>
+<th style="text-align: left;">功耗</th>
+<th style="text-align: left;">最⼤功耗等级</th>
+<th style="text-align: left;">设计通信距离</th>
+<th style="text-align: left;">典型设备</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Class 1</td>
+<td style="text-align: left;">⾼</td>
+<td style="text-align: left;">100 mW (20 dBm)</td>
+<td style="text-align: left;">&lt; 100⽶</td>
+<td style="text-align: left;">USB适配器、接⼊点</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Class 2</td>
+<td style="text-align: left;">中</td>
+<td style="text-align: left;">2.5 mW(4 dBm)</td>
+<td style="text-align: left;">&lt; 10⽶</td>
+<td style="text-align: left;">移动设备、蓝⽛适配器、智能卡读卡器</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Class 3</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">1 mW (0 dBm)</td>
+<td style="text-align: left;">&lt; 1⽶</td>
+<td style="text-align: left;">蓝⽛适配器</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="蓝牙协议栈" class="slide level2">
+<h2>蓝牙协议栈</h2>
+<p><a href="https://www.bluetooth.org/DocMan/handlers/DownloadDoc.ashx?doc_id=286439&amp;_ga=1.139498554.805272089.1452604944"><img data-src="images/chap0x04/bluetooth.protocol.stack.png" alt="蓝牙4.2协议规范 p197." /></a></p>
+</section>
+<section id="蓝牙技术基础" class="slide level2">
+<h2>蓝牙技术基础</h2>
+<ul>
+<li>使用 <code>2.4 GHz</code> <code>ISM</code> 频段的 <code>2400~2483.5 MHz</code>
+<ul>
+<li><a href="https://zh.wikipedia.org/wiki/ISM频段">Industrial Scientific Medical Band</a></li>
+</ul></li>
+<li><code>Basic Rate(BR)</code> 721.2Kbps
+<ul>
+<li>optional <code>EDR (Enhanced Data Rate)</code> 2.1Mbps</li>
+<li><code>AMP (Alternate MAC and PHY layer extension)</code> 54Mbps
+<ul>
+<li>“借用”802.11协议的物理层和MAC层规范</li>
+</ul></li>
+<li><code>BR/EDR</code> 和 <code>AMP</code> 必须二选一</li>
+</ul></li>
+<li><code>Low Energy (LE)</code></li>
+</ul>
+</section>
+<section id="使用-amp-标准的蓝牙与-ieee-802.11" class="slide level2">
+<h2>使用 AMP 标准的蓝牙与 IEEE 802.11</h2>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">特性</th>
+<th style="text-align: left;">蓝⽛</th>
+<th style="text-align: left;">IEEE 802.11</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">⽹络拓扑</td>
+<td style="text-align: left;">对称（点对点）</td>
+<td style="text-align: left;">⾮对称（以AP为中⼼），也支持点对点的非基础设施模式</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">⼯作频段</td>
+<td style="text-align: left;">2.4 GHz</td>
+<td style="text-align: left;">2.4 GHz / 5 GHz</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">传输速率</td>
+<td style="text-align: left;">1~24 Mbps</td>
+<td style="text-align: left;">5.5~1000 Mbps</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">传输距离</td>
+<td style="text-align: left;">1～300⽶蓝牙5.0</td>
+<td style="text-align: left;">室外最⼤250⽶左右</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">协议兼容性</td>
+<td style="text-align: left;">3.0+版本兼容802.11n (物理层使⽤802.11协议)</td>
+<td style="text-align: left;">-</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="蓝牙系统逻辑组成" class="slide level2">
+<h2>蓝牙系统逻辑组成</h2>
+<ul>
+<li><code>Host</code> 在负责逻辑链路的基础上为上层蓝牙应用提供更易使用的封装 <img align="right" src="images/chap0x04/bluetooth.logical.arch.png"/></li>
+<li><code>Controller</code> 负责定义 <code>RF</code>、<code>Baseband</code> 等偏硬件的规范在此基础之上抽象出用于通信的逻辑链路</li>
+</ul>
+</section>
+<section id="bluetooth-ism-division" class="slide level2">
+<h2>蓝牙 ISM 频段划分方法</h2>
+<ul>
+<li><code>BR/EDR</code> 控制器，<a href="https://en.wikipedia.org/wiki/List_of_2.4_GHz_radio_use#Bluetooth">分成79个频率，每个为1 MHz</a>
+<ul>
+<li>跳频(<code>Frequency Hopping</code>)，1 秒至多改变 1600 次</li>
+<li>物理信道（<code>Physical Channel</code>）是由跳频图谱（<code>Hopping Pattern</code>）决定的</li>
+<li>跳频图谱是一种规则，规定了蓝牙RF在某一时刻需要跳到 79 个频率中的哪个频率上通信</li>
+</ul></li>
+<li><code>LE</code> 控制器，分成 40 个频率，每个为 2 MHz
+<ul>
+<li>3 个频率为广播信道（<code>Advertising Channel</code>）</li>
+<li>37 个频率为数据信道（<code>Data Channel</code>）</li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="ble" class="title-slide slide level1">
+<h1>BLE</h1>
+
+</section>
+<section id="ble---bluetooth-low-energy" class="slide level2">
+<h2>BLE - Bluetooth Low Energy</h2>
+<ul>
+<li>别名：Bluetooth Smart</li>
+<li>经典蓝牙协议的一个轻量级子集（另一个是 <code>Basic Rate</code>），但 <strong>不能与经典蓝牙协议互通</strong></li>
+<li>蓝牙 4.0 核心规范的组成部分</li>
+<li>面向现代移动终端平台设计
+<ul>
+<li>iOS5+ (iOS7+ preferred)</li>
+<li>Android 4.3+ (numerous bug fixes in 4.4+)</li>
+<li>Apple OS X 10.6+</li>
+<li>Windows 8 (XP, Vista and 7 only support Bluetooth 2.1)</li>
+<li>GNU/Linux Vanilla BlueZ 4.93+</li>
+</ul></li>
+</ul>
+</section>
+<section id="典型-ble-协议栈" class="slide level2">
+<h2>典型 BLE 协议栈</h2>
+<p><img data-src="images/chap0x04/ble.protocol.stack.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="gap---generic-access-profile"><a href="https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile">GAP - Generic Access Profile</a></h3>
+<ul>
+<li>一个基础的蓝牙 <code>profile</code>，用于提供蓝牙设备的通用访问功能，包括设备发现、连接、鉴权、服务发现等等</li>
+<li>通过定义设备角色来控制蓝牙连接和广播通信，实现不同设备的互操作
+<ul>
+<li>中心设备(<code>Central Device</code>)，主动发现的设备
+<ul>
+<li>计算能力更强，耗电量更大，例如手机、平板电脑等</li>
+</ul></li>
+<li>周边设备(<code>Peripheral Device</code>)，被发现的设备
+<ul>
+<li>体积小、功耗低，通常需要连入中心设备。例如心率监控设备</li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="gatt---generic-attribute-profile"><a href="https://www.bluetooth.com/specifications/gatt">GATT - Generic Attribute Profile</a></h3>
+<ul>
+<li>定义了 2 个 <code>BLE</code> 设备数据交换的方式
+<ul>
+<li>服务 Services</li>
+<li>特性 Characteristics</li>
+</ul></li>
+<li>ATT - Attribute Profile
+<ul>
+<li>存储服务、特性和相关数据于一个简单的查找表，使用 <code>16-bit</code> 唯一编号在表中查找匹配</li>
+</ul></li>
+<li>一个BLE周边设备一次只能连接一个中心设备
+<ul>
+<li>连接一旦建立，广播通信立刻停止，其他设备就无法发现它所以无法再建立新连接了</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="gatt-service-charateristic">GATT - 服务和特性</h3>
+<ul>
+<li>Profile 由 <a href="https://www.bluetooth.com/specifications/gatt">蓝牙标准委员会</a> 或周边设备生产商预定义的一个服务集合 <img align="right" src="images/chap0x04/microcontrollers_GattStructure-small-16068.png"/></li>
+<li>Service <code>BLE</code> 标准委员会官方采纳的服务采用 <code>16-bit UUID</code> 进行标识，最多允许包含 3 个特性，私有自定义服务采用 <code>128-bit</code> 唯一标识</li>
+<li>Characteristic
+<ul>
+<li><code>BLE</code> 标准委员会官方采纳的特性采用 <code>16-bit UUID</code> 进行标识，私有自定义特性采用 <code>128-bit</code> 唯一标识</li>
+<li>一个特性字段存一个独立数据（可以是复合数据结构）</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="gatt-conversation">GATT 会话</h3>
+<ul>
+<li>周边设备：<code>GATT Server</code>
+<ul>
+<li>持有 <code>ATT</code> 查找数据、服务和特性定义</li>
+</ul></li>
+<li>中心设备：<code>GATT Client</code>
+<ul>
+<li>向 <code>Server</code> 发起请求</li>
+</ul></li>
+<li>连接间隔
+<ul>
+<li><code>Server</code> 设置建议值，<code>Client</code> 不一定照办（并发处理多个会话带来的可能延迟）</li>
+</ul></li>
+</ul>
+<p><img data-src="images/chap0x04/microcontrollers_Advertising2.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="ble-核心组件角色">BLE 核心组件角色</h3>
+<ul>
+<li><code>GATT</code> 提供多种认证机制
+<ul>
+<li>(1)静态口令/秘钥 (2)挑战-响应（最常见）(3)PKI</li>
+</ul></li>
+<li><code>SMP</code>（<code>Security Manager Protocol</code>）
+<ul>
+<li>点对点的协议，基于专用的 <code>L2CAP channel</code>，用于生成加密和识别用的密匙</li>
+<li><code>SM</code> 控制包括配对、认证和加密等过程</li>
+</ul></li>
+<li><code>L2CAP</code> 包括两个子模块
+<ul>
+<li><code>Channel Manager</code> 主要负责创建、管理、释放 <code>L2CAP channel</code></li>
+<li><code>L2CAP Resource Manager</code> 负责统一管理、调度 <code>L2CAP channel</code> 上传递的 <code>PDU</code>，以确保那些高 <code>QoS</code> 的 <code>packet</code> 可以获得对物理信道的控制权</li>
+</ul></li>
+</ul>
+</section>
+<section id="蓝牙安全概述" class="slide level2">
+<h2>蓝牙安全概述</h2>
+<ul>
+<li><a href="https://css.csail.mit.edu/6.858/2012/projects/echai-bendorff-cathywu.pdf">蓝牙协议设计存在的安全问题</a>
+<ul>
+<li>劫持配对过程</li>
+<li>窃听、伪造蓝牙通信，重放和中间人攻击</li>
+<li>隐私问题：标识追踪</li>
+</ul></li>
+<li>蓝牙协议栈实现存在的安全问题
+<ul>
+<li>无线网络绑定的是硬件层和协议层</li>
+<li>配对验证码 PIN 是默认值或弱 PIN 码</li>
+<li>蓝牙直接绑定应用相对复杂</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="blueborne"><a href="https://www.armis.com/blueborne/">BlueBorne</a></h3>
+<ul>
+<li>CVE-2017-1000250 Linux bluetoothd进程信息泄露</li>
+<li>CVE-2017-1000251 Linux 内核栈溢出</li>
+<li>CVE-2017-8628 微软蓝牙协议栈欺骗漏洞</li>
+<li>CVE-2017-0785 Android com.android.bluetooth进程信息泄露</li>
+<li>CVE-2017-0781 Android com.android.bluetooth进程堆溢出</li>
+<li>CVE-2017-0782 Android com.android.bluetooth进程堆溢出</li>
+<li>CVE-2017-14315 LEAP (Low Energy Audio Protocol)协议堆溢出漏洞导致的远程代码执行漏洞</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h4 id="blueborne-钓鱼-app">BlueBorne 钓鱼 App</h4>
+<p><img data-src="images/chap0x04/blueborne.phishing.small.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="blueborne-phishing-implies">BlueBorne 和 BlueBorne 钓鱼 App 带给我们的启示</h3>
+<ul>
+<li>移动互联时代，官方应用商店提供的 <code>app</code> 同样可能存在仿冒和钓鱼应用</li>
+<li>物联网时代，物联网设备和协议漏洞将会成为安全事件的新常态</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="蓝牙标识伪造">蓝牙标识伪造</h3>
+<p><img data-src="images/chap0x04/bluetooth-forge.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="蓝牙设备存活性探测">蓝牙设备存活性探测</h3>
+<p><img data-src="images/chap0x04/bluetooth.hcitool.scan.png" /></p>
+<blockquote>
+<p>在蓝牙(Bluetooth®)4.2核心规范当中，支持一项新的特性，可以通过周期性地改变蓝牙设备的随机地址帮助蓝牙设备的使用者来保护自身的隐私，避免其设备被窃听者通过射频侦听以及对数据分析的方式得以窃取。</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<h3 id="蓝牙设备信息探测">蓝牙设备信息探测</h3>
+<p><img data-src="images/chap0x04/bluetooth.scan.info.png" /></p>
+</section>
+<section id="蓝牙通信数据嗅探" class="slide level2">
+<h2>蓝牙通信数据嗅探</h2>
+<ul>
+<li>工具软件
+<ul>
+<li>btmon / hcidump / wireshark</li>
+<li>nRF Connect for Mobile (Android App)</li>
+<li><a href="https://source.android.com/devices/bluetooth/verifying_debugging">Android 4.4+: Bluetooth HCI snoop log</a></li>
+</ul></li>
+<li>数据存储格式
+<ul>
+<li><a href="https://www.fte.com/webhelp/bpa600/Content/Technical_Information/BT_Snoop_File_Format.htm">BTSnoop</a></li>
+</ul></li>
+<li>注意事项⚠️ 没有专用硬件支持则只能嗅探到本机收发的蓝牙数据，无法捕获其他设备之间的蓝牙通信数据
+<ul>
+<li>类比 <code>IEEE 802.11</code> 网络的“监听”模式与有线网卡的“混杂”模式的区别</li>
+</ul></li>
+</ul>
+</section>
+<section id="蓝牙数据构造和发送" class="slide level2">
+<h2>蓝牙数据构造和发送</h2>
+<ul>
+<li><a href="http://www.bluez.org/">Linux上的蓝牙协议栈——BlueZ</a></li>
+</ul>
+</section>
+<section id="蓝牙通信协议逆向" class="slide level2">
+<h2>蓝牙通信协议逆向</h2>
+<ul>
+<li>重放攻击
+<ul>
+<li><a href="http://www.guillier.org/blog/2015/04/reverse-engineering-of-a-ble-bulb/">智能灯泡逆向与控制实例</a></li>
+<li><a href="https://conference.hitb.org/hitbsecconf2017ams/materials/D2T3%20-%20Slawomir%20Jasek%20-%20Blue%20Picking%20-%20Hacking%20Bluetooth%20Smart%20Locks.pdf">Blue picking - hacking Bluetooth Smart Locks</a></li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="nfc" class="title-slide slide level1">
+<h1>NFC</h1>
+
+</section>
+<section id="nfc---near-field-communication" class="slide level2">
+<h2>NFC - Near Field Communication</h2>
+<ul>
+<li>短距离高频无线通信技术，由 <code>RFID</code> 演变而来</li>
+<li><code>NFC</code> 仅限 <code>13.56MHz</code> 高频段，<code>RFID</code> 有较多频段选择</li>
+<li><code>NFC</code> 的有效通信距离大多在 <code>10 厘米</code> 以内，<code>RFID</code> 的通信距离范围从几厘米到几十米都有</li>
+<li><code>NFC</code> 是一种“集成”RFID技术，单芯片内置非接触读卡器、非接触卡和点对点功能，<code>RFID</code> 通常使用独立的阅读器和标签</li>
+<li><code>RFID</code> 多用于生产、物流、资产管理等，<code>NFC</code> 则更多用于公交、门禁、手机支付等</li>
+</ul>
+</section>
+<section id="nfc-vs-bluetooth" class="slide level2">
+<h2>NFC 与蓝牙的关系</h2>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">特性</th>
+<th style="text-align: left;">NFC</th>
+<th style="text-align: left;">蓝⽛</th>
+<th style="text-align: left;">低功耗蓝⽛(BLE)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">标签是否耗能</td>
+<td style="text-align: left;">否</td>
+<td style="text-align: left;">是</td>
+<td style="text-align: left;">是</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">标签成本</td>
+<td style="text-align: left;">10美分</td>
+<td style="text-align: left;">5美元</td>
+<td style="text-align: left;">5美元</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">RFID兼容性</td>
+<td style="text-align: left;">ISO 18000-3</td>
+<td style="text-align: left;">有源（主动）</td>
+<td style="text-align: left;">有源（主动）</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">标准化组织</td>
+<td style="text-align: left;">ISO/IEC</td>
+<td style="text-align: left;">Bluetooth SIG</td>
+<td style="text-align: left;">Bluetooth SIG</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">⽹络协议标准</td>
+<td style="text-align: left;">ISO 13157 etc.</td>
+<td style="text-align: left;">IEEE 802.15.1</td>
+<td style="text-align: left;">IEEE 802.15.1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">⽹络拓扑类型</td>
+<td style="text-align: left;">点对点</td>
+<td style="text-align: left;">WPAN</td>
+<td style="text-align: left;">WPAN</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">加密</td>
+<td style="text-align: left;">基于RFID技术的没有</td>
+<td style="text-align: left;">可选</td>
+<td style="text-align: left;">可选</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">通信距离</td>
+<td style="text-align: left;">&lt; 0.2m</td>
+<td style="text-align: left;">~ 100m (class 1)</td>
+<td style="text-align: left;">~50m</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">频段</td>
+<td style="text-align: left;">13.56 MHz</td>
+<td style="text-align: left;">2.4-2.5GHz</td>
+<td style="text-align: left;">2.4-2.5GHz</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">传输(⽐特)速率</td>
+<td style="text-align: left;">424 kbps</td>
+<td style="text-align: left;">2.1/24 Mbps</td>
+<td style="text-align: left;">1 Mbps</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">(⽹络)建⽴时间</td>
+<td style="text-align: left;">&lt; 0.1s</td>
+<td style="text-align: left;">&lt; 6s</td>
+<td style="text-align: left;">&lt; 0.006s</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">功耗</td>
+<td style="text-align: left;">&lt; 15 mA(读)</td>
+<td style="text-align: left;">不同级别有差异</td>
+<td style="text-align: left;">&lt; 15 mA (读和传输)</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section>
+<section id="物联网安全小结" class="title-slide slide level1">
+<h1>物联网安全小结</h1>
+
+</section>
+<section id="物联网安全的特殊性与一般性" class="slide level2">
+<h2>物联网安全的特殊性与一般性</h2>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">特性</th>
+<th style="text-align: left;">物联网安全</th>
+<th style="text-align: left;">计算机网络安全</th>
+<th style="text-align: left;">移动互联网安全</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">设备寿命</td>
+<td style="text-align: left;">10~15年</td>
+<td style="text-align: left;">5~10年</td>
+<td style="text-align: left;">3~5年</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">泛在连接</td>
+<td style="text-align: left;">普遍</td>
+<td style="text-align: left;">不普遍</td>
+<td style="text-align: left;">普遍</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">功耗敏感</td>
+<td style="text-align: left;">高</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">中</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">人机交互频率</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">高</td>
+<td style="text-align: left;">中</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">人机交互复杂度</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">高</td>
+<td style="text-align: left;">中</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">物理安全风险</td>
+<td style="text-align: left;">高</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">中</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">调试经济成本</td>
+<td style="text-align: left;">高*</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">中</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>以蓝牙安全为例，ellisys 公司提供的商业化蓝牙全频段监听设备售价高达数万美元。基于开源硬件的 SDR 相关协议分析装备售价也高达人民币千元以上。</p>
+</blockquote>
+</section>
+</section>
+<section>
+<section id="广义无线网络安全" class="title-slide slide level1">
+<h1>广义无线网络安全</h1>
+
+</section>
+<section id="know-laws-then-conform" class="slide level2">
+<h2>《中华人民共和国无线管理条例》- 知法守法</h2>
+<ul>
+<li>第十四条 使用无线电频率应当取得许可，但下列频率除外
+<ul>
+<li>（一）业余无线电台、公众对讲机、制式无线电台使用的频率</li>
+<li>（二）国际安全与遇险系统，用于航空、水上移动业务和无线电导航业务的国际固定频率</li>
+<li>（三）国家无线电管理机构规定的微功率短距离无线电发射设备使用的频率</li>
+</ul></li>
+<li>第十五条 取得无线电频率使用许可，应当符合下列条件
+<ul>
+<li>（一）所申请的无线电频率符合无线电频率划分和使用规定，有明确具体的用途</li>
+<li>（二）使用无线电频率的技术方案可行</li>
+<li>（四）<strong>对依法使用的其他无线电频率不会产生有害干扰</strong></li>
+</ul></li>
+</ul>
+</section>
+<section id="延伸学习推荐" class="slide level2">
+<h2>延伸学习推荐</h2>
+<p><a href="http://www.hackrf.net/hackrf%E4%B8%8Egnuradio%E5%85%A5%E9%97%A8%E6%8C%87%E5%8D%97/">《HackRf与GnuRadio⼊门指南》</a></p>
+</section>
+</section>
+<section>
+<section id="无线网络安全小结" class="title-slide slide level1">
+<h1>无线网络安全小结</h1>
+
+</section>
+<section class="slide level2">
+
+<p><img data-src="images/chap0x04/wireless_networks.png" /></p>
+<ul>
+<li>无线网络主要解决的是终端设备接入网络的问题，有线网络主要解决的是骨干网络互联互通以及为无线网络提供广域网络传输的接入</li>
+<li>WPAN、WLAN和蜂窝网络的物理信号覆盖范围逐渐增大</li>
+</ul>
+</section>
+<section id="wireless-harden-1" class="slide level2">
+<h2>无线网络安全加固——蜂窝通信</h2>
+<ul>
+<li>尽快升级你的移动通信网络制式到最新主流制式标准</li>
+<li>不要依赖 <code>2G</code> 网络的短信传送机密信息</li>
+<li>服务提供商要正确的实现验证码短信功能
+<ul>
+<li>不要在短信中同时出现完整帐号和验证码</li>
+<li>验证码有效周期尽可能短，建议重要验证码 1 分钟过期</li>
+</ul></li>
+<li>遇到疑似 <strong>伪造来源号码</strong> 的电话和短信，回拨可验证真伪
+<ul>
+<li>更换另一个手机号、固定电话，逐个号码输入方式回拨</li>
+</ul></li>
+</ul>
+</section>
+<section id="wireless-harden-2" class="slide level2">
+<h2>无线网络安全加固——蓝牙</h2>
+<ul>
+<li>默认不启用设备的蓝牙功能，除非需要用到</li>
+<li>尽可能使用最低等级的蓝牙默认功耗，限制蓝牙传输距离</li>
+<li>关闭蓝牙的“可被发现”能力</li>
+<li>使用动态、健壮的PIN码</li>
+<li>尽可能使用高版本的蓝牙协议支持设备</li>
+<li>关闭不需要的蓝牙功能</li>
+<li>建议开启蓝牙配对设备的双向认证功能</li>
+</ul>
+</section>
+<section id="wireless-harden-3" class="slide level2">
+<h2>无线网络安全加固——RFID</h2>
+<ul>
+<li>给你口袋/钱包里的 <code>RFID</code> 卡增加一个 <code>RFID</code> 屏蔽卡套，防止近距离复制</li>
+<li>避免使用 <code>Mfiare Classic</code> 芯片卡，而采用更强加密算法的芯片卡，比如 <code>CPU</code> 卡</li>
+<li>涉及金额等敏感数据应进行加密处理，禁止明文存储</li>
+<li>读卡器与后端主机数据库实行线上作业，采用即时连线的方式进行系统核查</li>
+<li>结合 <code>uid</code> 进行加密，并设置 <code>uid</code> 白名单，提高攻击者破解成本，但可能被特殊卡绕过</li>
+<li>对全扇区采用非默认密码加密，提高破解成本，但可能通过 <code>DarkSide</code> 方式暴力破解</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="附录" class="title-slide slide level1">
+<h1>附录</h1>
+
+</section>
+<section class="slide level2">
+
+<ul>
+<li>Neshenko, N., Bou-Harb, E., Crichigno, J., Kaddoum, G., &amp; Ghani, N. (2019). Demystifying IoT security: an exhaustive survey on IoT vulnerabilities and a first empirical look on internet-scale IoT exploitations. IEEE Communications Surveys &amp; Tutorials, 21(3), 2702-2733.</li>
+<li><code>iot security awesome</code></li>
+</ul>
+</section>
+</section>
+    </div>
+  </div>
+
+  <script src="lib/reveal.js/lib/js/head.min.js"></script>
+  <script src="lib/reveal.js/js/reveal.js"></script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        // Display the page number of the current slide
+        slideNumber: true,
+        // Push each slide change to the browser history
+        history: true,
+        // Transition style
+        transition: 'fade', // none/fade/slide/convex/concave/zoom
+        math: {
+          mathjax: '',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+menu: {
+		// Specifies which side of the presentation the menu will 
+		// be shown. Use 'left' or 'right'.
+		side: 'left',
+
+		// Specifies the width of the menu.
+		// Can be one of the following:
+		// 'normal', 'wide', 'third', 'half', 'full', or
+		// any valid css length value
+		width: 'normal',
+
+		// Add slide numbers to the titles in the slide list.
+		// Use 'true' or format string (same as reveal.js slide numbers)
+		numbers: true,
+
+		// Specifies which slide elements will be used for generating
+		// the slide titles in the menu. The default selects the first
+		// heading element found in the slide, but you can specify any
+		// valid css selector and the text from the first matching
+		// element will be used.
+		// Note: that a section data-menu-title attribute or an element
+		// with a menu-title class will take precedence over this option
+		titleSelector: 'h1, h2, h3, h4, h5, h6',
+
+		// If slides do not have a matching title, attempt to use the
+		// start of the text content as the title instead
+		useTextContentForMissingTitles: false,
+
+		// Hide slides from the menu that do not have a title.
+		// Set to 'true' to only list slides with titles.
+		hideMissingTitles: false,
+
+		// Adds markers to the slide titles to indicate the 
+		// progress through the presentation. Set to 'false'
+		// to hide the markers.
+		markers: true,
+
+		// Specify custom panels to be included in the menu, by
+		// providing an array of objects with 'title', 'icon'
+		// properties, and either a 'src' or 'content' property.
+		custom: false,
+
+		// Specifies the themes that will be available in the themes
+		// menu panel. Set to 'true' to show the themes menu panel
+		// with the default themes list. Alternatively, provide an
+		// array to specify the themes to make available in the
+		// themes menu panel, for example...
+		// [
+		//     { name: 'Black', theme: 'css/theme/black.css' },
+		//     { name: 'White', theme: 'css/theme/white.css' },
+		//     { name: 'League', theme: 'css/theme/league.css' }
+		// ]
+		themes: false,
+
+		// Specifies the path to the default theme files. If your
+		// presentation uses a different path to the standard reveal
+		// layout then you need to provide this option, but only
+		// when 'themes' is set to 'true'. If you provide your own 
+		// list of themes or 'themes' is set to 'false' the 
+		// 'themesPath' option is ignored.
+		themesPath: 'css/theme/',
+
+		// Specifies if the transitions menu panel will be shown.
+		// Set to 'true' to show the transitions menu panel with
+		// the default transitions list. Alternatively, provide an
+		// array to specify the transitions to make available in
+		// the transitions panel, for example...
+		// ['None', 'Fade', 'Slide']
+		transitions: false,
+
+		// Adds a menu button to the slides to open the menu panel.
+		// Set to 'false' to hide the button.
+		openButton: true,
+
+		// If 'true' allows the slide number in the presentation to
+		// open the menu panel. The reveal.js slideNumber option must 
+		// be displayed for this to take effect
+		openSlideNumber: false,
+
+		// If true allows the user to open and navigate the menu using
+		// the keyboard. Standard keyboard interaction with reveal
+		// will be disabled while the menu is open.
+		keyboard: true,
+
+		// Normally the menu will close on user actions such as
+		// selecting a menu item, or clicking the presentation area.
+		// If 'true', the sticky option will leave the menu open
+		// until it is explicitly closed, that is, using the close
+		// button or pressing the ESC or m key (when the keyboard 
+		// interaction option is enabled).
+		sticky: false,
+
+		// If 'true' standard menu items will be automatically opened
+		// when navigating using the keyboard. Note: this only takes 
+		// effect when both the 'keyboard' and 'sticky' options are enabled.
+		autoOpen: true,
+
+		// If 'true' the menu will not be created until it is explicitly
+		// requested by calling RevealMenu.init(). Note this will delay
+		// the creation of all menu panels, including custom panels, and
+		// the menu button.
+		delayInit: false,
+
+		// If 'true' the menu will be shown when the menu is initialised.
+		openOnInit: false,
+
+		// By default the menu will load it's own font-awesome library
+		// icons. If your presentation needs to load a different
+		// font-awesome library the 'loadIcons' option can be set to false
+		// and the menu will not attempt to load the font-awesome library.
+		loadIcons: true
+	},
+
+
+        // Optional reveal.js plugins
+        dependencies: [
+          { src: 'lib/reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'lib/reveal.js/plugin/zoom-js/zoom.js', async: true },
+          { src: 'lib/reveal.js/plugin/math/math.js', async: true },
+          { src: 'lib/reveal.js/plugin/menu/menu.js'},
+          { src: 'lib/reveal.js/plugin/markdown/marked.js'},
+          { src: 'lib/reveal.js/plugin/markdown/markdown.js'},
+          { src: 'lib/reveal.js/plugin/search/search.js'},
+          { src: 'lib/reveal.js/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+          { src: 'lib/reveal.js/plugin/notes/notes.js', async: true },
+        ]
+      });
+    </script>
+    </body>
+</html>

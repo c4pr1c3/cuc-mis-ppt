@@ -1,0 +1,2010 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="黄玮">
+  <title>移动互联网安全</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="lib/reveal.js.v4/dist/reset.css">
+  <link rel="stylesheet" href="lib/reveal.js.v4/dist/reveal.css">
+
+  <!-- For syntax highlighting using highlight.js-->
+  <link rel="stylesheet" href="lib/reveal.js.v4/plugin/highlight/monokai.css">
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+  </style>
+  <link rel="stylesheet" href="lib/reveal.js.v4/dist/theme/my-white.css" id="theme">
+
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide">
+  <h1 class="title">移动互联网安全</h1>
+  <p class="author">黄玮</p>
+</section>
+
+<section>
+<section id="第三章-无线接入网入侵与防御" class="title-slide slide level1">
+<h1>第三章 无线接入网入侵与防御</h1>
+
+</section>
+<section id="温故" class="slide level2">
+<h2>温故</h2>
+<ul>
+<li>无线网络全生命周期包括哪些阶段</li>
+<li><a href="https://c4pr1c3.github.io/cuc-mis/chap0x02/exp.html#wireshark%E7%9A%8480211-psk%E8%A7%A3%E5%AF%86%E5%8A%9F%E8%83%BD">Wireshark 的 802.11 PSK 解密功能</a></li>
+</ul>
+</section>
+<section id="知新" class="slide level2">
+<h2>知新</h2>
+<ul>
+<li>SSID 隐藏与发现</li>
+<li>Evil Twin 攻击与防御</li>
+<li>花式中间人攻击与防御</li>
+<li>WLAN 认证机制攻防</li>
+<li>基于 Scapy 的无线网络编程实践</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="实战回顾无线网络全生命周期" class="title-slide slide level1">
+<h1>实战回顾无线网络全生命周期</h1>
+
+</section>
+<section id="pcap-as-examples" class="slide level2">
+<h2>本章演示使用到的 pcap 样例数据文件</h2>
+<ol type="1">
+<li><a href="exp/chap0x03/full-connect-public.pcap">WPA2-CCMP EAPOL 4 次握手包，完整连接过程</a></li>
+<li><a href="exp/chap0x03/wpa-tkip-public.pcap">WPA-TKIP 4 次握手包</a></li>
+<li><a href="exp/chap0x03/wpa-wpa2-auth-public.pcap">WPA/WPA2 等多安全机制组合</a></li>
+<li><a href="exp/chap0x03/utf8-ssid-full-beacons-public.pcap">中文 SSID</a></li>
+<li><a href="exp/chap0x03/hidden-essid-public.pcap">隐藏 SSID</a></li>
+<li><a href="exp/chap0x03/deauth-public.pcap">DeAuth Attack</a></li>
+</ol>
+</section>
+<section id="ap-configure-info" class="slide level2">
+<h2>无线 AP 配置信息</h2>
+<p><img data-src="images/chap0x03/OpenWrt-Wireless-LuCI.png" /></p>
+</section>
+<section class="slide level2">
+
+<p><img data-src="images/chap0x03/full-connect-1.png" /></p>
+</section>
+<section class="slide level2">
+
+<pre ><code >(!(wlan.fc.type_subtype==0x24) && !(wlan.fc.type_subtype==0x1d)) && !(ipv6.version==6) && (frame.number==1 || frame.number==12||frame.number&gt;18)</code></pre>
+</section>
+<section id="一个典型的无线网络完整生命周期" class="slide level2">
+<h2>一个典型的无线网络完整生命周期</h2>
+<ul>
+<li>加入无线网络前</li>
+<li>加入无线网络</li>
+<li>加入无线网络后</li>
+<li>上行有线接入网络通信</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="加入无线网络前-weak-0-0" class="title-slide slide level1">
+<h1>加入无线网络前 [WEAK-0-0]</h1>
+
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>悄无声息的「监听」模式</p>
+</blockquote>
+<ul>
+<li>无加密的无线网络通信就是在“裸奔”</li>
+<li>有加密的无线网络通信数据逃不过被获取原始通信数据的命运</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>动手准备好自己的无线「监听」环境</p>
+</blockquote>
+</section>
+</section>
+<section>
+<section id="加入无线网络前-weak-0-1" class="title-slide slide level1">
+<h1>加入无线网络前 [WEAK-0-1]</h1>
+
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>SSID 信息泄露</p>
+</blockquote>
+</section>
+<section id="回顾ssid包含在哪些类型的802.11帧" class="slide level2">
+<h2>回顾：SSID包含在哪些类型的802.11帧？</h2>
+<ul>
+<li>Beacon Frame</li>
+<li>Probe Request</li>
+<li>Probe Response</li>
+<li>Association Request</li>
+<li>Re-Association Request （样例数据文件中不包含）</li>
+</ul>
+</section>
+<section id="tshark-tricks-1" class="slide level2">
+<h2>Tshark 小技巧示范</h2>
+<pre ><code class="bash">echo "SA\t\t\tEnc\tType\tESSID"
+tshark -r full-connect-public.pcap -Y "wlan.fc.type_subtype==0x08 || wlan.fc.type_subtype==0x04 || wlan.fc.type_subtype==0x05 || wlan.fc.type_subtype==0" -T fields -e frame.number -e wlan.sa -e wlan.fixed.capabilities.privacy -e wlan.fc.type_subtype -e wlan.ssid | sort -u
+# 3c:46:d8:59:e8:f4 1   5   OpenWrt
+# 3c:46:d8:59:e8:f4 1   8   OpenWrt
+# 76:73:c1:7d:ef:a1     4   OpenWrt
+# 76:73:c1:7d:ef:a1 1   0   OpenWrt
+
+# 包含中文的 ESSID 怎么办？
+echo "SA.Addr\t\t\tEnc\tFC_TS\tESSID"
+tshark -r utf8-ssid-full-beacons-public.pcap -Y "wlan.fc.type_subtype==0x08 || wlan.fc.type_subtype==0x04 || wlan.fc.type_subtype==0x05 || wlan.fc.type_subtype==0" -T fields -e wlan.sa -e wlan.fixed.capabilities.privacy -e wlan.fc.type_subtype -e wlan.ssid | sort -u</code></pre>
+</section>
+<section id="essid-in-wireshark" class="slide level2">
+<h2>Wireshark 中查看中文 ESSID</h2>
+<p><img data-src="images/chap0x03/copy-as-escaped-string.png" /></p>
+</section>
+<section class="slide level2">
+
+<pre ><code class="bash">echo -e "\xe8\xae\xa9\xe6\x88\x91\xe5\xba\xb7\xe5\xba\xb7\xe4\xbd\xa0"
+# 让我康康你</code></pre>
+</section>
+<section id="scapy-decode-essid" class="slide level2">
+<h2>交给 Scapy 来自动化完成这个任务</h2>
+<pre ><code class="python">#!/usr/bin/env python
+
+import os
+import sys
+from scapy.all import Dot11Elt, rdpcap
+
+
+pcap = sys.argv[1]
+
+if not os.path.isfile(pcap):
+    print('input file does not exist')
+    exit(1)
+
+pkts = rdpcap(pcap)
+
+i = 0
+output = {}
+
+print("{:5} {:18} {:18} {:18}".format("No.", "SA", "Type", "ESSID"))
+for pkt in pkts:
+    i += 1
+    if not pkt.haslayer(Dot11Elt) or pkt.info.decode('utf8').strip('\x00') == '':
+        continue
+    if pkt.subtype == 0:  # Association Req
+        output["{:18} {:18} {:18}".format(pkt.addr2, "Assoc Req", pkt.info.decode('utf8'))] = "{:5} {:18} {:18} {:18}".format(i, pkt.addr2, "Assoc Req", pkt.info.decode('utf8'))
+    if pkt.subtype == 4:  # Probe Req
+        output["{:18} {:18} {:18}".format(pkt.addr2, "Probe Req", pkt.info.decode('utf8'))] = "{:5} {:18} {:18} {:18}".format(i, pkt.addr2, "Probe Req", pkt.info.decode('utf8'))
+    if pkt.subtype == 5:  # Probe Resp
+        output["{:18} {:18} {:18}".format(pkt.addr2, "Probe Resp", pkt.info.decode('utf8'))] = "{:5} {:18} {:18} {:18}".format(i, pkt.addr2, "Probe Rep", pkt.info.decode('utf8'))
+    if pkt.subtype == 8:  # Beacon Frame
+        output["{:18} {:18} {:18}".format(pkt.addr2, "Beacon", pkt.info.decode('utf8'))] = "{:5} {:18} {:18} {:18}".format(i, pkt.addr2, "Beacon", pkt.info.decode('utf8'))
+
+for key in output.keys():
+    print(output[key])</code></pre>
+</section>
+<section id="hidden-essid-1" class="slide level2">
+<h2>隐藏 ESSID 发现实验</h2>
+<p><img data-src="images/chap0x03/hidden-essid-1.png" /></p>
+</section>
+<section id="hidden-essid-2" class="slide level2">
+<h2>隐藏 ESSID 发现实验</h2>
+<p><img data-src="images/chap0x03/hidden-essid-probe-req.png" /></p>
+</section>
+<section id="hidden-essid-3" class="slide level2">
+<h2>隐藏 ESSID 发现实验</h2>
+<p><img data-src="images/chap0x03/hidden-essid-2.png" /></p>
+</section>
+</section>
+<section>
+<section id="加入无线网络前-weak-0-2" class="title-slide slide level1">
+<h1>加入无线网络前 [WEAK-0-2]</h1>
+
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>STA Mac Address 信息泄露</p>
+</blockquote>
+</section>
+<section id="wifi-collector-news" class="slide level2">
+<h2>Wi-Fi 探针有关的新闻</h2>
+<p><a href="https://finance.sina.cn/chanjing/gsxw/2019-08-29/detail-ihytcern4346376.d.html"><img data-src="images/chap0x03/wifi-collector-news.png" /></a></p>
+</section>
+<section id="how-probe-req-leakage-happens" class="slide level2">
+<h2>Probe Request 泄露你的行踪</h2>
+<p><img data-src="images/chap0x03/wifi-collector-agent.png" /></p>
+</section>
+<section id="协议标准化组织在行动" class="slide level2">
+<h2>协议标准化组织在行动</h2>
+<p><a href="https://www.csoonline.com/article/2945044/ieee-groups-recommends-random-mac-addresses-for-wi-fi-security.html">IEEE group recommends random MAC addresses for Wi-Fi security - 2015.7</a></p>
+<blockquote>
+<p>We have tried it on 802.11n, on 802.11g and 802.11ac," he said. "This is something that can be done by a firmware update, if manufacturers decide to do so.</p>
+</blockquote>
+</section>
+<section id="apple-against-weak2" class="slide level2">
+<h2>设备厂商在行动 - Apple</h2>
+<ul>
+<li><a href="https://support.apple.com/zh-cn/guide/security/secb9cb3140c/web">iOS 8+ 设备在扫描 Wi-Fi 时系统会使用的 MAC 地址来防止设备被跟踪，只有在连接成功后才会使用物理网卡地址 - 2014</a></li>
+<li><a href="https://support.apple.com/zh-cn/HT211227">iOS 14+ / iPadOS 14+ / watchOS 7+ 会在每个无线局域网中使用不同的 MAC 地址（私有地址） - 2020</a></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="macos-big-sur-11.1-不支持-mac-地址随机化功能">macOS Big Sur 11.1 不支持 MAC 地址随机化功能</h3>
+<p><a href="https://developer.apple.com/documentation/devicemanagement/wifi"><img data-src="images/chap0x03/wifi-macrandomization-on-macos.png" /></a></p>
+</section>
+<section class="slide level2">
+
+<h3 id="macos-用户自己手动修改网卡-mac-地址">macOS 用户自己手动修改网卡 MAC 地址</h3>
+<pre ><code class="bash"># 使用「随机」MAC 地址
+sudo ifconfig en0 ether $(openssl rand -hex 6 | sed 's/\(..\)/\1:/g; s/.$//')
+
+# 使用「指定」MAC 地址 aa:bb:cc:dd:ee:ff
+sudo ifconfig en0 ether aa:bb:cc:dd:ee:ff</code></pre>
+</section>
+<section id="microsoft-against-weak2-1" class="slide level2">
+<h2>设备厂商在行动 - Microsoft</h2>
+<p><a href="https://huitema.wordpress.com/2015/12/31/mac-address-randomization-in-windows-10/"><img data-src="images/chap0x03/win10-mac-addr-randomization-history.png" /></a></p>
+</section>
+<section id="microsoft-against-weak2-2" class="slide level2">
+<h2>设备厂商在行动 - Microsoft</h2>
+<p><a href="https://support.microsoft.com/zh-cn/windows/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8%E9%9A%8F%E6%9C%BA%E7%A1%AC%E4%BB%B6%E5%9C%B0%E5%9D%80-ac58de34-35fc-31ff-c650-823fc48eb1bc"><img data-src="images/chap0x03/win10-mac-addr-randomization.png" /></a></p>
+</section>
+<section id="android-against-weak2" class="slide level2">
+<h2>Android 社区在行动</h2>
+<ul>
+<li><a href="https://source.android.com/devices/tech/connect/wifi-mac-randomization#:~:text=In%20Android%2010%2C%20MAC%20randomization,and%20Wi%2DFi%20RTT%20operations.">从 Android 8.0 开始，Android 设备在未连接到网络的情况下探测新网络时，会使用随机分配的 MAC 地址 - 2017</a>
+<ul>
+<li>从 Android 6 开始，设备扫描无线网络时使用的是随机化的 MAC 地址 - 2015</li>
+<li>在 Android 9 中，用户可以启用一个开发者选项（默认处于停用状态），使设备在连接到 WLAN 网络时使用随机分配的 MAC 地址 - 2018</li>
+<li>在 Android 10 中，默认为客户端模式、SoftAp 和 WLAN 直连启用随机分配 MAC 地址功能 - 2019</li>
+</ul></li>
+</ul>
+</section>
+<section id="linux-against-weak2" class="slide level2">
+<h2>Linux 社区在行动</h2>
+<p><a href="https://w1.fi/cgit/hostap/plain/wpa_supplicant/ChangeLog">2015-03-15 wpa_supplicant v2.4</a></p>
+<blockquote>
+<p>add support for MAC address randomization in scans with nl80211</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<p>⚠️ 不仅是 Probe Request 泄露你的行踪</p>
+</section>
+<section id="how-beacon-leakage-happens-1" class="slide level2">
+<h2>Beacon Frame 暴露你（家）的位置</h2>
+<p><a href="https://www.wifimap.io/633-beijing-free-wifi/map"><img data-src="images/chap0x03/hotspot-map.png" /></a></p>
+</section>
+<section id="how-beacon-leakage-happens-2" class="slide level2">
+<h2>Beacon Frame 暴露你（家）的位置</h2>
+<p><img data-src="images/chap0x03/beacon-airodump-ng-csv.png" /></p>
+</section>
+<section id="how-beacon-leakage-happens-3" class="slide level2">
+<h2>Beacon Frame 暴露你（家）的位置</h2>
+<blockquote>
+<p>kismet wifi wardriving</p>
+</blockquote>
+</section>
+</section>
+<section>
+<section id="加入无线网络前-weak-0-3" class="title-slide slide level1">
+<h1>加入无线网络前 [WEAK-0-3]</h1>
+
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>SSID 滥用与 Evil SSID</p>
+</blockquote>
+</section>
+<section id="evil-ssid-1" class="slide level2">
+<h2>SSID 字段定义</h2>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">唯一标识</th>
+<th style="text-align: left;">长度</th>
+<th style="text-align: left;">ESSID</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">1byte</td>
+<td style="text-align: left;">1byte</td>
+<td style="text-align: left;">0~32byte</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>唯一标识：广播的 <code>SSID</code> ，此字段设置为0</li>
+<li>长度：<code>SSID</code> 字段的长度</li>
+<li><code>SSID</code>：人类可读、可识别的无线网络名称
+<ul>
+<li><code>IEEE 802.11-2012</code> 允许字符集范围未定义（未限制）</li>
+</ul></li>
+</ul>
+</section>
+<section id="evil-ssid-2" class="slide level2">
+<h2>Evil SSID</h2>
+<ul>
+<li>格式化字符串注入</li>
+<li>广告：传播垃圾信息</li>
+<li>XSS</li>
+<li>CSRF</li>
+</ul>
+<p><a href="https://media.blackhat.com/eu-13/briefings/Heiland/bh-eu-13-practical-exploitation-heiland-slides.pdf">ref: Deral Heiland, Practical Exploitation Using A Malicious Service Set Identifier (SSID) , Blackhat EU 2013</a></p>
+</section>
+<section class="slide level2">
+
+<h3 id="广告传播垃圾信息">广告：传播垃圾信息</h3>
+<p><img data-src="images/chap0x03/ssid-abuse-1-9004.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="xss-ok-case">XSS 成功示例</h3>
+<p><img data-src="images/chap0x03/DGN2200B-Stored-XSS-SSID-9164.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="airebase-ng-xss-1">使用 airebase-ng 创建一个广播 XSS 攻击向量的假 AP</h3>
+<p><img data-src="images/chap0x03/evil-ssid-xss-1-9088.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="airebase-ng-xss-2">使用 airebase-ng 创建一个广播 XSS 攻击向量的假 AP</h3>
+<pre ><code class="bash">sudo airbase-ng --essid "&lt;script&gt;alert(/hacked/)&lt;/script&gt;" -a "23:33:33:33:33:33" -c6 wlan0</code></pre>
+</section>
+<section class="slide level2">
+
+<h3 id="xss-failed-case">XSS 失败示例</h3>
+<p><img data-src="images/chap0x03/evil-ssid-xss-2-9113.png" /></p>
+</section>
+</section>
+<section>
+<section id="加入无线网络-weak-1-0" class="title-slide slide level1">
+<h1>加入无线网络 [WEAK-1-0]</h1>
+
+</section>
+<section id="evil-twin" class="slide level2">
+<h2>Evil Twin</h2>
+<ul>
+<li><a href="http://www.packetnexus.com/docs/wireless_LAN_security.pdf">公开资料最早见于 2001 年的技术白皮书：Wireless LAN Security</a></li>
+</ul>
+<blockquote>
+<p><strong>Access Point Clone (<code>Evil Twin</code>) Traffic Interception</strong> – An attacker fools legitimate wireless clients into connecting to the attacker’s own network by placing an unauthorized access point with a <strong>stronger signal in close proximity</strong> to wireless clients. Users attempt to log into the substitute servers and unknowingly give away passwords and similar sensitive data.</p>
+</blockquote>
+</section>
+<section id="evil-twin-variants" class="slide level2">
+<h2>Evil Twin 常见分类</h2>
+<ul>
+<li><a href="http://theta44.org/karma/">KARMA Attack - 2004~2006</a> | <a href="https://github.com/Leviathan36/SKA">Simple Karma Attack (Tool)</a></li>
+<li><a href="https://github.com/sensepost/hostapd-mana/wiki/KARMA---MANA-Attack-Theory">MANA Attack - 2014</a></li>
+<li><a href="https://census-labs.com/news/2017/05/11/lure10-exploiting-windows-automatic-association-algorithm/">Lure10 Attack - 2017</a>
+<ul>
+<li>影响 <a href="https://support.microsoft.com/zh-cn/windows/在-windows-10-中连接到开放-wlan-热点-bcec4e8b-00e7-4930-d3ff-5349a3e70037">Windows 10 version 1703 以前版本</a></li>
+</ul></li>
+<li><a href="https://census-labs.com/news/2018/02/01/known-beacons-attack-34c3/">Known Beacon Attack - 2018</a></li>
+</ul>
+</section>
+<section id="karma-attack-1" class="slide level2">
+<h2>KARMA Attack</h2>
+<p><img data-src="images/chap0x03/karma-attack.png" /></p>
+</section>
+<section id="karma-attack-2" class="slide level2">
+<h2>KARMA Attack</h2>
+<ul>
+<li>攻击目标是「无线客户端」</li>
+<li>攻击条件不依赖于「被克隆/伪装 AP 在附近」
+<ul>
+<li>「无线客户端」会在后台静默广播检测附近是否存在历史加入过的无线网络 SSID</li>
+</ul></li>
+</ul>
+</section>
+<section id="defense-against-karma" class="slide level2">
+<h2>已有的针对 KARMA Attack 防御措施</h2>
+<ul>
+<li>减少主动后台静默广播 Probe Request 或干脆只依赖于被动监听 Beacon Frame</li>
+<li>客户端保存「历史加入过的无线网络」（<code>Preferred Network List, PNL</code>）时，同时保存 {ESSID, BSSID} ， <strong>自动连接</strong> 历史网络时同时校验 ESSID 和 BSSID
+<ul>
+<li>攻击者除非能准确伪造出 BSSID ，否则无法强制客户端连入陷阱网络</li>
+</ul></li>
+<li>移动客户端在保存 <code>PNL</code> 时，甚至可以同时保存 {ESSID, BSSID, Location} 。超出历史无线网络所在定位范围过大时，拒绝 <strong>自动加入</strong> 目标无线网络</li>
+<li>不需要使用无线网络时，关闭无线网卡硬件开关</li>
+</ul>
+</section>
+<section id="mana-attack" class="slide level2">
+<h2>MANA Attack</h2>
+<ul>
+<li>现代无线设备在第一次探测 <code>Probe Request</code> 没有得到响应之后，就会认为目标无线网络当前不在附近，后续的 <code>Probe Response</code> 会在一段时间之内被自动忽略</li>
+<li><code>MANA Attack</code> 会通过网络嗅探自动保存所有「看到」的 <code>STA</code> 网络连接请求和通信会话形成一个本地 <code>PNL</code> ，后续再收到 <code>Probe Request</code> 后会对本地 <code>PNL</code> 中存在的 <code>STA</code> 发送匹配的 <code>Probe Response</code></li>
+<li>已有的针对 <code>KARMA Attack</code> 的防御措施也能用来防御 <code>MANA Attack</code></li>
+</ul>
+</section>
+<section id="lure10-attack" class="slide level2">
+<h2>Lure10 Attack</h2>
+<ul>
+<li><code>Windows 10 build 1703 之前版本</code> 默认启用的 <code>Wi-Fi Sense</code> 功能会自动连入系统内置的所谓「高质量热点名单中热点」</li>
+<li>剩下的攻击原理同 <code>KARMA Attack</code></li>
+<li>已有的针对 <code>KARMA Attack</code> 的防御措施也能用来防御 <code>Lure10 Attack</code></li>
+</ul>
+</section>
+<section id="known-beacon-attack" class="slide level2">
+<h2>Known Beacon Attack</h2>
+<ul>
+<li>攻击者主动基于一个「常见热点名单」进行 <code>Beacon Frame</code> 广播</li>
+<li>客户端一旦认定其中 <code>Beacon Frame</code> 有 <code>SSID</code> 包含在自己的 <code>PNL</code> ，则会自动发起连接</li>
+<li>剩下的攻击原理同 <code>KARMA Attack</code></li>
+<li>已有的针对 <code>KARMA Attack</code> 的防御措施也能用来防御 <code>Known Beacon Attack</code></li>
+</ul>
+</section>
+<section id="动手实验" class="slide level2">
+<h2>动手实验</h2>
+<ul>
+<li>本节 <code>Evil Twin</code> 实验指南详见<a href="https://c4pr1c3.github.io/cuc-mis/chap0x03/exp.html">课本</a></li>
+<li>第一章课后实验搭建的 <code>OpenWrt</code> 也可以用于 <code>Evil Twin</code> 实验</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="加入无线网络-weak-1-1" class="title-slide slide level1">
+<h1>加入无线网络 [WEAK-1-1]</h1>
+
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>恢复/破解认证凭据</p>
+</blockquote>
+<ul>
+<li>WEP</li>
+<li>WPA/WPA2 PSK</li>
+<li>WPA/WPA2 企业级认证</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="加入无线网络-wep-weak-1-1-0" class="title-slide slide level1">
+<h1>加入无线网络 WEP [WEAK-1-1-0]</h1>
+
+</section>
+<section id="short-life-of-wep" class="slide level2">
+<h2>短命的 WEP</h2>
+<ul>
+<li><strong>W</strong>ired <strong>E</strong>quivalent <strong>P</strong>rivacy (1997-2004) ，属于早期 <code>IEEE 802.11</code> 协议的组成部分</li>
+<li><code>IEEE</code> 随后在 2004.7.23 的 <code>IEEE 802.11i-2004</code> 报告中同时包含了 <code>TKIP</code> 和 <code>CCMP</code>
+<ul>
+<li>废止了 <code>WEP</code> 协议</li>
+<li><code>Wi-Fi 联盟</code> 接受了 <code>IEEE</code> 的上述相关报告并冠以 <code>WPA2</code> 这个 <strong>商业名称</strong> 发布</li>
+</ul></li>
+</ul>
+</section>
+<section id="temporary-tkip" class="slide level2">
+<h2>临时救火队员 TKIP</h2>
+<ul>
+<li>2002.10.31，<code>Wi-Fi 联盟</code> 提出 <code>TKIP</code> 协议，归类于 <code>WPA</code> 标准的一部分
+<ul>
+<li><code>TKIP</code> - Temporal Key Integrity Protocol，临时密钥完整性协议</li>
+<li>用于升级 <code>WEP</code> 的 <strong>临时过渡</strong> 解决方案，保留了 <code>WEP</code> 的基本架构与过程方式</li>
+</ul></li>
+<li><code>TKIP</code> 随后由于安全性原因于 2009 年 1 月被 <code>IEEE</code> 废弃</li>
+<li>自 2012 年的 <code>IEEE 802.11</code> 标准中，<code>TKIP</code> 已不再视为安全，目前已经处于废弃状态</li>
+</ul>
+</section>
+<section id="wep-的已知经典密钥恢复相关漏洞" class="slide level2">
+<h2>WEP 的已知经典密钥恢复相关漏洞</h2>
+<ul>
+<li><a href="http://www.cs.cornell.edu/People/egs/615/rc4_ksaproc.pdf"><code>FMS</code> attack on WEP RC4 - 2001</a></li>
+<li><a href="https://infoscience.epfl.ch/record/113785">KoreK 改进了 <code>FMS</code> attack - 2006</a></li>
+<li><a href="https://eprint.iacr.org/2007/120.pdf"><code>PTW</code> Attack - 2007</a>
+<ul>
+<li>基于 2005 年发布的 <code>Klein's attack on RC4</code></li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="加入无线网络-wpawpa2-psk-weak-1-1-1" class="title-slide slide level1">
+<h1>加入无线网络 WPA/WPA2 PSK [WEAK-1-1-1]</h1>
+
+</section>
+<section id="review-of-wpa-psk-flow-1" class="slide level2">
+<h2>回顾 WPA/WPA2 PSK 四次握手认证过程</h2>
+<p><img data-src="images/chap0x02/four-way-handshake.png" /></p>
+</section>
+<section id="review-of-wpa-psk-flow-2" class="slide level2">
+<h2>回顾 WPA/WPA2 PSK 四次握手认证参数定位和计算方法</h2>
+<pre ><code >PTK = PRF(PMK||A-nonce||S-nonce|| AP Mac || STA Mac)
+PMK = PBKDF(Passphrase, SSID, ssidLength, 4096, 256)</code></pre>
+<ul>
+<li>上述公式里的 <code>PRF</code> 通常使用 <code>Hash</code> 函数来实现
+<ul>
+<li>PRF = Pseudo-Random Function</li>
+</ul></li>
+<li><code>A-nonce</code> 在 4 次握手消息中的第 1 个 EAP 包；</li>
+<li><code>S-nonce</code> 在 4 次握手消息中的第 2 个 EAP 包；</li>
+<li>剩下的变量在 <code>AP</code> 的 <code>beacon frame</code> 广播包、<code>STA</code> 和 <code>AP</code> 之间的 <code>probe request</code>、<code>probe response</code>、<code>association request</code> 和 <code>association response</code> 中都可以提取到；</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>如果我们可以恢复/破解出上述公式中的 Passphrase 就可以加入目标网线网络</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>⚠️ 我们在嗅探获得的数据包中并不能得到 <code>PTK</code></p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>实际上我们能够提取到的是 <code>PTK</code> 的组成部分之一：校验和字段 <code>MIC</code> 值</p>
+</blockquote>
+</section>
+<section id="pmk-and-mic" class="slide level2">
+<h2>PMK 与 MIC 的关系</h2>
+<p><img data-src="images/chap0x03/pmk.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="tkip-in-beacon">TKIP 声明</h3>
+<p><img data-src="images/chap0x03/tkip.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="tkip-in-eapol">TKIP EAPOL 中的 MIC</h3>
+<p><img data-src="images/chap0x03/tkip-eapol.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="ccmp-in-beacon-1">CCMP 声明</h3>
+<p><img data-src="images/chap0x03/ccmp-in-wap-wap2-auth.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="ccmp-in-eapol-1">CCMP EAPOL 中的 MIC</h3>
+<p><img data-src="images/chap0x03/ccmp-mic-hmac-sha1.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="ccmp-in-beacon-2">CCMP 声明</h3>
+<p><img data-src="images/chap0x03/ccmp-in-full-connect.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="ccmp-in-wpa3">CCMP with SHA256</h3>
+<p><img data-src="images/chap0x03/ccmp-association-req-psk-sha256.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="ccmp-in-eapol-2">CCMP EAPOL 中的 MIC</h3>
+<p><img data-src="images/chap0x03/ccmp-mic-aes-128-cmac.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="openwrt-security-config-1">使用 OpenWrt 自行组合以下安全策略</h3>
+<ul>
+<li>WPA/WPA2 Mixed</li>
+<li>WPA/WPA2 TKIP</li>
+<li>WPA/WPA2 CCMP</li>
+<li>WPA CCMP</li>
+<li>WPA TKIP</li>
+<li>WPA2 TKIP</li>
+<li>WPA2 CCMP</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="openwrt-security-config-2">使用 OpenWrt 自行组合以下安全策略</h3>
+<p><img data-src="images/chap0x03/openwrt-security-config.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="在-wireshark-中筛选不同安全策略组合">在 Wireshark 中筛选不同安全策略组合</h3>
+<pre ><code class="bash"># CCMP
+wlan.rsn.pcs.type==4 && wlan.rsn.pcs.count==1
+
+# TKIP
+wlan.rsn.pcs.type==2 && wlan.rsn.pcs.count==1
+
+# CCMP && TKIP mixed
+wlan.rsn.pcs.type==2 && wlan.rsn.pcs.type==4
+
+# ex: exp/chap0x03/wpa-wpa2-auth-public.pcap
+# CCMP 条件下协商使用 AES Cipher, HMAC-SHA1 MIC (2) 
+# 只看 AP 的 Beacon Frame 中声明的安全信息
+wlan_rsna_eapol.keydes.key_info.keydes_version == 2 || (wlan.rsn.pcs.type==4 && wlan.fc.type_subtype==8)
+
+# ex: exp/chap0x03/full-connect-public.pcap
+# CCMP 条件下协商使用 AES Cipher, AES-128-CMAC MIC (3)
+# 只看 AP 的 Beacon Frame 中声明的安全信息
+wlan_rsna_eapol.keydes.key_info.keydes_version == 3 || (wlan.rsn.pcs.type==4 && wlan.fc.type_subtype==8)
+
+# ex: exp/chap0x03/wpa2-tkip-public.pcap
+# TKIP 条件下协商使用 RC4 Cipher, HMAC-MD5 MIC (1)
+# 只看 AP 的 Beacon Frame 中声明的安全信息
+wlan_rsna_eapol.keydes.key_info.keydes_version == 1 || (wlan.rsn.pcs.type==2 && wlan.fc.type_subtype==8)</code></pre>
+</section>
+<section class="slide level2">
+
+<h3 id="key-to-key-recovery-in-wpa-wpa2-1">WPA/WPA2 PSK 秘钥恢复的关键</h3>
+<ul>
+<li>无论 <code>TKIP</code> 还是 <code>CCMP</code> 加密模式，均是「数据机密性」保护算法，与身份认证无关</li>
+<li>WPA 和 WPA2 的 PSK 认证机制均是 <code>AP</code> <strong>单向</strong> 通过 <code>挑战-响应</code> 模式验证客户端身份，且挑战算法均使用了「消息签名算法」来生成 <strong>随机数挑战值</strong>
+<ul>
+<li>HMAC 或 <a href="https://tools.ietf.org/html/rfc4493">AES-CMAC</a> 的区别而已</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="key-to-key-recovery-in-wpa-wpa2-2">WPA/WPA2 PSK 秘钥恢复的关键</h3>
+<ul>
+<li>上述身份验证算法在设计时没有考虑 <strong>防重放</strong> 攻击</li>
+<li>攻击者只要通过网络嗅探，拿到了以下关键参数
+<ul>
+<li><code>A-nonce</code> 在 4 次握手消息中的第 1 个 EAP 包；</li>
+<li><code>S-nonce</code> 在 4 次握手消息中的第 2 个 EAP 包；</li>
+<li><code>SSID</code>, <code>AP MAC</code> 和 <code>STA MAC</code></li>
+</ul></li>
+<li>遍历寻找 <code>TargetPassphrase</code> 代入 <code>PMK</code> 公式
+<ul>
+<li><code>TargetPMK = PBKDF(TargetPassphrase, SSID, ssidLength, 4096, 256)</code></li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="key-to-key-recovery-in-wpa-wpa2-3">WPA/WPA2 PSK 秘钥恢复的关键</h3>
+<ul>
+<li>根据 <code>EAPOL</code> 包中的签名算法信息（例如 <code>AES-128-CMAC</code> 或 <code>HMAC-SHA1</code> 或 <code>HMAC-MD5</code>）即可计算出对应的 <code>TargetPTK</code></li>
+<li>再根据 <code>EAPOL</code> 中的 <code>MIC</code> 算法信息计算出 <code>TargetMIC</code> 与 <code>EAPOL</code> 握手消息中的第 2 个消息中包含的 <code>MIC</code> 进行比较</li>
+<li>如果 <code>TargetMIC == MIC</code> ，则说明找到了 <code>Passphrase = TargetPassphrase</code>。否则，继续遍历尝试下一个 <code>TargetPassphrase</code> ，直到找到或穷举完口令字典</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>等等，目标客户端已经连接上目标 AP 了怎么抓取到认证 4 次握手中的前 2 个数据包？</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>请看稍候即将登场的 Deauthentication Attack</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>目标 AP 不在附近也能恢复出目标 AP 的入网认证口令？</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<h3 id="主动攻击离线客户端">主动攻击离线客户端</h3>
+<ul>
+<li>提前开启无线数据嗅探</li>
+<li>使用 <code>Evil Twin</code> 去攻击附近曾经连接过 <code>目标 AP</code> 的无线客户端</li>
+<li>目标：获取 4 次握手认证过程的前 2 个数据包</li>
+</ul>
+</section>
+<section id="使用工具完成上述秘钥恢复算法" class="slide level2">
+<h2>使用工具完成上述秘钥恢复算法</h2>
+<pre ><code class="bash">aircrack-ng -w /usr/share/wordlists/rockyou.txt -e OpenWrt exp/chap0x03/full-connect-public.pcap</code></pre>
+</section>
+<section class="slide level2">
+
+<h3 id="pmkid-hash-dictionary-attack">PMKID Hash Dictionary Attack</h3>
+<ul>
+<li>2018 年由 <a href="https://hashcat.net/hashcat/">Hashcat</a> 的作者 <code>Steube</code> 公布了一种<a href="https://hashcat.net/forum/thread-7717.html">基于 PMKID 的针对 WPA/WPA2 PSK 认证算法的新型字典攻击方法</a></li>
+<li>攻击者需要能直接和目标 AP 通信</li>
+<li>目标 AP 需要开启 <strong>漫游</strong> 功能</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="roaming-in-openwrt">OpenWrt 中开启 <strong>漫游</strong> 功能</h3>
+<p><img data-src="images/chap0x03/roaming-in-openwrt.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="pmkid-消息示例">PMKID 消息示例</h3>
+<p><img data-src="images/chap0x03/pmkid-hash.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="how-pmkid-is-generated">PMKID 计算方法</h3>
+<pre ><code >PMKID = HMAC-SHA1-128(PMK, "PMK Name" | MAC_AP | MAC_STA)</code></pre>
+<ul>
+<li>上述公式中 <code>PMK Name</code> 是固定静态字符串，<code>PMKID</code>，<code>MAC_AP</code> 和 <code>MAC_STA</code> 均可以通过抓包获得</li>
+<li>剩下的工作原理就和前述 <code>MIC</code> 字典爆破过程原理相同</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="pmkid-tools">PMKID 攻击的工具实现方法</h3>
+<p><a href="https://hashcat.net/forum/thread-7717.html">Hashcat 作者给出的攻击原理详解和工具使用说明</a></p>
+</section>
+<section class="slide level2">
+
+<h3 id="pmkid-vs-mic-crack">PMKID 相比较于 MIC 爆破方法</h3>
+<ul>
+<li>更隐蔽
+<ul>
+<li>无需获取 EAPOL 4 次握手认证包
+<ul>
+<li>无需依赖目标 AP 的任何在线或离线客户端</li>
+<li>无需等待客户端连接加入目标 AP 的认证握手过程</li>
+<li>无需对客户端实施 <code>Deauthentication Attack</code> ，客户端意外掉线会引起目标用户警觉</li>
+</ul></li>
+</ul></li>
+<li>结果更可靠
+<ul>
+<li>不用担心警觉用户故意输错连接口令导致的 EAPOL 中的 MIC 无法匹配出正确的联网口令</li>
+</ul></li>
+</ul>
+</section>
+<section id="离线字典方式爆破口令的其他改进措施" class="slide level2">
+<h2>离线字典方式爆破口令的其他改进措施</h2>
+<ul>
+<li>基本思想1：空间换时间，针对常见 SSID 预先计算好 PMK
+<ul>
+<li>genpmk - WPA-PSK precomputation attack</li>
+<li><a href="https://github.com/JPaulMora/Pyrit">pyrit</a></li>
+</ul></li>
+<li>基本思想2：使用 GPU 代替 CPU 计算字典
+<ul>
+<li><a href="https://github.com/JPaulMora/Pyrit">pyrit</a> - A GPGPU-driven WPA/WPA2-PSK key cracker</li>
+<li><a href="https://hashcat.net/hashcat/">hashcat</a> - World’s fastest password cracker</li>
+</ul></li>
+<li>基本思想3：并行/分布式计算
+<ul>
+<li>Google: distributed wpa crack</li>
+</ul></li>
+</ul>
+</section>
+<section id="防御-wpawpa2-psk-认证口令恢复攻击" class="slide level2">
+<h2>防御 WPA/WPA2 PSK 认证口令恢复攻击</h2>
+<ul>
+<li>使用健壮的认证口令
+<ul>
+<li>口令长度设置 <strong>与时俱进</strong> ，当前建议不少于 16 位</li>
+<li>大小写字母、数字、特殊符号随机组合</li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="加入无线网络-wpawpa2-企业级认证-weak-1-1-2" class="title-slide slide level1">
+<h1>加入无线网络 WPA/WPA2 企业级认证 [WEAK-1-1-2]</h1>
+
+</section>
+<section id="wpa-enterprise-1" class="slide level2">
+<h2>回顾 WPA/WPA2 企业级认证</h2>
+<p><img data-src="images/chap0x03/wpa-enterprise-1.png" /></p>
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>逻辑上来说，EAP认证过程发生在请求者（supplicant）和认证服务器（authentication server）之间</p>
+</blockquote>
+</section>
+<section id="wpa-enterprise-2" class="slide level2">
+<h2>回顾 WPA/WPA2 企业级认证</h2>
+<p><img data-src="images/chap0x03/wpa-enterprise-2.png" /></p>
+<blockquote>
+<p>物理上来说，AP 扮演了认证过程的中间人</p>
+</blockquote>
+</section>
+<section id="wpa-enterprise-3" class="slide level2">
+<h2>回顾 WPA/WPA2 企业级认证</h2>
+<p><img data-src="images/chap0x03/wpa-enterprise-3.png" /></p>
+</section>
+<section class="slide level2">
+
+<ul>
+<li>在安全隧道建立之前，<code>AP</code> 是一个开放访问的接入点</li>
+<li>开放无线网络易遭受 <code>Evil Twin</code> 攻击，因为（客户端）没有办法验证 <code>AP</code> 的身份
+<ul>
+<li><code>Evil Twin</code> 攻击针对 <code>WPA/WPA2</code> 企业级认证是否能成功主要取决于「无线网络用户」的安全意识</li>
+</ul></li>
+</ul>
+</section>
+<section id="你会重视连接无线网络时的证书警告吗" class="slide level2">
+<h2>你会重视连接无线网络时的证书警告吗？</h2>
+<p><img data-src="images/chap0x03/wpa-enterprise-4.png" /></p>
+</section>
+<section id="wpa-enterprise-after-evil-twin-1" class="slide level2">
+<h2>一旦被 <code>Evil Twin</code> 攻击得手</h2>
+<p><img data-src="images/chap0x03/wpa-enterprise-5.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="虽然在无线信道上认证数据是安全的">虽然在无线信道上认证数据是安全的</h3>
+<ul>
+<li>SSL/TLS 加密隧道保护了传输的 EAPOL 相关报文
+<ul>
+<li>WPA/WPA2 PSK 认证过程使用的 EAPOL 是明文传输、易被捕获</li>
+</ul></li>
+</ul>
+</section>
+<section id="wpa-enterprise-after-evil-twin-2" class="slide level2">
+<h2>一旦被 <code>Evil Twin</code> 攻击得手</h2>
+<p><img data-src="images/chap0x03/asleep-1.png" /></p>
+<p><code>假 AP</code> 搭建的 SSL/TLS 加密隧道，当然可以直接“看到”基于明文口令生成的 <code>挑战-响应应答消息</code>（<strong>单向散列运算值</strong>），如上图所示。</p>
+</section>
+<section id="wpa-enterprise-after-evil-twin-3" class="slide level2">
+<h2>一旦被 <code>Evil Twin</code> 攻击得手</h2>
+<p><img data-src="images/chap0x03/asleep-2.png" /></p>
+<p><code>asleep</code> 直接 <strong>跑字典</strong> 爆破出口令。</p>
+</section>
+<section id="protect-wpa-wpa2-enterprise" class="slide level2">
+<h2>加固 WPA/WPA2 企业级认证</h2>
+<ul>
+<li>健壮口令设置</li>
+<li>禁用不安全的 <code>EAP</code> 实现方法，例如：EAP-MD5, EAP-OTP, <a href="https://www.defcon.org/images/defcon-21/dc-21-presentations/djwishbone-PuNk1nPo0p/DEFCON-21-djwishbone-PuNk1nPo0p-BYO-Disaster-Updated.pdf">EAP-GTC</a> , LEAP</li>
+<li>启用并 <strong>正确配置</strong> 安全的 <code>EAP</code> 实现方法，例如：PEAP, TTLS, EAP/TLS</li>
+<li>在无线客户端上预置自签发的 <code>EAP</code> 认证证书信任链或购买权威CA签发的用于身份认证的证书</li>
+<li>无线客户端启用永远验证服务器证书有效性</li>
+<li>教育无线网络用户不要信任任何被警告的证书
+<ul>
+<li>学会手工验证证书的 <code>CN</code> 字段值是否与公司通告一致（只是缓解风险，如果攻击者完全克隆企业的证书信息，则本方法无效）</li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="加入无线网络-weak-1-2" class="title-slide slide level1">
+<h1>加入无线网络 [WEAK-1-2]</h1>
+
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>绕过 AP 的 MAC 地址过滤</p>
+</blockquote>
+</section>
+<section id="random-client-mac-against-mac-filtering-2" class="slide level2">
+<h2>绕过原理</h2>
+<ul>
+<li>客户端 MAC 地址可以「任意伪造」</li>
+<li>客户端 MAC 地址在无线通信过程中是明文</li>
+<li>无线网络流量可以被「悄无声息」地监听</li>
+</ul>
+<blockquote>
+<p>⚠️ 基于 MAC 地址过滤功能的是「纸老虎」安全机制</p>
+</blockquote>
+</section>
+<section id="random-client-mac-against-mac-filtering-1" class="slide level2">
+<h2>无线客户端地址随机化功能对 MAC 地址过滤功能的影响</h2>
+<ul>
+<li>已有的无线客户端 MAC 地址随机化功能均支持按照指定 BSSID 固定「私有地址」功能</li>
+<li>已有的无线客户端 MAC 地址随机化功能均可以按需关闭该功能</li>
+<li>如果无线网络 MAC 地址过滤功能发生在无线客户端完成加入目标无线网络相关的身份认证流程
+<ul>
+<li>之后，则 MAC 地址过滤功能可以正常工作</li>
+<li>之前，则需要先关闭无线客户端的地址随机化功能，连接成功后再开启客户端地址随机化功能</li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="加入无线网络-weak-1-3" class="title-slide slide level1">
+<h1>加入无线网络 [WEAK-1-3]</h1>
+
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>脆弱的 WPS 认证机制</p>
+</blockquote>
+<ul>
+<li>静态 PIN 码预测攻击：部分设备厂商的脆弱性实现</li>
+<li>离线破解认证凭据：WPS Pixie Dust Attack</li>
+<li>在线破解认证凭据：WPS Brute Force Attck</li>
+</ul>
+</section>
+<section id="vulnerable-pin-generator" class="slide level2">
+<h2>静态 PIN 码预测攻击</h2>
+<ul>
+<li>针对 <code>Headless</code> 设备静态预分配 <code>PIN</code> 码的弱随机产生算法或静态确定性产生算法</li>
+</ul>
+<p><img data-src="images/chap0x03/headless-pin.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="相关历史安全事件">相关历史安全事件</h3>
+<ul>
+<li><a href="http://wifibeta.com/2012-04/thread-712-1-1.html">2012年爆出所有MAC地址前6位是C83A35和00B00C的腾达和磊科全系路由器采用了确定性PIN码算法可以通过嗅探无线路由器MAC地址后秒算PIN码</a>
+<ul>
+<li>这些WPS PIN是通过mac的后6位 DEC2HEX 取舍而得</li>
+</ul></li>
+<li><a href="http://www.devttys0.com/2014/02/reversing-the-wrt120n-firmware-obfuscation/">2014年D-Link部分路由器的WPS PIN算法被逆向并可以从BSSID秒算</a></li>
+<li><a href="http://www.freebuf.com/articles/wireless/63627.html">2015年贝尔金部分路由器的WPS PIN算法被逆向并可以从路由器MAC地址秒算</a></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="又是协议设计无缺陷实现偷工减料导致安全漏洞的实例">又是协议设计无缺陷，实现偷工减料导致安全漏洞的实例</h3>
+<p><a href="https://c4pr1c3.gitee.io/cuc-mis/chap0x03/attach/chap0x02/media/Wi-Fi_Simple_Configuration_Technical_Specification_v2.0.5.pdf">《Wi-Fi Simple Configuration Technical Specification》</a> 的 <code>4.3.2 Guidelines and Requirements for PIN values</code></p>
+<blockquote>
+<p>The recommended length for a manually entered device password is an 8-digit numeric PIN. This length does not provide a large amount of entropy for strong mutual authentication, but the design of the Registration Protocol protects against dictionary attacks on PINs if a fresh PIN or a rekeying key is used each time the Registration Protocol is run.</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p><strong><em>PIN values should be randomly generated, and they SHALL NOT be derivable from any information that can be obtained by an eavesdropper or active attacker</em></strong>. The device’s serial number and MAC address, for example, are easily eavesdropped by an attacker on the in-band channel. Furthermore, if a device includes multiple PIN values, these values SHALL be cryptographically separate from each other. If, for example, a device includes both a label-based PIN and a Device Password on an integrated NFC Tag, the two Device Passwords SHALL be different and uncorrelated.</p>
+</blockquote>
+</section>
+<section id="wps-brute-force-attack" class="slide level2">
+<h2>WPS Brute Force Attack</h2>
+<ul>
+<li><code>WPS</code> 协议中使用到的 <code>PIN</code> 码本身是 <strong>定长的 8 位数字</strong> ，理论爆破需要尝试 <span class="math inline">10<sup>8</sup></span> 次，即 1亿次；</li>
+<li><a href="https://sviehb.files.wordpress.com/2011/12/viehboeck_wps.pdf">2011 年公布的一种改进版爆破算法</a> 最多只需要尝试 11000 次即可恢复出 PSK</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="wps-two-fold-auth-weakness">WPS 两轮认证过程存在的设计缺陷</h3>
+<blockquote>
+<p>以下内容是为了便于理解，简化说明</p>
+</blockquote>
+<ul>
+<li>WPS 在线认证过程也会用到 PSK 校验，但会先将 PSK 一分为二：PSK-1 和 PSK-2</li>
+<li>第一轮验证 PIN 只用到了前 4 位，在线爆破尝试最多 <span class="math inline">10<sup>4</sup></span> 次后成功得到 PSK-1</li>
+<li>第二轮验证 PIN 只用到了后 4 位，且最后 1 位是校验和位，实际只验证后 3 位，在线爆破尝试最多 <span class="math inline">10<sup>3</sup></span> 次后成功得到 PKS-2。</li>
+<li>PSK = PKS1 || PSK2</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="使用工具-reaver">使用工具 <a href="https://github.com/t6x/reaver-wps-fork-t6x">reaver</a></h3>
+<p><img data-src="images/chap0x03/wps-reaver.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="defend-against-wps-brute-force">防御 WPS 在线认证暴力破解</h3>
+<ul>
+<li>设置「认证封禁策略」，将短时间内多次 WPS 认证失败的 <code>STA MAC</code> 加入黑名单封禁一段时间
+<ul>
+<li>启用「动态罚时」策略：每次封禁时长动态增长</li>
+</ul></li>
+<li><code>AP</code> 配置禁用 <code>WPS</code> 功能</li>
+</ul>
+</section>
+<section id="wps-pixie-dust-attack" class="slide level2">
+<h2><a href="https://forums.kali.org/showthread.php?24286-WPS-Pixie-Dust-Attack-(Offline-WPS-Attack)">WPS Pixie Dust Attack</a></h2>
+<ul>
+<li>WPS 认证过程中的关键变量 <code>E-Hash1</code>、<code>E-Hash2</code>、<code>PKE</code>、<code>PKR</code> 都是可以直接通过抓包获得的，剩下的 <code>PSK1</code> 和 <code>PSK2</code> 分别对应 <code>PIN</code> 码前后两半，可被枚举</li>
+<li><code>E-S1</code> 和 <code>E-S2</code> 是整个 <strong>离线破解</strong> 的关键，⼀旦这 2 个参数被计算出来，则对照公式可以离线遍历 <code>PSK-1</code> 和 <code>PSK-2</code> 的可能性验证计算出的 <code>E-Hash1</code> 是否与抓包得到的 <code>E-Hash1</code> 相同</li>
+<li><code>E-S1</code> 和 <code>E-S2</code> 在实际设备中的实现算法使用的是 <strong>伪随机数发⽣器</strong></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="伪随机数发生器常见实现缺陷">伪随机数发生器常见实现缺陷</h3>
+<ul>
+<li>嵌⼊式设备⼤多采用 32 位 CPU，状态空间不⾜，导致产生的随机数取值空间较小</li>
+<li>伪随机算法可能被逆向</li>
+<li>伪随机数种⼦状态可能会被预测和恢复</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="伪随机数发生器缺陷实例">伪随机数发生器缺陷实例</h3>
+<ul>
+<li>Broadcom/eCos，E-S1 + E-S2 使用与 N1 相同的随机数发⽣器</li>
+<li>Realtek，E-S1 = E-S2 = N1 或使用秒为单位的 UNIX 时间戳格式整数作为随机数发⽣器种⼦</li>
+<li>Ralink / MediaTek / Celeno， E-S1 = E-S2 = 0</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="使用工具-pixiewps">使用工具 <a href="https://github.com/wiire-a/pixiewps">pixiewps</a></h3>
+<p><img data-src="images/chap0x03/pixiewps.png" /></p>
+<blockquote>
+<p>依赖于存在伪随机数发生器缺陷的特定路由器</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<h3 id="defend-against-wps-pixie">防御 WPS 离线认证暴力破解</h3>
+<ul>
+<li>修补路由器的伪随机数发生器缺陷</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="加入无线网络后-weak-2-0" class="title-slide slide level1">
+<h1>加入无线网络后 [WEAK-2-0]</h1>
+
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>回顾 《网络安全》第 4 章 网络监听 一节提到的所有 <strong>局域网</strong> 攻防手段</p>
+</blockquote>
+<ul>
+<li>ARP 欺骗</li>
+<li>DNS 投毒</li>
+<li>SSL Stripping</li>
+</ul>
+</section>
+<section id="defense-against-arp" class="slide level2">
+<h2>防御方法</h2>
+<ul>
+<li>设置无线和有线客户端隔离</li>
+</ul>
+<p><img data-src="images/chap0x03/isolate-clients-in-ap.png" /></p>
+</section>
+</section>
+<section>
+<section id="加入无线网络后-weak-2-1" class="title-slide slide level1">
+<h1>加入无线网络后 [WEAK-2-1]</h1>
+
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>Deauthentication Attack</p>
+</blockquote>
+</section>
+<section id="deauth-attack-internals" class="slide level2">
+<h2>Deauthentication 攻击原理</h2>
+<ul>
+<li>公开资料可查最早描述该攻击方法的文章: <a href="http://www.iv2-technologies.com/DOSAttacks.pdf">R. Bidou, “Denial of service attacks,” 2000</a></li>
+<li>伪造目标客户端 <code>MAC 地址</code>、类型为 <code>Deauthenticaion(subtype=12)</code> 的 <code>管理帧</code> 不断发往目标 <code>AP</code></li>
+</ul>
+</section>
+<section id="deauth-attack-visualization" class="slide level2">
+<h2>DeAuthenticaion 攻击可视化</h2>
+<blockquote>
+<p>Statistics -&gt; I/O Graphs</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<p><img data-src="images/chap0x03/deauthentication-attack.png" /></p>
+</section>
+<section id="aireplay-ng" class="slide level2">
+<h2>aireplay-ng</h2>
+<pre ><code class="bash">sudo aireplay-ng --deauth 1 -a  3C:46:D8:59:E8:F4 -c 62:27:AD:C4:0F:F2 wlan0 --ignore-negative-one
+# 18:36:35  Waiting for beacon frame (BSSID: 3C:46:D8:59:E8:F4) on channel 11
+# 18:36:43  Sending 64 directed DeAuth (code 7). STMAC: [62:27:AD:C4:0F:F2] [44|39 ACKs]
+# sudo aireplay-ng --deauth 1 -a  3C:46:D8:59:E8:F4 -c 62:27:AD:C4:0F:F2 wlan0 --ignore-negative-one
+# 18:37:18  Waiting for beacon frame (BSSID: 3C:46:D8:59:E8:F4) on channel 11
+# 18:37:26  Sending 64 directed DeAuth (code 7). STMAC: [62:27:AD:C4:0F:F2] [31|30 ACKs]</code></pre>
+</section>
+<section id="in-defense-of-deauth-1" class="slide level2">
+<h2>防御 deauthentication-attack</h2>
+<ul>
+<li>在 AP 上启用 <a href="https://standards.ieee.org/standard/802_11w-2009.html">IEEE 802.1w-2009</a> 引入的 <code>Protected Management Frames (PMF)</code> 机制
+<ul>
+<li>对管理帧启用了机密性、完整性、来源真实性和重放保护机制</li>
+</ul></li>
+<li><code>WPA2</code> 启用了 <code>PMF</code> 后（<code>WPA</code> 不支持）
+<ul>
+<li><code>MIC</code> 产生算法从 <code>HMAC-SHA1</code> 进化为 <code>AES-CMAC</code></li>
+<li><code>PTK</code> 产生算法从 <code>SHA-1</code> 进化为 <code>SHA-256</code></li>
+</ul></li>
+</ul>
+</section>
+<section id="in-defense-of-deauth-2" class="slide level2">
+<h2>防御 deauthentication-attack</h2>
+<p><img data-src="images/chap0x03/ieee802.1w.openwrt.png" /></p>
+</section>
+</section>
+<section>
+<section id="加入无线网络后-weak-2-2" class="title-slide slide level1">
+<h1>加入无线网络后 [WEAK-2-2]</h1>
+
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>解密流量</p>
+</blockquote>
+<ul>
+<li>WPA/WPA2-PSK 在拿到 PSK 情况下直接解密历史和进行中通信数据</li>
+<li><a href="http://securedsolutions.com.my/pdf/WhitePapers/WPA2-Hole196-Vulnerability.pdf">Hole196 Vulnerability - 2010</a></li>
+<li><a href="https://www.krackattacks.com/">KRACK Attack against WPA/WPA2 - 2017</a></li>
+</ul>
+</section>
+<section id="使用-wireshark-解密-wpawpa2-psk-加密的流量" class="slide level2">
+<h2>使用 Wireshark 解密 WPA/WPA2 PSK 加密的流量</h2>
+<ul>
+<li>Edit-&gt;Preferences-&gt;Protocol-&gt;IEEE 802.11-&gt;Enable decryption-&gt;descryption keys选择 <code>wpa-pwd</code> ，填入已知共享密钥保存</li>
+<li>在 <code>IEEE 802.11</code> 的首选项设置面板，勾选启用：<code>Enable decryption</code> 功能</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<p><img data-src="images/chap0x03/gtk-decryption.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="from-pwd-to-psk">从 Passphrase 到 PSK</h3>
+<ul>
+<li><a href="https://www.wireshark.org/tools/wpa-psk.html">Wireshark 官网提供的网页版小工具</a></li>
+<li>使用命令行工具 <code>wpa_passphrase</code></li>
+</ul>
+<pre ><code class="bash">wpa_passphrase &lt;SSID&gt; &lt;Passphrase&gt;
+# wpa_passphrase OpenWrt WelcomeCUCer-2018
+# network={
+#         ssid="OpenWrt"
+#         #psk="WelcomeCUCer-2018"
+#         psk=04f305d51a8331d0839a48900a47560f80665d4fdb1ca28290bdcbb3908ffb64
+# }</code></pre>
+<pre ><code class="python">import hashlib, binascii
+
+def wpa_psk(ssid, password):
+    dk = hashlib.pbkdf2_hmac(
+        'sha1',
+        str.encode(password),
+        str.encode(ssid),
+        4096,
+        256
+    )
+    return (binascii.hexlify(dk))
+
+print(wpa_psk('OpenWrt', 'WelcomeCUCer-2018')[0:64].decode('utf8'))</code></pre>
+</section>
+<section id="hole196-vulnerability---2010" class="slide level2">
+<h2><a href="http://securedsolutions.com.my/pdf/WhitePapers/WPA2-Hole196-Vulnerability.pdf">Hole196 Vulnerability - 2010</a></h2>
+<p>基于 <code>加密 GTK 负载</code> 的 <strong>纯无线</strong> ARP 投毒攻击</p>
+</section>
+<section class="slide level2">
+
+<h3 id="enc-in-wpa-wpa2">回顾第二章内容：无线网络中的单播、组播和广播加密</h3>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">密钥类型</th>
+<th style="text-align: left;">用途</th>
+<th style="text-align: left;">来源</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">PSK</td>
+<td style="text-align: left;">认证</td>
+<td style="text-align: left;">（离线）配置😈</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">PMK</td>
+<td style="text-align: left;">长期使用😈，产生其他加密用途密钥</td>
+<td style="text-align: left;">EAP 协商</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">PTK</td>
+<td style="text-align: left;">加密单播(unicast)通信</td>
+<td style="text-align: left;">产生自 PMK/PSK</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">GTK</td>
+<td style="text-align: left;">加密广播(broadcast)和多播(multicast)通信</td>
+<td style="text-align: left;">产生自 PMK/PSK</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section class="slide level2">
+
+<h3 id="hole196-vs-arp">相比较于前述无线局域网中的直接 ARP 投毒</h3>
+<p><img data-src="images/chap0x03/hole196-attack.png" /></p>
+</section>
+<section id="defense-against-hole196" class="slide level2">
+<h2>防御方法</h2>
+<ul>
+<li>设置无线和有线客户端隔离</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="krack-attack-against-wpawpa2---2017" class="title-slide slide level1">
+<h1><a href="https://www.krackattacks.com/">KRACK Attack against WPA/WPA2 - 2017</a></h1>
+
+</section>
+<section id="简介" class="slide level2">
+<h2>简介</h2>
+<ul>
+<li><strong>K</strong>ey <strong>R</strong>einstallation <strong>A</strong>tta<strong>ck</strong>s, Breaking WPA2 by forcing nonce reuse
+<ul>
+<li>WPA/WPA2 PSK 协议的 EAPOL 认证过程存在消息重放漏洞，导致相同的密钥和加密用 nonce 被反复使用在不同的会话上</li>
+</ul></li>
+<li>WPA/WPA2 PSK 认证过程中的 EAPOL 4 次握手第 3 步存在协议设计缺陷</li>
+<li>无线客户端实现漏洞利用</li>
+</ul>
+</section>
+<section id="协议设计缺陷原理" class="slide level2">
+<h2>协议设计缺陷原理</h2>
+<ul>
+<li>不管是 <code>AES-CCMP</code> 还是 <code>RC4-TKIP</code> ，实际的无线通信数据加密过程使用了 <code>流密码加密</code> 工作模式</li>
+<li>原本的 <code>密钥流</code> 虽然也会复用加密密钥和 IV，但存在一个不断增长的 <code>密钥重用计数器</code> 。只要计数器正常计数工作，<code>密钥流</code> 就不会出现重用现象</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="stream-cipher-1">流密码加密的密钥重用攻击原理</h3>
+<ul>
+<li>给定明文 A 和明文 B，定义加密函数为 <code>E()</code> 。</li>
+<li>随机序列生成器定义为 <code>C(K)</code> ，其中 <code>K</code> 为主密钥。</li>
+<li>流密码加密过程为以主密钥 <code>K</code> 为种子、<code>C(K)</code> 为随机序列生成器产生一个“无限长”的 <code>流密钥</code>，将待加密明文与 <code>流密钥</code> 进行逐字节异或操作完成 <code>流密码加密</code></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="stream-cipher-2">流密码加密的密钥重用攻击原理</h3>
+<pre ><code >E(A) = A xor C
+E(B) = B xor C
+
+E(A) xor E(B) = (A xor C) xor (B xor C) = A xor B xor C xor C = A xor B</code></pre>
+<p>从以上计算公式可以看出：如果 C 在 A 和 B 的加密过程中被重用，则攻击者只需要掌握了：</p>
+<ul>
+<li>A 攻击者自行构造的明文</li>
+<li>E(A) 攻击者通过数据嗅探捕获到的自己发出的密文</li>
+<li>E(B) 攻击者通过数据嗅探捕获到的目标用户发出的密文</li>
+</ul>
+<p>即使不知道密钥 <code>K</code> ，也可以通过 <code>B = E(A) xor E(B) xor A</code> 恢复出目标用户发出的明文</p>
+</section>
+<section id="back-to-krack-design-flaws-1" class="slide level2">
+<h2>回到 KRACK 中的协议设计缺陷原理</h2>
+<ul>
+<li><code>WPA/WPA2 PSK</code> 的 <code>4 次握手认证</code> 消息中的第 3 个消息 <span class="math inline"><em>E</em><em>A</em><em>P</em><em>O</em><em>L</em><sub>3</sub></span> 是由 <code>AP</code> 发给 <code>STA</code></li>
+<li>由于无线网络的物理传输介质不可靠特性，<code>IEEE 802.11i</code> 规定如果丢包可以重传</li>
+<li>攻击者利用上述协议规定 <strong>精心构造</strong> 第 3 个消息的多次重放达到 <code>KRACK</code> 攻击的多种攻击效果
+<ul>
+<li><code>WPA</code> 的 <code>RC4-TKIP</code> 和 <code>WPA2</code> 的 <code>AES-CCMP</code> 均受漏洞影响</li>
+<li>不需要恢复和掌握 <code>PTK</code> 的前提下，解密通信数据、中间人篡改消息</li>
+<li>不需要恢复和掌握 <code>GTK</code> 的前提下，解密通信数据、中间人篡改消息</li>
+</ul></li>
+</ul>
+</section>
+<section id="back-to-krack-design-flaws-2" class="slide level2">
+<h2>回到 KRACK 中的协议设计缺陷原理</h2>
+<ul>
+<li><span class="math inline"><em>E</em><em>A</em><em>P</em><em>O</em><em>L</em><sub>3</sub></span> 的作用是 <code>AP</code> 通知 <code>STA</code> ：<code>PTK</code> 已生成完毕，可以 <code>安装</code> 用于后续单播通信加密。另外，<code>GTK</code> 被加密后以密文形式包含在 <span class="math inline"><em>E</em><em>A</em><em>P</em><em>O</em><em>L</em><sub>3</sub></span> 中。此时 <code>重放计数器</code> 被设置为 <code>AP</code> 发送 <span class="math inline"><em>E</em><em>A</em><em>P</em><em>O</em><em>L</em><sub>1</sub></span> 时设置的 <code>重放计数器r+1</code></li>
+<li><code>AP</code> 只有在接收到 <code>STA</code> 发送的 <span class="math inline"><em>E</em><em>A</em><em>P</em><em>O</em><em>L</em><sub>4</sub></span> 才会真正 <code>安装 PTK</code></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>IEEE 802.11i 协议最关键的缺陷定义即将登场</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<ul>
+<li><code>STA</code> 只要自己把 <span class="math inline"><em>E</em><em>A</em><em>P</em><em>O</em><em>L</em><sub>4</sub></span> “成功” 发出去，就会按照协议规定认为 <code>EAPOL 4 次握手</code> 已经完结，接下来的会话过程就会使用前述“握手成功”的 <code>PTK</code> 和 <code>GTK</code></li>
+<li>但实际上如果 <code>AP</code> 并没有 “成功接收” 到 <span class="math inline"><em>E</em><em>A</em><em>P</em><em>O</em><em>L</em><sub>4</sub></span> ，还可以重发一遍 <span class="math inline"><em>E</em><em>A</em><em>P</em><em>O</em><em>L</em><sub>3</sub></span> ，要求 <code>STA</code> 重新安装一次 <code>PTK</code> 和 <code>GTK</code></li>
+<li><code>AP</code> 判定 <code>EAPOL 4 次握手</code> 完结的标准是收到 <span class="math inline"><em>E</em><em>A</em><em>P</em><em>O</em><em>L</em><sub>4</sub></span></li>
+</ul>
+<blockquote>
+<p>在 KRACK 之前，IEEE 802.11i 的 4 次握手安全性证明是建立在一个重要（假设）前提之上：<code>PTK</code> 和 <code>GTK</code> 的密钥只会被安装一次。</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<p>攻击者实施 <code>KRACK</code> 攻击的 1 个重要前提是：攻击者能通过中间人攻击劫持目标 <code>STA</code> 和目标 <code>AP</code> 的通信过程。具体来说的典型实施手段如下：</p>
+<ol type="1">
+<li>监听目标 <code>AP</code> 和目标 <code>STA</code> 之间的通信过程</li>
+<li>通过 <code>Deauthenticaion Attack</code> 强制目标 <code>STA</code> 从目标 <code>AP</code> 断开且重新连接目标 <code>AP</code> 时要连接到攻击者搭建的 <strong>信号更强</strong> 的<a href="https://lirias.kuleuven.be/bitstream/123456789/473761/1/acsac2014.pdf">不同信道同名无线网络</a></li>
+<li>攻击者使用 2 个不同信道建立起了目标 <code>STA</code> 和目标 <code>AP</code> 的跨信道中间人攻击链路</li>
+</ol>
+</section>
+<section class="slide level2">
+
+<ul>
+<li>在具备上述 <strong>中间人攻击链路</strong> 之后，<code>KRACK</code> 攻击才能真正开始</li>
+<li>这也是为什么 <code>KRACK</code> 攻击在实践中较难利用成功的一个重要原因
+<ul>
+<li>如何搭建起一个对于目标 <code>STA</code> 来说比目标 <code>AP</code> <strong>信号更强</strong> 的无线网络</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<ul>
+<li>攻击者要阻断 <code>STA</code> 给 <code>AP</code> 回应的 <span class="math inline"><em>E</em><em>A</em><em>P</em><em>O</em><em>L</em><sub>4</sub></span> ，触发 <code>AP</code> 的 <span class="math inline"><em>E</em><em>A</em><em>P</em><em>O</em><em>L</em><sub>3</sub></span> 重传
+<ul>
+<li>此时重传的 <span class="math inline"><em>E</em><em>A</em><em>P</em><em>O</em><em>L</em><sub>3</sub></span> 的 <code>重传计数器</code> 相比于 <span class="math inline"><em>E</em><em>A</em><em>P</em><em>O</em><em>L</em><sub>1</sub></span> 的 <code>重传计数器r</code> 已经是 <code>r+2</code> 了</li>
+</ul></li>
+<li>攻击者转发上述 <code>r+2</code> 的 <span class="math inline"><em>E</em><em>A</em><em>P</em><em>O</em><em>L</em><sub>3</sub></span> 给目标 <code>STA</code></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<ul>
+<li>按照 <code>IEEE 802.11i</code> 规定，<code>STA</code> 只要收到 <span class="math inline"><em>E</em><em>A</em><em>P</em><em>O</em><em>L</em><sub>3</sub></span> ， <strong>不管三七二十一</strong> ，必须回复 <span class="math inline"><em>E</em><em>A</em><em>P</em><em>O</em><em>L</em><sub>4</sub></span> 。并且， <strong>不管四七二十几</strong> ，<code>STA</code> 需要执行 <code>PTK</code> <strong>重装</strong> 操作。更进一步的过分要求是：会话密钥加密密钥流生成算法里使用的 <code>nonce</code> 需要重置为 1
+<ul>
+<li>此处的 <code>nonce</code> 和 <code>A-nonce</code> 与 <code>S-nonce</code> 没有任何关系</li>
+<li>此处的 <code>nonce</code> 实际上就是一个当前加密会话的「发包计数器」，初始值为 1</li>
+<li>此时的 <span class="math inline"><em>E</em><em>A</em><em>P</em><em>O</em><em>L</em><sub>4</sub></span> 实际上是被 <code>STA</code> 用已经协商好的 <code>PTK</code> 以及对应的 <code>nonce</code> 加密后的密文</li>
+</ul></li>
+<li>经过上述一通操作，目标 <code>STA</code> 实际是被打了个「流密码加密的密钥重用攻击」组合拳
+<ul>
+<li><span class="math inline"><em>E</em><em>A</em><em>P</em><em>O</em><em>L</em><sub>4</sub></span> 明文和密文同时在手了</li>
+</ul></li>
+</ul>
+</section>
+<section id="上述解密过程的局限性" class="slide level2">
+<h2>上述解密过程的局限性</h2>
+<ul>
+<li>如何搭建起一个对于目标 <code>STA</code> 来说比目标 <code>AP</code> <strong>信号更强</strong> 的无线网络来实现「中间人攻击」？</li>
+<li><span class="math inline"><em>E</em><em>A</em><em>P</em><em>O</em><em>L</em><sub>4</sub></span> 长度有限，基于流密码加密的密钥重用攻击使用异或操作这个特点，一对 <span class="math inline"><em>E</em><em>A</em><em>P</em><em>O</em><em>L</em><sub>4</sub></span> 明密文对在手一次能解密的目标密文数据长度有限
+<ul>
+<li>作者在漏洞证明演示视频里演示的就是解密电子邮件地址和口令</li>
+</ul></li>
+</ul>
+</section>
+<section id="受漏洞影响客户端信息" class="slide level2">
+<h2>受漏洞影响客户端信息</h2>
+<p><a href="https://papers.mathyvanhoef.com/ccs2017.pdf"><img data-src="images/chap0x03/krack-affected-clients.png" /></a></p>
+</section>
+<section id="why-ios-windows-not-affected" class="slide level2">
+<h2>为什么苹果的 iOS 和微软的 Windows 不受 KRACK 影响？</h2>
+<p>因为他们的程序员没有按照 <code>IEEE 802.11i</code> 规范去开发代码 🤷</p>
+<blockquote>
+<p>the implementation does not accept retransmissions of message 3.</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<p>如果想要了解关于 <code>KRACK</code> 的更多利用方式细节，一定要仔细阅读作者发表在 CCS 17 上的论文。</p>
+<p><a href="https://papers.mathyvanhoef.com/ccs2017.pdf">Vanhoef, M., &amp; Piessens, F. (2017, October). Key reinstallation attacks: Forcing nonce reuse in WPA2. In Proceedings of the 2017 ACM SIGSAC Conference on Computer and Communications Security (pp. 1313-1328).</a></p>
+</section>
+<section id="受漏洞影响客户端的补丁信息" class="slide level2">
+<h2>受漏洞影响客户端的补丁信息</h2>
+<p><img data-src="images/chap0x03/krack-patched.png" /></p>
+</section>
+<section id="wpa_supplicant-on-kali" class="slide level2">
+<h2>当前 Kali 上自带的 wpa_supplicant</h2>
+<pre ><code class="bash"># lsb_release -a
+# No LSB modules are available.
+# Distributor ID: Kali
+# Description:    Kali GNU/Linux Rolling
+# Release:        2020.4
+# Codename:       kali-rolling
+# date
+# Sun 17 Jan 2021 02:12:47 PM CST
+wpa_supplicant -v
+# wpa_supplicant v2.9
+# Copyright (c) 2003-2019, Jouni Malinen &lt;j@w1.fi&gt; and contributors</code></pre>
+</section>
+<section id="krack-inspiration-1" class="slide level2">
+<h2>KRACK 带给我们的启示</h2>
+<p><a href="https://blog.cryptographyengineering.com/2017/10/16/falling-through-the-kracks/"><img data-src="images/chap0x03/czx0o-twqaaeali.jpg" /></a></p>
+<blockquote>
+<p>Two unit tests, 0 integration tests</p>
+</blockquote>
+</section>
+<section id="krack-inspiration-2" class="slide level2">
+<h2>KRACK 带给我们的启示</h2>
+<ul>
+<li>上图是 <code>KRACK</code> 作者在 <code>Blackhat Europe</code> 做报告时用的一张图：单元测试只能保证组件可以独立工作，一旦集成测试就会暴露出「协作」漏洞
+<ul>
+<li><code>KRACK</code> 就是一个典型的「组件协作漏洞」</li>
+</ul></li>
+</ul>
+</section>
+<section id="defense-against-krack" class="slide level2">
+<h2>防御 KRACK</h2>
+<ul>
+<li><del>
+抱紧无线路由器上网（不是🤷
+</del></li>
+<li>设备和软件升级</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="上行有线接入网络通信-weak-3-1" class="title-slide slide level1">
+<h1>上行有线接入网络通信 [WEAK-3-1]</h1>
+
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>Rogue Access Point, Rogue AP</p>
+</blockquote>
+</section>
+<section id="generalized-rogue-ap" class="slide level2">
+<h2>广义 Rogue AP</h2>
+<ul>
+<li>这是许多基于 <code>AP</code> 方式专门攻击无线客户端行为的笼统称谓
+<ul>
+<li><code>Evil Twin</code></li>
+<li><code>KRACK</code> 中使用到的「跨信道中间人攻击」技术</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>本节要介绍的是一种「后门」方式实现的 <code>Rogue AP</code></p>
+</blockquote>
+</section>
+<section id="specific-rogue-ap" class="slide level2">
+<h2>狭义 Rogue AP</h2>
+<p>在未经有线网络管理员允许/授权情况下，悄悄接入目标有线网络并开启无线网络功能的 <code>AP</code> 。</p>
+<ul>
+<li>硬件方式：使用便携式无线路由器直接接入有线网络</li>
+<li>软件方式：员工用自己连入有线网络的个人电脑私开无线热点</li>
+</ul>
+</section>
+<section id="对于企业网络的主要威胁" class="slide level2">
+<h2>对于企业网络的主要威胁</h2>
+<ul>
+<li>增加了若干新的风险暴露面
+<ul>
+<li>非授权的访问可以绕过已有的有线网络安全接入控制，通过不受监管控制的无线网络接入方式访问到企业内网</li>
+<li><code>Rogue AP</code> 本身如果还具备远程控制能力，则相当于在企业内网直接建立了一个「远程攻击跳板」</li>
+</ul></li>
+</ul>
+</section>
+<section id="防御狭义-rogue-ap" class="slide level2">
+<h2>防御狭义 <code>Rogue AP</code></h2>
+<ul>
+<li>防范硬件形式的 <code>Rogue AP</code>
+<ul>
+<li>部署严格的有线网络端口接入访问控制，例如启用有线交换机所有暴露端口的 <code>802.1X</code> 认证，避免任何设备只要连入网线即可访问企业内网</li>
+</ul></li>
+<li>防范软件形式的 <code>Rogue AP</code>
+<ul>
+<li>员工终端电脑配置统一的软件安装和配置管理策略，禁止电脑开启无线热点</li>
+<li>部署无线入侵检测设备，第一时间发现并报告工作场所中存在未备案的无线热点</li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="上行有线接入网络通信-weak-3-2" class="title-slide slide level1">
+<h1>上行有线接入网络通信 [WEAK-3-2]</h1>
+
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>回顾 《网络安全》第 4 章 网络监听 一节提到的所有局域网攻防手段</p>
+</blockquote>
+<blockquote>
+<p>对于企业级认证来说，可以对 Radius 协议进行『中间人攻击』</p>
+</blockquote>
+</section>
+<section id="防御加固方法" class="slide level2">
+<h2>防御加固方法</h2>
+<p>参见《网络安全》第 4 章局域网安全加固方法和建议。</p>
+</section>
+</section>
+<section>
+<section id="其他似是而非的无线安全机制" class="title-slide slide level1">
+<h1>其他似是而非的无线安全机制</h1>
+
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>禁用 DHCP，采用静态地址配置</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<ul>
+<li>监听 <code>ARP</code> 广播</li>
+<li><code>ARP</code> 广播的发生场景
+<ul>
+<li>同一局域网下客户端相互之间首次访问</li>
+<li>客户端要访问外网，寻找网关地址</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>无加密无线网络中使用的明文 Portal 认证</p>
+</blockquote>
+</section>
+<section id="portal-risks-in-open-network" class="slide level2">
+<h2>明文 Portal 认证无法抵御</h2>
+<ul>
+<li>重放和仿冒
+<ul>
+<li><code>http</code> 会话中的身份认证 <code>cookie</code> 提取和重放</li>
+<li>已通过认证的无线 <code>STA</code> 的 <code>MAC</code> 地址被克隆</li>
+<li>搭建起钓鱼门户认证页面，套取客户端的认证凭据</li>
+</ul></li>
+<li>监听
+<ul>
+<li>应用层协议分析与还原</li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="wpa3-vulnerabilities" class="title-slide slide level1">
+<h1>WPA3 安全性初探</h1>
+
+</section>
+<section id="wpa3-enhancements-1" class="slide level2">
+<h2>主要安全性改进</h2>
+<ul>
+<li><a href="https://www.wi-fi.org/beacon/dan-harkins/wi-fi-certified-enhanced-open-transparent-wi-fi-protections-without-complexity">Wi-Fi Enhanced Open™</a>
+<ul>
+<li><a href="https://www.wi-fi.org/download.php?file=/sites/default/files/private/Opportunistic_Wireless_Encryption_Specification_v1.1.pdf">Opportunistic Wireless Encryption, OWE - RFC 8110</a>, 免认证的开放无线网络也能自动协商加密密钥并加密整个无线通信会话</li>
+</ul></li>
+<li>SAE 升级替代了 PSK 模式用于个人及家庭无线网络的访问控制机制
+<ul>
+<li><code>Simultaneous Authentication of Equals</code> ，一种 <strong>在线计算</strong> 的「零知识证明」算法</li>
+<li>每次认证前均通过 <code>SAE</code> 过程协商出一个 <strong>随机认证用共享秘钥</strong> ，代替 <code>PSK</code> 模式时的「预共享静态秘钥」</li>
+</ul></li>
+</ul>
+</section>
+<section id="wpa3-enhancements-2" class="slide level2">
+<h2>主要安全性改进</h2>
+<ul>
+<li>默认强制开启了 <code>PMF</code></li>
+<li>完美前向安全性
+<ul>
+<li>Perfect Forward Secrecy (PFS)</li>
+<li><code>SAE</code> 保证了即使捕获到了无线数据包、拥有预共享的无线网络入网口令，但由于每个无线会话均使用了“不可预测”（<span class="math inline">$\frac{1}{2^{128}}$</span> ~ <span class="math inline">$\frac{1}{2^{256}}$</span> 几率重复）的随机会话秘钥，使得解密抓包数据在 <strong>可爆破计算意义上</strong> 没有可能</li>
+</ul></li>
+</ul>
+</section>
+<section id="延伸课外学习" class="slide level2">
+<h2>延伸课外学习</h2>
+<ul>
+<li><a href="https://wpa3.mathyvanhoef.com/">Dragonblood</a>
+<ul>
+<li>CERT ID #VU871675: 针对 WPA3-Transtition 模式的降级攻击使得离线字典攻击恢复网络认证口令成为可能</li>
+<li>CERT ID #VU871675: 针对 <code>SAE</code> 握手过程的加密算法降级攻击</li>
+<li>CVE-2019-9494: <code>hostapd</code> 和 <code>wpa_supplicant</code> 实现缺陷导致的侧信道信息泄露</li>
+<li>CERT ID #VU871675: 针对 <code>SAE</code> 握手过程的计算资源消耗型拒绝服务攻击</li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="小结" class="title-slide slide level1">
+<h1>小结</h1>
+
+</section>
+<section class="slide level2">
+
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">威胁/漏洞类型</th>
+<th style="text-align: left;">WPA3 是否已经解决</th>
+<th style="text-align: left;">备注</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">SSID 信息泄露</td>
+<td style="text-align: left;">❌</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Evil Twin</td>
+<td style="text-align: left;">❌</td>
+<td style="text-align: left;">企业级认证模式里启用双向证书认证可解决</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">SSL Stripping</td>
+<td style="text-align: left;">❌</td>
+<td style="text-align: left;">应用层风险</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">DNS 欺骗</td>
+<td style="text-align: left;">❌</td>
+<td style="text-align: left;">应用层风险</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Rogue AP</td>
+<td style="text-align: left;">❌</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ARP 欺骗等</td>
+<td style="text-align: left;">❌</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">悄无声息的监听</td>
+<td style="text-align: left;">⚠️ 部分解决</td>
+<td style="text-align: left;"><code>OWE</code> 保证了不再有明文无线通信网络</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">STA 地址泄露</td>
+<td style="text-align: left;">⚠️ 大部分已解决</td>
+<td style="text-align: left;">无线设备厂商和操作系统厂商共同努力</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">SSID 滥用与 Evil SSID</td>
+<td style="text-align: left;">⚠️ 大部分已解决</td>
+<td style="text-align: left;">无线设备厂商和操作系统厂商共同努力</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">解密数据</td>
+<td style="text-align: left;">✅</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">离线字典破解握手认证报文</td>
+<td style="text-align: left;">✅</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">PMKID 离线破解</td>
+<td style="text-align: left;">✅</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">DeAuth Attack</td>
+<td style="text-align: left;">✅</td>
+<td style="text-align: left;">WPA2 + PMF 也能做到</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">KRACK</td>
+<td style="text-align: left;">✅</td>
+<td style="text-align: left;"></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section>
+<section id="构建安全的无线局域网" class="title-slide slide level1">
+<h1>构建安全的无线局域网</h1>
+
+</section>
+<section id="层次化的安全加固策略" class="slide level2">
+<h2>层次化的安全加固策略</h2>
+<ul>
+<li>人</li>
+<li>应用层</li>
+<li>网络层</li>
+<li>链路层</li>
+<li>物理层</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="人的安全意识教育指南">人的安全意识教育指南</h3>
+<ul>
+<li>避免使用 <code>Wi-Fi 分享类应用</code></li>
+<li>定期更换共享密钥</li>
+<li>谨慎使用公共或陌生 <code>Wi-Fi</code>
+<ul>
+<li>避免使用高安全等级业务：重要账户登录、金融类业务在线操作等</li>
+<li>尽可能使用额外的 VPN 措施保护所有联网行为</li>
+</ul></li>
+<li>所有具备 <code>Wi-Fi</code> 功能的设备在不使用 <code>Wi-Fi</code> 功能时关闭无线开关（软开关或硬件开关）
+<ul>
+<li>避免 <code>Evil Twin</code> 攻击套取到你连过的 <code>AP</code> 的 <code>EAPOL Packet</code> 用于离线破解 <code>WPA/WPA2 PSK</code> 密码</li>
+<li>避免设备主动连入开放认证的恶意 <code>AP</code>
+<ul>
+<li>监听、中间人攻击</li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="个人用户的应用层安全加固指南">个人用户的应用层安全加固指南</h3>
+<ul>
+<li>无线路由器默认设置的安全加固
+<ul>
+<li>修改默认的管理员密码</li>
+<li>修改默认的管理员用户名</li>
+<li>启用登录管理界面的图形化验证码</li>
+<li>更新到最新版固件</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="个人用户的网络层安全加固指南">个人用户的网络层安全加固指南</h3>
+<ul>
+<li>启用客人/访客网络
+<ul>
+<li>仅提供互联网访问，禁止访问有线局域网</li>
+<li>使用独立密码</li>
+</ul></li>
+<li>启用 <code>AP</code> 隔离功能
+<ul>
+<li>禁止无线网络中的客户端相互直接访问，杜绝局域网内的攻击</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="个人用户的链路层安全加固指南">个人用户的链路层安全加固指南</h3>
+<ul>
+<li>仅使用 <code>WPA3-SAE</code>
+<ul>
+<li>从协议兼容性角度，可以配置 <code>WPA3-SAE/WPA2-PSK only</code> ，禁用 <code>WPA</code> 兼容模式</li>
+</ul></li>
+<li>使用强健口令
+<ul>
+<li>大小写字母、数字、特殊字符组合，口令长度建议 16 位以上</li>
+</ul></li>
+<li>禁用 <code>WPS</code> 功能</li>
+<li>避免使用常见 <code>SSID</code> 名
+<ul>
+<li>例如：dlink、NetGear等</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="个人用户的物理层安全加固指南">个人用户的物理层安全加固指南</h3>
+<ul>
+<li>根据信号覆盖范围需求，合理设置无线路由器的信号发射功率
+<ul>
+<li>「穿墙」模式按需开启</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="企业用户的网络层安全加固指南">企业用户的网络层安全加固指南</h3>
+<ul>
+<li>子网划分与隔离</li>
+<li>按业务需求、安全等级设置无线局域网、有线局域网和互联网之间的访问控制机制</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="企业用户的链路层安全加固指南">企业用户的链路层安全加固指南</h3>
+<ul>
+<li>启用 <code>WPA/WPA2/WPA3-企业级</code> 身份认证
+<ul>
+<li>实名制、独立账号接入</li>
+<li>有 <code>IT</code> 技术能力的企业强烈建议配置 <code>EAP-TLS</code>
+<ul>
+<li><strong>双向证书验证</strong></li>
+</ul></li>
+</ul></li>
+<li>部署无线入侵检测与防护系统
+<ul>
+<li>检测：通过监听模式配合白名单比对发现 <code>Rogue AP</code> 并告警</li>
+<li>防护
+<ul>
+<li>对 <code>Rogue AP</code> 构建的无线网络实施 <code>DeAuth Attack</code></li>
+<li>有线网络全部启用 <code>802.1X</code> 端口认证，避免 <code>Rogue AP</code> 物理接入</li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="企业用户的物理层安全加固指南">企业用户的物理层安全加固指南</h3>
+<ul>
+<li>缩窄发射天线覆盖范围</li>
+<li>墙面信号反射涂料</li>
+<li>使用定向天线</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="附录" class="title-slide slide level1">
+<h1>附录</h1>
+
+</section>
+<section class="slide level2">
+
+<ul>
+<li><a href="https://github.com/v1s1t0r1sh3r3/airgeddon">v1s1t0r1sh3r3/airgeddon 全功能综合无线网络安全风险评估工具集</a></li>
+<li><a href="https://github.com/wifiphisher/wifiphisher">wifiphisher/wifiphisher Evil Twin 自动化攻击工具集</a></li>
+<li><a href="https://github.com/s0lst1c3/eaphammer">s0lst1c3/eaphammer WPA2-企业级认证无线网络 Evil Twin 自动化攻击工具集</a></li>
+</ul>
+</section>
+</section>
+    </div>
+  </div>
+
+  <script src="lib/reveal.js.v4/dist/reveal.js"></script>
+
+  <!-- reveal.js plugins -->
+  <script src="lib/reveal.js.v4/plugin/notes/notes.js"></script>
+  <script src="lib/reveal.js.v4/plugin/search/search.js"></script>
+  <script src="lib/reveal.js.v4/plugin/zoom/zoom.js"></script>
+  <script src="lib/reveal.js.v4/plugin/math/math.js"></script>
+  <script src="lib/reveal.js.v4/plugin/markdown/markdown.js"></script>
+  <script src="lib/reveal.js.v4/plugin/highlight/highlight.js"></script>
+  <script src="lib/reveal.js.v4/plugin/reveal.js-plugins/menu/menu.js"></script>
+  <script src="lib/reveal.js.v4/plugin/reveal.js-plugins/chalkboard/plugin.js"></script>
+  <script src="lib/reveal.js.v4/plugin/reveal.js-plugins/audio-slideshow/plugin.js"></script>
+
+  <script>
+    
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+      
+        // Display the page number of the current slide
+        slideNumber: true,
+        // Push each slide change to the browser history
+        history: true,
+        // Transition style
+        transition: 'fade', // none/fade/slide/convex/concave/zoom
+        math: {
+          mathjax: '',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+    menu: {
+  		// Specifies which side of the presentation the menu will 
+  		// be shown. Use 'left' or 'right'.
+  		side: 'left',
+  
+  		// Specifies the width of the menu.
+  		// Can be one of the following:
+  		// 'normal', 'wide', 'third', 'half', 'full', or
+  		// any valid css length value
+  		width: 'normal',
+  
+  		// Add slide numbers to the titles in the slide list.
+  		// Use 'true' or format string (same as reveal.js slide numbers)
+  		numbers: true,
+  
+  		// Specifies which slide elements will be used for generating
+  		// the slide titles in the menu. The default selects the first
+  		// heading element found in the slide, but you can specify any
+  		// valid css selector and the text from the first matching
+  		// element will be used.
+  		// Note: that a section data-menu-title attribute or an element
+  		// with a menu-title class will take precedence over this option
+  		titleSelector: 'h1, h2, h3, h4, h5, h6',
+  
+  		// If slides do not have a matching title, attempt to use the
+  		// start of the text content as the title instead
+  		useTextContentForMissingTitles: false,
+  
+  		// Hide slides from the menu that do not have a title.
+  		// Set to 'true' to only list slides with titles.
+  		hideMissingTitles: false,
+  
+  		// Adds markers to the slide titles to indicate the 
+  		// progress through the presentation. Set to 'false'
+  		// to hide the markers.
+  		markers: true,
+  
+  		// Specify custom panels to be included in the menu, by
+  		// providing an array of objects with 'title', 'icon'
+  		// properties, and either a 'src' or 'content' property.
+  		custom: false,
+  
+  		// Specifies the themes that will be available in the themes
+  		// menu panel. Set to 'true' to show the themes menu panel
+  		// with the default themes list. Alternatively, provide an
+  		// array to specify the themes to make available in the
+  		// themes menu panel, for example...
+  		// [
+  		//     { name: 'Black', theme: 'css/theme/black.css' },
+  		//     { name: 'White', theme: 'css/theme/white.css' },
+  		//     { name: 'League', theme: 'css/theme/league.css' }
+  		// ]
+  		themes: false,
+  
+  		// Specifies the path to the default theme files. If your
+  		// presentation uses a different path to the standard reveal
+  		// layout then you need to provide this option, but only
+  		// when 'themes' is set to 'true'. If you provide your own 
+  		// list of themes or 'themes' is set to 'false' the 
+  		// 'themesPath' option is ignored.
+  		themesPath: 'css/theme/',
+  
+  		// Specifies if the transitions menu panel will be shown.
+  		// Set to 'true' to show the transitions menu panel with
+  		// the default transitions list. Alternatively, provide an
+  		// array to specify the transitions to make available in
+  		// the transitions panel, for example...
+  		// ['None', 'Fade', 'Slide']
+  		transitions: false,
+  
+  		// Adds a menu button to the slides to open the menu panel.
+  		// Set to 'false' to hide the button.
+  		openButton: true,
+  
+  		// If 'true' allows the slide number in the presentation to
+  		// open the menu panel. The reveal.js slideNumber option must 
+  		// be displayed for this to take effect
+  		openSlideNumber: false,
+  
+  		// If true allows the user to open and navigate the menu using
+  		// the keyboard. Standard keyboard interaction with reveal
+  		// will be disabled while the menu is open.
+  		keyboard: true,
+  
+  		// Normally the menu will close on user actions such as
+  		// selecting a menu item, or clicking the presentation area.
+  		// If 'true', the sticky option will leave the menu open
+  		// until it is explicitly closed, that is, using the close
+  		// button or pressing the ESC or m key (when the keyboard 
+  		// interaction option is enabled).
+  		sticky: false,
+  
+  		// If 'true' standard menu items will be automatically opened
+  		// when navigating using the keyboard. Note: this only takes 
+  		// effect when both the 'keyboard' and 'sticky' options are enabled.
+  		autoOpen: true,
+  
+  		// If 'true' the menu will not be created until it is explicitly
+  		// requested by calling RevealMenu.init(). Note this will delay
+  		// the creation of all menu panels, including custom panels, and
+  		// the menu button.
+  		delayInit: false,
+  
+  		// If 'true' the menu will be shown when the menu is initialised.
+  		openOnInit: false,
+  
+  		// By default the menu will load it's own font-awesome library
+  		// icons. If your presentation needs to load a different
+  		// font-awesome library the 'loadIcons' option can be set to false
+  		// and the menu will not attempt to load the font-awesome library.
+  		loadIcons: true
+
+    },
+
+    chalkboard: {
+        boardmarkerWidth: 3,
+        chalkWidth: 7,
+        chalkEffect: 1.0,
+        storage: null,
+        src: null,
+        readOnly: undefined,
+        toggleChalkboardButton: { left: "80px" },
+				toggleNotesButton: { left: "130px" },
+        transition: 800,
+        theme: "chalkboard",
+    },
+
+        // reveal.js plugins
+        plugins: [
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom,
+          RevealMarkdown, 
+          RevealMenu, 
+          RevealHighlight,
+          RevealChalkboard
+        ]
+      });
+    </script>
+    </body>
+</html>

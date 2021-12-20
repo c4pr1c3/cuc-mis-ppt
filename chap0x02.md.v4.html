@@ -1,0 +1,1722 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="黄玮">
+  <title>移动互联网安全</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="lib/reveal.js.v4/dist/reset.css">
+  <link rel="stylesheet" href="lib/reveal.js.v4/dist/reveal.css">
+
+  <!-- For syntax highlighting using highlight.js-->
+  <link rel="stylesheet" href="lib/reveal.js.v4/plugin/highlight/monokai.css">
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+  </style>
+  <link rel="stylesheet" href="lib/reveal.js.v4/dist/theme/my-white.css" id="theme">
+
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide">
+  <h1 class="title">移动互联网安全</h1>
+  <p class="author">黄玮</p>
+</section>
+
+<section>
+<section id="第二章-无线接入网监听" class="title-slide slide level1">
+<h1>第二章 无线接入网监听</h1>
+
+</section>
+<section id="温故" class="slide level2">
+<h2>温故</h2>
+<ul>
+<li>了解 IEEE 802.11 与 Wi-Fi 的关系</li>
+<li>了解 IEEE 802.11 无线网络协议中的关键组件有哪些</li>
+<li>了解 IEEE 802.11 无线网络中有什么设备</li>
+<li>了解 OpenWrt 的基本功能与配置方法</li>
+<li>了解本课程实验所需无线网卡的基本要求</li>
+</ul>
+</section>
+<section id="知新" class="slide level2">
+<h2>知新</h2>
+<ul>
+<li>实战无线网监听</li>
+<li>无线通信数据报文分析</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="实战无线网监听" class="title-slide slide level1">
+<h1>实战无线网监听</h1>
+
+</section>
+<section id="无线网络监听的基本条件" class="slide level2">
+<h2>无线网络监听的基本条件</h2>
+<ul>
+<li>硬件
+<ul>
+<li>无线网卡</li>
+</ul></li>
+<li>软件
+<ul>
+<li>无线网卡驱动（管理硬件）</li>
+<li>无线网卡设备管理软件</li>
+<li>报文嗅探软件（抓包器）</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="usb-接口的无线网卡">USB 接口的无线网卡</h3>
+<p><img data-src="images/chap0x02/good-wifi-phy.png" /></p>
+<blockquote>
+<p>注意此时无线网卡指示灯 <strong>均已点亮</strong></p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<h3 id="usb-filter">虚拟机连接 USB 接口无线网卡</h3>
+<p><img data-src="images/chap0x02/vb-usb-config.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="usb-connect-to-vm">虚拟机连接 USB 接口无线网卡</h3>
+<p><img data-src="images/chap0x02/usb-connect-to-vm.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="usb-connect-to-vm-summary">虚拟机连接 USB 接口无线网卡</h3>
+<ul>
+<li>确保 <code>Virtualbox</code> 的 <code>USB</code> 设备管理菜单能识别连入的 USB 无线网卡</li>
+<li>确保该连入的 USB 无线网卡处于已连入虚拟机状态（ 对应无线网卡状态为✔️ 且虚拟机控制台没有报错）</li>
+</ul>
+<p><img data-src="images/chap0x02/usb-connect-to-vm-failed.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="无线网卡驱动与设备管理软件">无线网卡驱动与设备管理软件</h3>
+<ul>
+<li>本课程只推荐 <code>Kali</code> 作为基础操作系统</li>
+<li><code>Kali</code> 开箱即用提供了大量 USB 接口无线网卡驱动</li>
+<li><code>lsusb</code> 无法识别的 USB 无线网卡大概率无法使用</li>
+<li><code>lsusb</code> 可识别但 <code>iw</code> 无法管理的无线网卡可以通过手动安装对应驱动程序的方式来解决网卡使用问题</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="无线网卡设备管理软件示例">无线网卡设备管理软件示例</h3>
+<pre ><code class="bash"># 查看 USB 接口上是否已识别无线网卡
+lsusb
+# Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+# Bus 001 Device 006: ID 0bda:a811 Realtek Semiconductor Corp. RTL8811AU 802.11a/b/g/n/ac WLAN Adapter
+# Bus 001 Device 008: ID 0cf3:9271 Qualcomm Atheros Communications AR9271 802.11n
+# Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+
+# 查看无线网卡驱动加载情况
+# Driver=rtl88XXau 非空，说明无线网卡驱动加载正常
+lsusb -t
+# /:  Bus 02.Port 1: Dev 1, Class=root_hub, Driver=xhci_hcd/6p, 5000M
+# /:  Bus 01.Port 1: Dev 1, Class=root_hub, Driver=xhci_hcd/8p, 480M
+#     |__ Port 1: Dev 2, If 0, Class=Vendor Specific Class, Driver=rtl88XXau, 480M
+
+# 查看 USB 接口连接设备的详细信息
+lsusb -v
+# Bus 001 Device 006: ID 0bda:a811 Realtek Semiconductor Corp. RTL8811AU 802.11a/b/g/n/ac WLAN Adapter
+# Device Descriptor:
+# ...
+#   idVendor           0x0bda Realtek Semiconductor Corp.
+#   idProduct          0xa811 RTL8811AU 802.11a/b/g/n/ac WLAN Adapter
+#   bcdDevice            2.00
+#   iManufacturer           1 Realtek
+#   iProduct                2 802.11ac WLAN Adapter
+#   iSerial                 3 00e04c000001
+#   bNumConfigurations      1
+#   Configuration Descriptor:
+# ...
+
+# Bus 001 Device 011: ID 0cf3:9271 Qualcomm Atheros Communications AR9271 802.11n
+# Device Descriptor:
+# ...
+#   idVendor           0x0cf3 Qualcomm Atheros Communications
+#   idProduct          0x9271 AR9271 802.11n
+#   bcdDevice            1.08
+#   iManufacturer          16 ATHEROS
+#   iProduct               32 USB2.0 WLAN
+#   iSerial                48 12345
+#   bNumConfigurations      1
+# ...
+
+# 使用 iw 工具查看无线网卡基本信息
+iw dev
+# phy#1
+#   Interface wlan1
+#       ifindex 6
+#       wdev 0x100000001
+#       addr 0e:05:8c:fd:dc:56
+#       type managed
+#       txpower 20.00 dBm
+# phy#0
+#   Interface wlan0
+#       ifindex 5
+#       wdev 0x1
+#       addr 56:6a:c9:ec:2d:2f
+#       type managed
+#       txpower 20.00 dBm
+
+# 查看无线网卡详细硬件参数信息
+iw phy</code></pre>
+</section>
+<section id="无线网络监听的进阶条件" class="slide level2">
+<h2>无线网络监听的进阶条件</h2>
+<ul>
+<li>操作系统支持设置⽆线⽹卡进⼊ <code>monitor</code>（监听）模式
+<ul>
+<li>⽆需加⼊任何⼀个 <code>BSS</code>
+<ul>
+<li>⽆需绑定到⼀个 <code>AP</code> 或进⼊ <code>Ad-Hoc</code> 模式</li>
+</ul></li>
+<li>⽆线⽹卡通过 <code>channel hopping</code> （跳频）技术在多个 <code>channel</code> （频道）之间快速切换</li>
+<li>捕获 802.11 数据帧</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="无线网络监听的限制因素">无线网络监听的限制因素</h3>
+<ul>
+<li>⽆线⽹卡只能⼯作在⼀个确定的频道上
+<ul>
+<li>不能同时监听所有频道和波段</li>
+</ul></li>
+<li>⽆线⽹卡对 <code>IEEE 802.11</code> 协议的支持有 <strong>硬件差异</strong>
+<ul>
+<li>指定范围： <code>a/b/g/n/ac</code> ，其中 <code>b/g</code> 最为常见</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="配置网卡进入监听模式">配置网卡进入监听模式</h3>
+<pre ><code class="bash"># 方法一
+# 最傻瓜化的指令 airmon-ng 
+# 配置指定网卡 wlan 进入监听模式
+# 部分型号无线网卡可能会被重命名
+# 重命名后的网卡名称可能是 wlan0mon 
+airmon-ng start wlan0
+
+# 配置指定网卡 wlan 退出监听模式（回到默认的 managed 模式）
+airmon-ng stop wlan0
+# airmon-ng stop wlan0mon
+
+# 使用无线网卡底层配置工具 iw 
+# 方法二
+# 配置指定网卡 wlan 进入监听模式
+iw dev wlan0 set type monitor
+
+# 配置网卡监听 channel
+iw dev wlan0 set channel 6
+
+# 配置指定网卡 wlan 进入 managed 模式
+iw dev wlan0 set type managed
+
+# 方法三
+# 对于硬件支持创建虚拟子接口的网卡可以采用以下指令
+iw dev wlan0 interface add mon0 type monitor
+# 此时再次查看 iw dev 输出结果会发现多了一个「无线网卡」 mon0
+
+# 如果提示 command failed: Device or resource busy (-16)
+# 需要先从操作系统层面禁用无线网卡，再执行上述 iw 指令配置网卡工作模式
+
+# 常见故障排查手段
+# 操作系统层面启用无线网卡
+ip link set wlan0 up
+# 操作系统层面禁用无线网卡
+ip link set wlan0 down
+# 注意网卡被禁用后通常硬件的工作状态指示灯也会灭掉</code></pre>
+</section>
+<section class="slide level2">
+
+<h3 id="配置无线网卡开始抓包-airodump-ng">配置无线网卡开始抓包 airodump-ng</h3>
+<pre ><code class="bash"># 开始以channel hopping模式抓包
+# 注意看清楚 iw dev 输出的网卡名称
+airodump-ng wlan0
+# CTRL-C退出当前抓包
+
+# 选择一个"感兴趣"的目标AP进行定向（指定工作channel）监听并将结果保存到本地文件
+airodump-ng wlan0 --channel 13 -w saved --beacons --wps
+# 以上命令会在当前目录保存文件名为saved-NN的几个文件：.cap、.csv、.kismet.csv、.kismet.netxml
+# 其中NN按照从01开始编号，重复执行上述命令多次，捕获到的数据报文会保存在不同编号的.cap文件中
+# 使用 --beacons 参数可以记录每一个独立BSSID发送的所有beacon frame
+# 如果不使用上述参数，airodump-ng 默认对一个独立BSSID只记录一个beacon frame
+# 假如某个AP在抓包过程中更换了ESSID，则抓包结果会遗失大部分ESSID
+# 不使用 --beacons 参数可以减少大量的I/O写磁盘次数（大部分AP每秒会发送10个beacon frame）
+# --wps 可以显示开启了WPS功能的AP的WPS相关信息
+
+# 如果希望只监听指定AP的所有通信数据报文，可以使用以下命令
+airodump-ng -c 8 --bssid &lt;bssid&gt; -w saved wlan0
+# 上述命令中&lt;bssid&gt;替换为实际目标AP的BSSID值即可</code></pre>
+</section>
+<section class="slide level2">
+
+<h3 id="配置无线网卡开始抓包-tcpdumptshark">配置无线网卡开始抓包 tcpdump/tshark</h3>
+<pre ><code class="bash"># tcpdump 和 tshark 未开箱即用提供 channel hopping 功能
+# 只能固定在一个指定 channel 上抓包
+# 部分无线网卡可能不支持 -I 参数
+tshark -i wlan0 -I -w saved.cap
+
+tshark --help | grep -- -I
+#   -I, --monitor-mode       capture in monitor mode, if available
+
+tcpdump -i wlan0 -w saved.cap</code></pre>
+</section>
+<section class="slide level2">
+
+<h3 id="小结无线网络监听步骤">小结无线网络监听步骤</h3>
+<ol type="1">
+<li>将 USB 无线网卡连入虚拟机</li>
+<li>设置网卡进入 <code>监听模式</code></li>
+<li>使用抓包器对指定的监听模式无线网卡进行抓包
+<ul>
+<li><code>channel hopping</code> 模式收集附近无线网络信息</li>
+<li>确定抓包目标，进行定向抓包</li>
+</ul></li>
+<li>使用报文分析软件对抓包结果文件进行离线分析</li>
+</ol>
+</section>
+</section>
+<section>
+<section id="无线网卡监听常见故障排查" class="title-slide slide level1">
+<h1>无线网卡监听常见故障排查</h1>
+
+</section>
+<section id="故障排查思路" class="slide level2">
+<h2>故障排查思路</h2>
+<ul>
+<li>自底向上
+<ul>
+<li>先硬件、后软件</li>
+<li>先 USB 接口识别、再网卡基本信息识别、最后是网卡管理软件操作验证</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="硬件相关常见故障排查">硬件相关常见故障排查</h3>
+<ul>
+<li>更换 <code>USB 连接接口</code>，有些电脑的不同 <code>USB 接口</code> 由于供电能力差异，部分耗电量较大的 <code>USB 无线网卡</code> 可能只能在电脑的特定 <code>USB 接口</code> 上可以正常工作；</li>
+<li>对应上一条排查建议，还可以尝试更换 <code>USB 无线网卡</code> 的 <code>USB 连接线</code> ，排除连接线故障原因；</li>
+<li>如果是使用的虚拟机环境，建议检查虚拟机的USB设备共享设置。必要时可以启用 <code>USB 3.0兼容</code> 选项或者如果 <code>USB 3.0兼容模式</code> 无法正常识别网卡或网卡无法抓包，可以降级为 <code>USB 2.0兼容模式</code> 尝试故障排查；</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="软件相关常见故障排查">软件相关常见故障排查</h3>
+<ul>
+<li>确保使用的是最新版的虚拟机软件并安装了必要的扩展包；</li>
+<li>使用 <code>tail -F /var/log/messages</code> ，重新连接 <code>USB 无线网卡</code> ，检查该日志中的消息是否有出现一些故障信息报错。尝试在搜索引擎中搜索相关报错信息关键词；</li>
+<li>确认已安装匹配版本的 USB 无线网卡驱动，必要时需要自己下载驱动源代码进行编译安装；</li>
+<li><code>重启</code> 大法好。无论是虚拟机还是物理主机，有时可能是由于新安装了USB驱动或其他未知不可描述原因，重启或关闭系统再启动（冷启动）就可以解决问题；</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="动手抓包" class="title-slide slide level1">
+<h1>动手抓包</h1>
+
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>准备无线网络抓包实验环境，动手抓包时间。</p>
+</blockquote>
+</section>
+<section class="slide level2">
+
+<ul>
+<li>自建无线网络
+<ul>
+<li>推荐使用无线路由器或 AP 确保连接稳定性</li>
+<li>使用 <a href="chap0x01.md.html#/8/1">OpenWrt + USB 无线网卡自建无线网络</a></li>
+<li>在 Kali 里使用无线网卡自建无线热点（稳定性和并发服务能力均较差）</li>
+</ul></li>
+<li>配置不同条件的无线网络供抓包
+<ul>
+<li>开放认证（不加密）</li>
+<li>隐藏 SSID (禁止广播 SSID）</li>
+<li>WPA/WPA2/WPA3 个人认证</li>
+</ul></li>
+<li>使用抓包工具抓包</li>
+</ul>
+</section>
+<section id="aircrack-ng" class="slide level2">
+<h2><a href="https://www.aircrack-ng.org/">AirCrack-NG</a></h2>
+<blockquote>
+<p>Aircrack-ng is a complete suite of tools to assess WiFi network security.</p>
+</blockquote>
+<ul>
+<li class="fragment">Monitoring: Packet capture and export of data to text files for further processing by third party tools</li>
+<li class="fragment">Attacking: Replay attacks, deauthentication, fake access points and others via packet injection</li>
+<li class="fragment">Testing: Checking WiFi cards and driver capabilities (capture and injection)</li>
+<li class="fragment">Cracking: WEP and WPA PSK (WPA 1 and 2)</li>
+</ul>
+</section>
+<section id="aircrack-ng-1" class="slide level2">
+<h2><a href="https://www.aircrack-ng.org/">AirCrack-NG</a></h2>
+<pre ><code class="bash"># 查看版本信息和命令行参数帮助
+aircrack-ng --help
+
+# 查看当前系统上的 aircrack-ng 安装了哪些文件
+dpkg -L aircrack-ng</code></pre>
+</section>
+</section>
+<section>
+<section id="无线通信数据报文分析" class="title-slide slide level1">
+<h1>无线通信数据报文分析</h1>
+
+</section>
+<section id="customize-wireshark-1" class="slide level2">
+<h2>定制 Wireshark 主窗口显示列</h2>
+<p><img data-src="images/chap0x02/customize-wireshark-1.png" /></p>
+<ul>
+<li>鼠标右键单击主窗口的信息显示标题行，在弹出菜单中选择 <code>Column Preferences</code></li>
+</ul>
+</section>
+<section id="customize-wireshark-2" class="slide level2">
+<h2>定制 Wireshark 主窗口显示列</h2>
+<p><img data-src="images/chap0x02/customize-wireshark-2.png" /></p>
+<ul>
+<li>添加 <code>Type</code> 为 <code>Custom</code> 的自定义列，值为 <code>wlan.fc.type_subtype</code></li>
+</ul>
+</section>
+<section id="customize-wireshark-3" class="slide level2">
+<h2>定制 Wireshark 主窗口显示列</h2>
+<p><img data-src="images/chap0x02/customize-wireshark-3.png" /></p>
+</section>
+<section id="样例数据" class="slide level2">
+<h2>样例数据</h2>
+<ul>
+<li><a href="exp/chap0x02/0-open-ap-public.pcap">样例1：开放式认证连接过程样例数据</a></li>
+<li><a href="exp/chap0x02/1-wpa2mixed-public.pcap">样例2：WPA/WPA2 个人模式加密认证过程样例数据</a></li>
+<li><a href="exp/chap0x02/2-wpa2-enterprise.pcap">样例3：WPA2 企业级加密认证过程样例数据</a></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="以开放式认证连接过程为例" class="title-slide slide level1">
+<h1>以开放式认证连接过程为例</h1>
+
+</section>
+<section id="open-ap-1" class="slide level2">
+<h2>样例1 中的无线 AP 基本信息</h2>
+<p><img data-src="images/chap0x02/open-access-ap-1.png" /></p>
+</section>
+<section id="open-ap-2" class="slide level2">
+<h2>样例1 中的无线 AP 基本信息</h2>
+<p><img data-src="images/chap0x02/open-access-ap-2.png" /></p>
+</section>
+<section id="open-ap-3" class="slide level2">
+<h2>样例1 中的无线 AP 基本信息</h2>
+<p><img data-src="images/chap0x02/open-access-ap-3.png" /></p>
+</section>
+<section id="sample1-client-info" class="slide level2">
+<h2>样例1 中的客户端基本信息</h2>
+<p><img data-src="images/chap0x02/open-access-client-1.png" /></p>
+</section>
+<section id="flowgraph-of-open-access" class="slide level2">
+<h2>WPA Open Access 连接过程全貌</h2>
+<p><img data-src="images/chap0x02/open-access-flowgraph.png" /></p>
+</section>
+<section id="上述连接过程全貌里观察到的无线数据帧类型" class="slide level2">
+<h2>上述连接过程全貌里观察到的无线数据帧类型</h2>
+<ul>
+<li>Beacon frame</li>
+<li>Probe Request</li>
+<li>Probe Response</li>
+<li>Authentication (Request)</li>
+<li>Authentication (Response)</li>
+<li>Association Request</li>
+<li>Association Response</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="开放式认证">开放式认证</h3>
+<ul>
+<li>虽然没有设置加密方式，但「认证」步骤没有跳过</li>
+</ul>
+<p><img data-src="images/chap0x02/open.access.png" /></p>
+</section>
+<section class="slide level2">
+
+<blockquote>
+<p>先讲一段「基础理论」知识</p>
+</blockquote>
+</section>
+</section>
+<section>
+<section id="network-services" class="title-slide slide level1">
+<h1>IEEE 802.11 中定义的主要网络服务</h1>
+
+</section>
+<section class="slide level2">
+
+<ul>
+<li><strong><em>数据封包传送</em></strong></li>
+<li><strong><em>身份验证(authentication)</em></strong></li>
+<li><strong><em>解除验证(de-authentication)</em></strong></li>
+<li><strong><em>隐私(privacy)保护</em></strong></li>
+<li>连接(association)服务</li>
+<li>重连(re-association)服务</li>
+<li>取消连接（dis-association）服务</li>
+<li>分发(distribution)服务</li>
+<li>(integration)服务</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<ul>
+<li><strong><em>STA</em></strong> 必备服务</li>
+<li>DS 中会用到的服务</li>
+</ul>
+</section>
+<section id="数据封包传送服务" class="slide level2">
+<h2>数据封包传送服务</h2>
+<ul>
+<li>此服务为最基本的功能</li>
+<li>STA 对待发送数据进⾏封装、传送和接收</li>
+</ul>
+</section>
+<section id="身份验证服务" class="slide level2">
+<h2>身份验证服务</h2>
+<ul>
+<li>主要用来确认每个 <code>STA</code> 的身份</li>
+<li><code>IEEE 802.11</code> 通常要求双向式的身份确认，它也允许同⼀时间⼀个 <code>STA</code> 和多个 <code>STA</code> （包括 <code>AP</code> ）进⾏身份验证</li>
+</ul>
+</section>
+<section id="解除验证服务" class="slide level2">
+<h2>解除验证服务</h2>
+<ul>
+<li>已完成身份认证的 <code>STA</code> 可以用这个服务来取消身份认证，⼀旦取消后连接也同时被取消</li>
+</ul>
+</section>
+<section id="隐私保护服务" class="slide level2">
+<h2>隐私保护服务</h2>
+<ul>
+<li>通过加密机制保护通信数据的机密性</li>
+</ul>
+</section>
+<section id="connection-service-1" class="slide level2">
+<h2>连接服务</h2>
+<ul>
+<li>目的：在 <code>STA</code> 和 <code>AP</code> （或 <code>STA</code> ）之间建立⼀个通信链路</li>
+<li>当分布式系统要将数据传送给主机时，必须事先知道这个主机目前是通过哪个 <code>AP</code> 接⼊分布式系统的，这些信息都可以由连接服务提供</li>
+<li>⼀个主机在被允许经由某个AP传送数据给分布式系统前，必须先和此 <code>AP</code> 进⾏连接</li>
+</ul>
+</section>
+<section id="connection-service-2" class="slide level2">
+<h2>连接服务</h2>
+<ul>
+<li>通常在⼀个 <code>BS</code> 内有⼀个 <code>AP</code> ，因此在这个区域内的任意主机若想要与外界进⾏通信，就必须先与此 <code>AP</code> 进⾏连接。这个过程类似注册，当主机完成连接后，<code>AP</code> 就会记住这台主机目前在它的管辖范围之内。连接服务通常都由主机启动，用它来与 <code>AP</code> 进⾏连接
+<ul>
+<li>在任何时刻⼀台主机只会和⼀个 <code>AP</code> 进⾏连接，这样才能使分布式系统知道哪个主机是由哪个 <code>AP</code> 所管辖的，然⽽⼀个 <code>AP</code> 却可以同时与多台主机进⾏连接</li>
+</ul></li>
+</ul>
+</section>
+<section id="重连服务" class="slide level2">
+<h2>重连服务</h2>
+<ul>
+<li>目的：将⼀个移动中的主机连接由⼀个 <code>AP</code> 转移⾄另⼀个 <code>AP</code></li>
+<li>当主机从⼀个服务区移动到另⼀个服务区时，它将启动重连服务</li>
+<li>重连服务会将主机与它所移⼊的服务区内的 <code>AP</code> 进⾏连接，使分布式系统知道此主机已经转移⾄另⼀个 <code>AP</code> 的管辖区域内</li>
+<li>重连服务通常也是由主机启动</li>
+</ul>
+</section>
+<section id="取消连接服务" class="slide level2">
+<h2>取消连接服务</h2>
+<ul>
+<li>当⼀台主机数据传送结束时，可以使用取消连接服务对当前已有的连接进⾏取消</li>
+<li>当主机在服务区内移动时，它除了会对新的 <code>AP</code> 启动重连服务外，还会对旧的 <code>AP</code> 启动取消连接服务</li>
+<li>此服务可以由主机或AP任⼀⽅来启动，不论是哪⼀⽅启动的另⼀⽅都不能拒绝。（需要注意的是AP可能因⽹络负荷过重⽽是用取消连接服务对主机取消连接）</li>
+</ul>
+</section>
+<section id="分发服务" class="slide level2">
+<h2>分发服务</h2>
+<ul>
+<li>此服务主要由 <code>BSS</code> 中的主机使用</li>
+<li>当主机需要传送数据时，会先将数据传送⾄ <code>AP</code>，再由 <code>AP</code> 通过分布式系统传送⾄目的地</li>
+<li><code>IEEE 802.11</code> 并没有规定分布式系统要如何将数据正确的送⾄目的地，但它说明了在连接、取消连接和重连等服务中，数据应该由哪个 <code>AP</code> 进⾏输出以将数据送达⾄正确的目标地点</li>
+</ul>
+</section>
+<section id="整合服务" class="slide level2">
+<h2>整合服务</h2>
+<ul>
+<li>目的：让数据能够在分布式系统和现有的局域⽹之间进⾏传送</li>
+<li>整合服务的任务就是将数据从分布式系统转送到相连的局域⽹络媒介，其主要⼯作就是将不同的地址空间做⼀个转换</li>
+</ul>
+</section>
+<section id="csmacd" class="slide level2">
+<h2>CSMA/CD</h2>
+<ul>
+<li>IEEE 802.3</li>
+<li>基于碰撞 <strong>检测</strong> 的载波监听多路访问
+<ul>
+<li>Carrier Sense Multiple Access With Collision <strong>Detection</strong></li>
+</ul></li>
+</ul>
+</section>
+<section id="csmaca" class="slide level2">
+<h2>CSMA/CA</h2>
+<ul>
+<li>IEEE 802.11</li>
+<li>基于碰撞 <strong>规避</strong> 的载波监听多路访问
+<ul>
+<li>Carrier Sense Multiple Access with Collision <strong>Avoidance</strong></li>
+</ul></li>
+<li>⽆线局域⽹数据链路层最基本的接⼊⽅法</li>
+<li>分布协调功能（DCF）的基础
+<ul>
+<li>Distributed Coordination Function</li>
+</ul></li>
+</ul>
+</section>
+<section id="四次握手协议" class="slide level2">
+<h2>四次握手协议</h2>
+<ul>
+<li>非必选协议</li>
+<li>解决数据链路层的传输过程中 <code>隐藏节点并发同 AP 通信</code> 可能导致的丢帧问题
+<ul>
+<li>检测并重发
+<ul>
+<li>进⼀步，避免重发时的碰撞，解决 <code>隐藏节点</code> 问题，引⼊了 <code>RTS</code>/<code>CTS</code> + <code>ACK</code> 协议</li>
+</ul></li>
+</ul></li>
+<li>RTS：发送请求控制
+<ul>
+<li>Request to send</li>
+</ul></li>
+<li>CTS：清除发送控制
+<ul>
+<li>Clear to send</li>
+</ul></li>
+</ul>
+</section>
+<section id="rts-cts-handshake" class="slide level2">
+<h2>基于 CSMA/CA 的四次握手协议简易流程</h2>
+<p><img data-src="images/chap0x02/rts-cts-ack-4way-handshake.png" /></p>
+</section>
+</section>
+<section>
+<section id="ieee-802.11-无线帧类型" class="title-slide slide level1">
+<h1>IEEE 802.11 无线帧类型</h1>
+
+</section>
+<section class="slide level2">
+
+<ul>
+<li>管理帧</li>
+<li>控制帧</li>
+<li>数据帧</li>
+</ul>
+</section>
+<section id="管理帧" class="slide level2">
+<h2>管理帧</h2>
+<ul>
+<li>管理帧负责监督⽆线⽹络状态，它主要用于建立第⼆层，即链路层，主机间的连接，管理数据包包括身份认证数据包、关联数据包和 <code>Beacon</code> 数据包等
+<ul>
+<li>为了限制⼴播或组播管理帧所造成的副作用，收到管理帧后，必须加以查验</li>
+<li>只有⼴播或者组播帧来自⼯作站当前所关联的 <code>BSSID</code> 时，它们才会被送⾄ <code>MAC 管理层</code> ,唯⼀例外的是 <code>Beacon</code> 帧</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="wlan.mgt.wireshark">管理帧相关的分析技巧之 wireshark</h3>
+<ul>
+<li><a href="https://www.wireshark.org/docs/dfref/w/wlan.html">wlan.mgt</a></li>
+<li><code>wlan.fc.type == 0</code></li>
+</ul>
+<p><img data-src="images/chap0x02/wlan.fc.beacon.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="wlan.fc.type_subtype">管理帧相关的分析技巧之 wireshark</h3>
+<p><img data-src="images/chap0x02/beacon-frame-filter.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="管理帧的字段取值定义">管理帧的字段取值定义</h3>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Subtype 2进制表示</th>
+<th style="text-align: center;">Subtype 10进制表示</th>
+<th style="text-align: left;">功能</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">00</td>
+<td style="text-align: center;">1000</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: left;">Beacon</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">00</td>
+<td style="text-align: center;">0100</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: left;">Probe Request</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">00</td>
+<td style="text-align: center;">0101</td>
+<td style="text-align: center;">5</td>
+<td style="text-align: left;">Probe Response</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">00</td>
+<td style="text-align: center;">1011</td>
+<td style="text-align: center;">11</td>
+<td style="text-align: left;">Authentication</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">00</td>
+<td style="text-align: center;">1100</td>
+<td style="text-align: center;">12</td>
+<td style="text-align: left;">Deauthentication</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">00</td>
+<td style="text-align: center;">0000</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: left;">Association request</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">00</td>
+<td style="text-align: center;">0001</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: left;">Association response</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section class="slide level2">
+
+<h3 id="wlan.mgt.tshark-3">管理帧相关的分析技巧之 tshark</h3>
+<pre ><code class="bash">tshark -r 0-open-ap-public.pcap -T fields -e wlan.fc.type -e wlan.fc.subtype -e _ws.col.Info "wlan.mgt" | awk -F ',' '{print $1}' | sort -t 1 -u
+# 0 0   Association Request
+# 0 1   Association Response
+# 0 10  Disassociate
+# 0 11  Authentication
+# 0 13  Action
+# 0 4   Probe Request
+# 0 5   Probe Response
+# 0 8   Beacon frame</code></pre>
+</section>
+<section class="slide level2">
+
+<h3 id="wlan.mgt.scapy">管理帧相关的分析技巧之 scapy</h3>
+<pre ><code class="python"># 查看 scapy 支持的协议对象
+## Dot11 开头的都是 IEEE 802.11 相关协议对象
+ls()
+
+# Dot11AssoReq : 802.11 Association Request
+# Dot11AssoResp : 802.11 Association Response
+# Dot11Auth  : 802.11 Authentication
+# Dot11Beacon : 802.11 Beacon
+# Dot11Deauth : 802.11 Deauthentication
+# Dot11Disas : 802.11 Disassociation
+# Dot11ProbeReq : 802.11 Probe Request
+# Dot11ProbeResp : 802.11 Probe Response
+# Dot11QoS   : 802.11 QoS
+# Dot11ReassoReq : 802.11 Reassociation Request
+# Dot11ReassoResp : 802.11 Reassociation Response
+
+# 构造一个 Beacon Frame
+beacon=RadioTap()/Dot11()/Dot11Beacon()
+
+# 可视化 Beacon Frame 结构
+beacon.show2()
+# ###[ RadioTap ]###
+#   version= 0
+#   pad= 0
+#   len= 8
+#   present=
+#   notdecoded= ''
+# ###[ 802.11 ]###
+#      subtype= Beacon
+#      type= Management
+#      proto= 0
+#      FCfield=
+#      ID= 0
+#      addr1= 00:00:00:00:00:00 (RA=DA)
+#      addr2= 00:00:00:00:00:00 (TA=SA)
+#      addr3= 00:00:00:00:00:00 (BSSID/STA)
+#      SC= 0
+# ###[ 802.11 Beacon ]###
+#         timestamp= 0
+#         beacon_interval= 100
+#         cap=
+
+# 打印 type 和 subtype 字段取值
+print("{} {}".format(beacon.getlayer(Dot11).type, beacon.getlayer(Dot11).subtype))
+# 0 8
+# 管理帧字段 type=0</code></pre>
+</section>
+<section id="beacon-in-open-ap" class="slide level2">
+<h2>以 Beacon Frame 为例看管理帧的功能</h2>
+<p><img data-src="images/chap0x02/beacon-in-open-ap.png" /></p>
+</section>
+<section id="控制帧" class="slide level2">
+<h2>控制帧</h2>
+<ul>
+<li>控制帧通常与数据帧搭配使用，负责清空区域、获取信道和载波监听的维护，并在收到数据时予以确认以提⾼⼯作站之间数据传送的可靠性
+<ul>
+<li>因为⽆线收发器通常只有半双⼯⼯作模式，即⽆法同时收发数据，为防⽌冲突，<code>IEEE 802.11</code> 允许 <code>STA</code> 使用 <code>request to send</code> 和 <code>clear to send</code> 信号来清空传送区域</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="wlan.mgt.tshark-2">控制帧相关的分析技巧之 tshark</h3>
+<pre ><code class="bash">tshark -r 0-open-ap-public.pcap -T fields -e wlan.fc.type -e wlan.fc.subtype -e wlan.fc.type_subtype -e _ws.col.Info "wlan.fc.type==1" | awk -F ',' '{print $1}' | sort -t 1 -u
+# 1 11  27  Request-to-send
+# 1 12  28  Clear-to-send
+# 1 13  29  Acknowledgement
+# 1 8   24  802.11 Block Ack Req
+# 1 9   25  802.11 Block Ack</code></pre>
+</section>
+<section class="slide level2">
+
+<h3 id="wlan.ctrl.scapy">控制帧相关的分析技巧之 scapy</h3>
+<pre ><code class="python"># 构造一个默认的控制帧
+dot11ack=RadioTap()/Dot11()/Dot11Ack()
+
+# 可视化这个控制帧字段结构
+dot11ack.show2()
+# ###[ RadioTap ]###
+#   version= 0
+#   pad= 0
+#   len= 8
+#   present=
+#   notdecoded= ''
+# ###[ 802.11 ]###
+#      subtype= Ack
+#      type= Control
+#      proto= 0
+#      FCfield=
+#      ID= 0
+#      addr1= 00:00:00:00:00:00 (RA)
+
+# 打印 type 和 subtype 字段取值
+print("{} {}".format(dot11ack.getlayer(Dot11).type, dot11ack.getlayer(Dot11).subtype))
+# 1 13
+# 控制帧字段 type=1</code></pre>
+</section>
+<section id="数据帧" class="slide level2">
+<h2>数据帧</h2>
+<ul>
+<li>数据帧中包含实际需要传送的数据，并且是能够从⽆线⽹络转发到有线⽹络的唯⼀帧类型</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="wlan.data.tshark">数据帧相关的分析技巧之 tshark</h3>
+<pre ><code class="bash">tshark -r 1-wpa2mixed-public.pcap -T fields -e wlan.fc.type -e wlan.fc.subtype -e wlan.fc.type_subtype -e _ws.col.Info "wlan.fc.type==2" | awk -F ',' '{print $1}' | sort -t 1 -u
+# 2 0   32  Data
+# 2 4   36  Null function (No data)
+# 2 8   40  Key (Message 1 of 4)
+# 2 8   40  Key (Message 2 of 4)
+# 2 8   40  Key (Message 3 of 4)
+# 2 8   40  Key (Message 4 of 4)
+# 2 8   40  QoS Data</code></pre>
+</section>
+<section class="slide level2">
+
+<h3 id="null-sta-goto-sleep">Null function (No data) 的奥秘</h3>
+<p><img data-src="images/chap0x02/null-sta-goto-sleep.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="null-sta-stay-up">Null function (No data) 的奥秘</h3>
+<p><img data-src="images/chap0x02/null-sta-stay-up.png" /></p>
+</section>
+</section>
+<section>
+<section id="wpa2-mixed-flow" class="title-slide slide level1">
+<h1>以 WPA 加密认证连接过程为例</h1>
+
+</section>
+<section id="openwrt-ap-1" class="slide level2">
+<h2>样例2 中的无线 AP</h2>
+<p><img data-src="images/chap0x02/openwrt-security-config.png" /></p>
+</section>
+<section id="sample2-client-info" class="slide level2">
+<h2>样例2 中的客户端基本信息</h2>
+<p><img data-src="images/chap0x02/openwrt-wpa2-client.png" /></p>
+</section>
+<section id="sample-2-display-filter" class="slide level2">
+<h2>样例2 的显示过滤器示例</h2>
+<pre ><code >(wlan.addr == 3c:46:d8:59:e8:f4) || (wlan.addr == 76:73:c1:7d:ef:a1) && (wlan.fc.type_subtype &lt;= 0x1b || eapol)  && !(wlan.addr == ce:1e:34:cd:76:a9) && !(wlan.addr == ba:2a:cd:46:18:22) && !(wlan.da == 48:64:12:67:f9:c2) && !(wlan.fc.type_subtype == 0x001b) && !(wlan.fc.type_subtype == 0x000a) && !(wlan.fc.type_subtype == 0x000c) && !(wlan.addr == 9c:c8:f3:82:89:e0)</code></pre>
+</section>
+<section id="wpa2-connect-flowgraph" class="slide level2">
+<h2>WPA 加密认证连接过程全貌</h2>
+<p><img data-src="images/chap0x02/openwrt-wpa2-flowgraph.png" /></p>
+</section>
+<section id="beacon-in-wpa2-ap" class="slide level2">
+<h2>以 Beacon Frame 为例看管理帧的功能</h2>
+<p><img data-src="images/chap0x02/beacon-in-wap2-ap.png" /></p>
+</section>
+<section id="rsn-wap1-in-beacon" class="slide level2">
+<h2>Beacon Frame 中的认证和加密信息</h2>
+<p><img data-src="images/chap0x02/beacon-rsn-wpa1.png" /></p>
+</section>
+<section id="mac-addr-types" class="slide level2">
+<h2>IEEE 802.11 链路层地址类型</h2>
+<ul>
+<li>DA = Destination MAC Address</li>
+<li>SA = Source MAC Address</li>
+<li>RA = Receiver Address indicate MAC Address of STAtion in WM that have to receive frame</li>
+<li>TA = Transmitter Address indicate STAtion which have transmitted frame in WM</li>
+<li>BSSID</li>
+</ul>
+</section>
+<section id="frame-header" class="slide level2">
+<h2>Frame Header</h2>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">分段名称</th>
+<th style="text-align: center;">FC</th>
+<th style="text-align: center;">D/I</th>
+<th style="text-align: center;">Addr1</th>
+<th style="text-align: center;">Addr2</th>
+<th style="text-align: center;">Addr3</th>
+<th style="text-align: center;">SC</th>
+<th style="text-align: center;">Addr4</th>
+<th style="text-align: center;">body</th>
+<th style="text-align: center;">CRC</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">字节数(octets)</td>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">6</td>
+<td style="text-align: center;">6</td>
+<td style="text-align: center;">6</td>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">6</td>
+<td style="text-align: center;">0 ~ 2312</td>
+<td style="text-align: center;">4</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>FC = Frame Control</li>
+<li>D/I = Duration/connection ID</li>
+<li>SC = Sequence control</li>
+<li>body = Frame body</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="frame-control">Frame Control</h3>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">分段名称</th>
+<th style="text-align: left;">Protocol</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Subtype</th>
+<th style="text-align: left;">TD</th>
+<th style="text-align: left;">FD</th>
+<th style="text-align: left;">MF</th>
+<th style="text-align: left;">Retry</th>
+<th style="text-align: left;">PM</th>
+<th style="text-align: left;">MD</th>
+<th style="text-align: left;">PF</th>
+<th style="text-align: left;">Order</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">比特数(bits)</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">1</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>TD = To DS</li>
+<li>FD = From DS</li>
+<li>MF = More Fragmentation</li>
+<li>PM = Power Management</li>
+<li>PF = Protected Frame</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="scapy.psdump">scapy 中可视化无线数据报文</h3>
+<pre ><code class="python">beacon=RadioTap()/Dot11()/Dot11Beacon()
+beacon.psdump('beacon.demo.eps', layer_shift=1)</code></pre>
+</section>
+<section class="slide level2">
+
+<h3 id="scapy.psdump.result">scapy 中可视化无线数据报文</h3>
+<p><img data-src="images/chap0x02/beacon.demo.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="wireshark.frame.hdr">Wireshark 中查看数据报帧头部详细信息</h3>
+<p><img data-src="images/chap0x02/wlan.fc.addrs.details.png" /></p>
+</section>
+</section>
+<section>
+<section id="wpa-wpa2-basics" class="title-slide slide level1">
+<h1>WPA 基础</h1>
+
+</section>
+<section class="slide level2">
+
+<ul>
+<li>WEP, Wired Equivalent Privacy</li>
+<li>WPA, <a href="https://www.wi-fi.org/discover-wi-fi/security">Wi-Fi Protected Access</a></li>
+</ul>
+</section>
+<section id="wifi-security-protocols-1" class="slide level2">
+<h2>安全协议概述</h2>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: left;">WEP</th>
+<th style="text-align: left;">WPA</th>
+<th style="text-align: left;">WPA2</th>
+<th style="text-align: left;">WPA3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">发布时间</td>
+<td style="text-align: left;">1997</td>
+<td style="text-align: left;">2003</td>
+<td style="text-align: left;">2004</td>
+<td style="text-align: left;">2018</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">安全模型</td>
+<td style="text-align: left;">Open/Shared</td>
+<td style="text-align: left;">PSK/Enterprise</td>
+<td style="text-align: left;">PSK/Enterprise</td>
+<td style="text-align: left;">PSK/Enterprise</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">加密算法</td>
+<td style="text-align: left;">RC4</td>
+<td style="text-align: left;">TKIP</td>
+<td style="text-align: left;">AES-CCMP</td>
+<td style="text-align: left;">AES-CCMP/AES-GCMP</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">密钥长度</td>
+<td style="text-align: left;">64b/128b</td>
+<td style="text-align: left;">128b</td>
+<td style="text-align: left;">128b</td>
+<td style="text-align: left;">128b/256b</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">完整性校验算法</td>
+<td style="text-align: left;">CRC-32</td>
+<td style="text-align: left;">64b MIC</td>
+<td style="text-align: left;">CBC-MAC</td>
+<td style="text-align: left;">SHA-2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">PMF 支持</td>
+<td style="text-align: left;">不支持</td>
+<td style="text-align: left;">可选</td>
+<td style="text-align: left;">可选</td>
+<td style="text-align: left;">强制要求</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">FS 支持</td>
+<td style="text-align: left;">❌</td>
+<td style="text-align: left;">❌</td>
+<td style="text-align: left;">❌</td>
+<td style="text-align: left;">✅</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">已淘汰（2021）</td>
+<td style="text-align: left;">2004</td>
+<td style="text-align: left;">2012</td>
+<td style="text-align: left;">未淘汰</td>
+<td style="text-align: left;">未淘汰</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="wifi-security-protocols-2" class="slide level2">
+<h2>安全协议概述</h2>
+<ul>
+<li>密钥长度 - 包括初始化向量 IV 的长度</li>
+<li>PMF - Protected Management Frame</li>
+<li>FS - Forward Secrecy</li>
+<li>TKIP - Temporal Key Integrity Protocol</li>
+<li>CCMP - Counter Cipher Mode Protocol，默认密钥长度 128bit</li>
+<li>GCMP - Galois Counter Mode Protocol, 默认密钥长度 256bit</li>
+</ul>
+</section>
+<section id="安全协议普及应用概况" class="slide level2">
+<h2>安全协议普及应用概况</h2>
+<p><a href="https://wigle.net/enc-large.html"><img data-src="images/chap0x02/wigle.net.png" /></a></p>
+</section>
+<section class="slide level2">
+
+<p>本课程专注于 <code>WPA/WPA2</code> 协议及其安全问题讲解。</p>
+</section>
+<section id="wpa-work-modes" class="slide level2">
+<h2>WPA 工作模式</h2>
+<ul>
+<li>个人模式
+<ul>
+<li>适用于家庭和小规模企业无线网络</li>
+<li>基于 <strong>单一</strong> <code>预共享密钥</code> 机制</li>
+</ul></li>
+<li>企业模式
+<ul>
+<li>适用于企业无线网络</li>
+<li>基于 <code>IEEE 802.1X</code> 标准，支持非共享的独立认证凭据</li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="wpa-personal" class="title-slide slide level1">
+<h1>WPA 个人模式</h1>
+
+</section>
+<section id="密钥分类概述" class="slide level2">
+<h2>密钥分类概述</h2>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">密钥类型</th>
+<th style="text-align: left;">用途</th>
+<th style="text-align: left;">来源</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">PSK</td>
+<td style="text-align: left;">认证</td>
+<td style="text-align: left;">（离线）配置😈</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">PMK</td>
+<td style="text-align: left;">长期使用😈，产生其他加密用途密钥</td>
+<td style="text-align: left;">EAP 协商</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">PTK</td>
+<td style="text-align: left;">加密单播(unicast)通信</td>
+<td style="text-align: left;">产生自 PMK/PSK</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">GTK</td>
+<td style="text-align: left;">加密广播(broadcast)和多播(multicast)通信</td>
+<td style="text-align: left;">产生自 PMK/PSK</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section class="slide level2">
+
+<h3 id="psk">PSK</h3>
+<ul>
+<li>Pre-Shared Key, 预共享密钥</li>
+<li>网络中所有使用者（客户端） <strong>共享</strong> 该密钥</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="pmk">PMK</h3>
+<ul>
+<li>Pairwise Master Key, 成对主密钥</li>
+<li>PMK = PBKDF(PSK, SSID, ssidLength, c)
+<ul>
+<li>PBKDF: Password-Based Key Derivation Function</li>
+<li>CCMP: c=4096, 输出长度：256bit</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="pbkdf-1">PBKDF</h3>
+<p><img data-src="images/chap0x02/pbkdf.png" /></p>
+</section>
+<section class="slide level2">
+
+<h3 id="pbkdf-2">PBKDF</h3>
+<ul>
+<li>相同的密码输入，经过 <code>PBKDF</code> 运算之后每次的结果都不相同</li>
+<li>通过增大迭代参数 <code>c</code>，增加暴力破解的计算量，从而增加破解时间</li>
+<li><code>salt</code> 的选择如果做到 <strong>不可预测</strong> ，则可以抵御预先计算 <code>PBKDF</code> 字典的加速暴力破解攻击方法
+<ul>
+<li><code>WPA/WPA2 PSK</code> 使用的 <code>salt</code> 是 <code>SSID</code> 和 <code>ssidLength</code></li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="ptk">PTK</h3>
+<ul>
+<li>Authenticator: 认证服务提供者</li>
+<li>Supplicant: 认证服务申请者</li>
+<li>A-nonce: Authenticator (generated) nonce, 随机值</li>
+<li>S-nonce: Supplicant (generated) nonce, 随机值</li>
+<li>Pairwise Transient Key, 成对 <strong>临时</strong> 密钥</li>
+<li>PTK = Function(PMK, A-nonce, S-nonce, Authenticator MAC, Supplicant MAC)
+<ul>
+<li>此处的 <code>Function</code> 是 <code>预先定义好的伪随机函数</code></li>
+</ul></li>
+</ul>
+</section>
+<section id="wpa-4way-handshake" class="slide level2">
+<h2>WPA/WPA2 4 次握手示意图</h2>
+<p><img data-src="images/chap0x02/four-way-handshake.png" /></p>
+</section>
+<section id="wpa-4way-handshake-sample-1" class="slide level2">
+<h2>WPA/WPA2 4 次握手实例 - 消息1</h2>
+<p><img data-src="images/chap0x02/fourway-handshake-1.png" /></p>
+</section>
+<section id="wpa-4way-handshake-sample-2" class="slide level2">
+<h2>WPA/WPA2 4 次握手实例 - 消息2</h2>
+<p><img data-src="images/chap0x02/fourway-handshake-2.png" /></p>
+</section>
+<section id="wpa-4way-handshake-sample-3" class="slide level2">
+<h2>WPA/WPA2 4 次握手实例 - 消息3</h2>
+<p><img data-src="images/chap0x02/fourway-handshake-3.png" /></p>
+</section>
+<section id="wpa-4way-handshake-sample-4" class="slide level2">
+<h2>WPA/WPA2 4 次握手实例 - 消息4</h2>
+<p><img data-src="images/chap0x02/fourway-handshake-4.png" /></p>
+</section>
+</section>
+<section>
+<section id="抓包任务" class="title-slide slide level1">
+<h1>抓包任务</h1>
+
+</section>
+<section class="slide level2">
+
+<ul>
+<li>分别使用电脑、手机、Kali 虚拟机连接 USB 无线网卡作为无线网络客户端</li>
+<li>无线网络分别配置 <code>DHCP</code> 和禁用 <code>DHCP</code> 状态下进行抓包
+<ul>
+<li><code>AP</code> 广播的 <code>beacon frame</code></li>
+<li><code>STA</code> 主动发出的 <code>probe request frame</code></li>
+<li>开放认证: 认证成功、解除认证</li>
+<li>WPA-PSK: 认证成功、认证失败、解除认证</li>
+<li>WPA2-PSK: 认证成功、认证失败、解除认证</li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="数据包分析任务" class="title-slide slide level1">
+<h1>数据包分析任务</h1>
+
+</section>
+<section class="slide level2">
+
+<ul>
+<li>查看统计当前信号覆盖范围内一共有多少独立的SSID？其中是否包括隐藏SSID？哪些无线热点是加密/非加密的？加密方式是否可知？</li>
+<li>如何分析出一个指定手机在抓包时间窗口内在手机端的无线网络列表可以看到哪些SSID？这台手机尝试连接了哪些SSID？最终加入了哪些SSID？</li>
+<li>SSID包含在哪些类型的802.11帧？</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="wireshark-分析常用技巧汇总" class="title-slide slide level1">
+<h1>Wireshark 分析常用技巧汇总</h1>
+
+</section>
+<section class="slide level2">
+
+<ul>
+<li>pcap 文件基本信息
+<ul>
+<li>pcap 基本统计信息</li>
+<li>无线网络流量聚类统计</li>
+</ul></li>
+<li>加密无线流量的解密</li>
+<li>数据可视化</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="scapy-编程基础" class="title-slide slide level1">
+<h1>Scapy 编程基础</h1>
+
+</section>
+<section id="scapy-layers-hier" class="slide level2">
+<h2>使用 scapy 构造 802.11 帧的基本层次结构</h2>
+<pre ><code class="ini">[RadioTap]
+-[Dot11]
+-- [Dot11&lt;Frame Type&gt;]
+--- [Dot11Elt]
+--- [Dot11Elt]
+ …
+--- [Dot11Elt]</code></pre>
+</section>
+<section id="scapy-build-frame" class="slide level2">
+<h2>使用 scapy 构造 802.11 帧</h2>
+<pre ><code class="python">frame = RadioTap()/Dot11()/Dot11ProbeReq()/Dot11Elt()
+
+# 查看 Dot11 字段定义
+ls(Dot11)
+# subtype    : BitMultiEnumField  (4 bits)         = (0)
+# type       : BitEnumField  (2 bits)              = (0)
+# proto      : BitField  (2 bits)                  = (0)
+# cfe        : BitEnumField (Cond) (4 bits)        = (0)
+# FCfield    : MultipleTypeField                   = (&lt;Flag 0 ()&gt;)
+# ID         : ShortField                          = (0)
+# addr1      : _Dot11MacField                      = ('00:00:00:00:00:00')
+# addr2      : _Dot11MacField (Cond)               = ('00:00:00:00:00:00')
+# addr3      : _Dot11MacField (Cond)               = ('00:00:00:00:00:00')
+# SC         : LEShortField (Cond)                 = (0)
+# addr4      : _Dot11MacField (Cond)               = ('00:00:00:00:00:00')
+
+# 查看 Dot11Elt 字段定义
+ls(Dot11Elt)
+# ID         : ByteEnumField                       = (0)
+# len        : FieldLenField                       = (None)
+# info       : StrLenField                         = (b'')
+
+# 发送构造好的 wireless frame
+sendp(frame, iface='wlan0', count=10, inter=0.2)
+# 从 pcap 中读取 wireless frame
+frame_list = rdpcap(filename)
+frame_obj = frame_list[0]
+# 嗅探模式实时抓包
+# count=10 捕获 10 个 frame 后退出嗅探
+# prn=FrameHandler 注册一个回调函数 FrameHandler 
+# 用于每收到一个 frame 后调用该函数
+sniff(iface='wlan0', count=10, prn=FrameHandler)
+# 捕获数据写入文件
+wrpcap(filename, frames_list)</code></pre>
+</section>
+<section id="课本资源" class="slide level2">
+<h2>课本资源</h2>
+<ul>
+<li><a href="https://c4pr1c3.github.io/cuc-mis/chap0x02/scapy.html">scapy 无线网络编程入门</a></li>
+<li><a href="https://c4pr1c3.github.io/cuc-mis/chap0x03/scapy.html">scapy 无线网络编程实例</a></li>
+</ul>
+</section>
+</section>
+<section>
+<section id="wpa-enterprise" class="title-slide slide level1">
+<h1>WPA 企业模式</h1>
+
+</section>
+<section id="概述" class="slide level2">
+<h2>概述</h2>
+<ul>
+<li>认证服务器和 AP 分离</li>
+<li>认证服务器和 AP 之间使用 <code>RADIUS</code> 协议认证
+<ul>
+<li>EAP, Extensible Authentication Protocol</li>
+</ul></li>
+</ul>
+</section>
+<section id="wpa-802dot1x" class="slide level2">
+<h2>802.11 与 802.1X</h2>
+<ul>
+<li><code>802.11</code> 是无线网络链路层协议规范</li>
+<li><code>802.1X</code> 是物理层无关的基于端口的（链路层）访问控制协议</li>
+<li>两者组合后可以提高无线网络安全性</li>
+</ul>
+</section>
+<section id="wpa-802dot1X-requirements" class="slide level2">
+<h2>802.1X 与 802.11 身份认证需求</h2>
+<ul>
+<li>可以解决
+<ul>
+<li>不同无线客户端使用独立认证凭据</li>
+<li>伪造 AP 和中间人攻击</li>
+<li>精细化授权</li>
+</ul></li>
+<li>无法解决
+<ul>
+<li>伪造数据报文和伪造断开连接请求进行 <code>DoS</code> 攻击</li>
+</ul></li>
+</ul>
+</section>
+<section id="eap" class="slide level2">
+<h2>EAP</h2>
+<ul>
+<li>非简单用户名和密码</li>
+<li>很容易封装到数据链路层协议数据帧</li>
+<li>提供了一个适用于所有认证方法的通用框架</li>
+<li>更简单的不同认证方法的互操作和兼容性</li>
+<li>在 <code>IEEE 802.11</code> 协议中提供 <code>STA</code> 和认证服务器之间的端到端认证
+<ul>
+<li><code>AP</code> 在这个过程中扮演认证代理角色</li>
+<li><code>RADIUS</code> 是 <code>EAP</code> 在 <code>IP</code> 网络中传输的事实标准</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h3 id="eapol">EAPOL</h3>
+<p>EAP encapsulation over LAN.</p>
+</section>
+<section id="eap-auth-alternatives" class="slide level2">
+<h2>EAP 的常见可选认证方法</h2>
+<ul>
+<li>按普及程度从高到低排序
+<ul>
+<li>PEAP</li>
+<li>EAP-MD5</li>
+<li>EAP-TTLS</li>
+<li>EAP-TLS (安全等级最高）</li>
+<li>LEAP （安全性最差）</li>
+<li>EAP-FAST</li>
+</ul></li>
+</ul>
+</section>
+<section id="x" class="slide level2">
+<h2>802.1X</h2>
+<ul>
+<li>解决用户身份认证问题</li>
+<li>定义了有线和无线局域网传送 <code>EAP</code> 的标准</li>
+<li><code>EAP</code> 消息被封装在以太帧负载</li>
+<li>提供基于（交换机）端口的访问控制</li>
+<li>在不改动现有网络设备的前提下提供高层应用新的认证方式</li>
+<li>保证最新的安全技术可以兼容现有网络基础设施</li>
+</ul>
+</section>
+<section id="wpa-enterprise-flowgraph" class="slide level2">
+<h2>基于 802.1X 的 WPA 企业级认证流程简化</h2>
+<p><img data-src="images/chap0x02/wpa-enterprise-flowgraph.png" /></p>
+</section>
+<section id="wpa-enterprise-arch" class="slide level2">
+<h2>WPA 企业级认证架构组成</h2>
+<p><img data-src="images/chap0x02/wpa-enterprise-arch.png" /></p>
+</section>
+</section>
+<section>
+<section id="setup-wpa-enterprise-ap" class="title-slide slide level1">
+<h1>搭建 WPA2 企业级认证软 AP</h1>
+
+</section>
+<section id="软件依赖" class="slide level2">
+<h2>软件依赖</h2>
+<ul>
+<li>OpenWRT</li>
+<li>FreeRADIUS</li>
+</ul>
+</section>
+<section id="wpa2-openwrt-enterprise" class="slide level2">
+<h2>基于 OpenWRT 的软 AP 配置效果</h2>
+<p><img data-src="images/chap0x02/wpa2-enterprise-openwrt-demo.png" /></p>
+</section>
+<section id="无线客户端连接时的证书警告" class="slide level2">
+<h2>无线客户端连接时的证书警告</h2>
+<p><img data-src="images/chap0x02/wpa2-enterprise-client-cert-warning.png" /></p>
+</section>
+<section id="wpa2-eap-md5-vulnerability" class="slide level2">
+<h2>Wireshark 里的 WPA2 企业级认证连接过程分析</h2>
+<p><img data-src="images/chap0x02/eap-md5-vul.png" /></p>
+</section>
+<section class="slide level2">
+
+<p><a href="https://openwrt.org/docs/guide-user/network/wifi/freeradius">OpenWRT 官网的 FreeRADIUS 指南</a></p>
+</section>
+</section>
+<section>
+<section id="wpa2-enterprise-guide-on-openwrt" class="title-slide slide level1">
+<h1>WPA2 企业级认证配置简要指南</h1>
+
+</section>
+<section class="slide level2">
+
+<p>⚠️ 本节内容仅限「教学演示」用途，包含严重安全漏洞，切勿用于生产环境！！</p>
+<p>⚠️ 本节内容仅限「教学演示」用途，包含严重安全漏洞，切勿用于生产环境！！</p>
+<p>⚠️ 本节内容仅限「教学演示」用途，包含严重安全漏洞，切勿用于生产环境！！</p>
+</section>
+<section id="openwrt-系统基本信息" class="slide level2">
+<h2>OpenWRT 系统基本信息</h2>
+<p>OpenWrt 19.07.5, r11257-5090152ae3</p>
+</section>
+<section id="安装依赖软件" class="slide level2">
+<h2>安装依赖软件</h2>
+<pre ><code class="bash">opkg update && opkg install freeradius3-default freeradius3-utils</code></pre>
+</section>
+<section id="配置-freeradius-客户端认证配置文件" class="slide level2">
+<h2>配置 freeradius 客户端认证配置文件</h2>
+<p><code>freeradius3/clients.conf</code></p>
+<pre ><code class="ini"># 修改配置文件中 secret 变量赋值
+# AP 访问 FreeRADIUS 使用的秘密凭据
+secret = SecretForAP1</code></pre>
+</section>
+<section id="配置-freeradius-授权用户配置文件" class="slide level2">
+<h2>配置 freeradius 授权用户配置文件</h2>
+<p><code>freeradius3/mods-config/files/authorize</code></p>
+<pre ><code class="ini"># 添加以下「用户密码明文对」到文件第一行
+# 无线客户端连接 AP 时使用的独立用户名密码
+bob Cleartext-Password := "password1"</code></pre>
+</section>
+<section id="开启-freeradius-的登录审计功能" class="slide level2">
+<h2>开启 freeradius 的登录审计功能</h2>
+<p><code>freeradius3/sites-available/default</code></p>
+<pre ><code class="ini"># 取消 radutmp 这一行的行首注释
+radutmp</code></pre>
+<p><code>freeradius3/sites-available/inner-tunnel</code></p>
+<pre ><code class="ini"># 取消注释 'update output.session-state' 这一小节配置
+update outer.session-state {
+        User-Name := &User-Name
+}</code></pre>
+</section>
+<section id="编辑无线网络配置" class="slide level2">
+<h2>编辑无线网络配置</h2>
+<pre ><code class="ini">config wifi-iface 'default_radio0'
+    option device 'radio0'
+    option mode 'ap'
+    option ssid 'OpenWrt'
+    option network 'wan'
+    option encryption 'wpa2'
+    option server '127.0.0.1'
+    option key 'SecretForAP1'
+    option acct_server '127.0.0.1'
+    option acct_secret 'SecretForAP1'</code></pre>
+</section>
+<section class="slide level2">
+
+<p>完成以上配置之后，可以通过 <code>LuCI</code> 重启无线网络以使配置生效。</p>
+</section>
+</section>
+<section>
+<section id="本章小结" class="title-slide slide level1">
+<h1>本章小结</h1>
+
+</section>
+<section class="slide level2">
+
+<ul>
+<li>掌握无线网络监听的实现方法</li>
+<li>掌握无线通信数据报文分析的常用方法</li>
+<li>了解基于 OpenWrt 的软 AP 基本搭建配置方法</li>
+<li>了解基于 Scapy 的无线数据收发分析编程技术</li>
+</ul>
+</section>
+</section>
+    </div>
+  </div>
+
+  <script src="lib/reveal.js.v4/dist/reveal.js"></script>
+
+  <!-- reveal.js plugins -->
+  <script src="lib/reveal.js.v4/plugin/notes/notes.js"></script>
+  <script src="lib/reveal.js.v4/plugin/search/search.js"></script>
+  <script src="lib/reveal.js.v4/plugin/zoom/zoom.js"></script>
+  <script src="lib/reveal.js.v4/plugin/math/math.js"></script>
+  <script src="lib/reveal.js.v4/plugin/markdown/markdown.js"></script>
+  <script src="lib/reveal.js.v4/plugin/highlight/highlight.js"></script>
+  <script src="lib/reveal.js.v4/plugin/reveal.js-plugins/menu/menu.js"></script>
+  <script src="lib/reveal.js.v4/plugin/reveal.js-plugins/chalkboard/plugin.js"></script>
+  <script src="lib/reveal.js.v4/plugin/reveal.js-plugins/audio-slideshow/plugin.js"></script>
+
+  <script>
+    
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+      
+        // Display the page number of the current slide
+        slideNumber: true,
+        // Push each slide change to the browser history
+        history: true,
+        // Transition style
+        transition: 'fade', // none/fade/slide/convex/concave/zoom
+        math: {
+          mathjax: '',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+    menu: {
+  		// Specifies which side of the presentation the menu will 
+  		// be shown. Use 'left' or 'right'.
+  		side: 'left',
+  
+  		// Specifies the width of the menu.
+  		// Can be one of the following:
+  		// 'normal', 'wide', 'third', 'half', 'full', or
+  		// any valid css length value
+  		width: 'normal',
+  
+  		// Add slide numbers to the titles in the slide list.
+  		// Use 'true' or format string (same as reveal.js slide numbers)
+  		numbers: true,
+  
+  		// Specifies which slide elements will be used for generating
+  		// the slide titles in the menu. The default selects the first
+  		// heading element found in the slide, but you can specify any
+  		// valid css selector and the text from the first matching
+  		// element will be used.
+  		// Note: that a section data-menu-title attribute or an element
+  		// with a menu-title class will take precedence over this option
+  		titleSelector: 'h1, h2, h3, h4, h5, h6',
+  
+  		// If slides do not have a matching title, attempt to use the
+  		// start of the text content as the title instead
+  		useTextContentForMissingTitles: false,
+  
+  		// Hide slides from the menu that do not have a title.
+  		// Set to 'true' to only list slides with titles.
+  		hideMissingTitles: false,
+  
+  		// Adds markers to the slide titles to indicate the 
+  		// progress through the presentation. Set to 'false'
+  		// to hide the markers.
+  		markers: true,
+  
+  		// Specify custom panels to be included in the menu, by
+  		// providing an array of objects with 'title', 'icon'
+  		// properties, and either a 'src' or 'content' property.
+  		custom: false,
+  
+  		// Specifies the themes that will be available in the themes
+  		// menu panel. Set to 'true' to show the themes menu panel
+  		// with the default themes list. Alternatively, provide an
+  		// array to specify the themes to make available in the
+  		// themes menu panel, for example...
+  		// [
+  		//     { name: 'Black', theme: 'css/theme/black.css' },
+  		//     { name: 'White', theme: 'css/theme/white.css' },
+  		//     { name: 'League', theme: 'css/theme/league.css' }
+  		// ]
+  		themes: false,
+  
+  		// Specifies the path to the default theme files. If your
+  		// presentation uses a different path to the standard reveal
+  		// layout then you need to provide this option, but only
+  		// when 'themes' is set to 'true'. If you provide your own 
+  		// list of themes or 'themes' is set to 'false' the 
+  		// 'themesPath' option is ignored.
+  		themesPath: 'css/theme/',
+  
+  		// Specifies if the transitions menu panel will be shown.
+  		// Set to 'true' to show the transitions menu panel with
+  		// the default transitions list. Alternatively, provide an
+  		// array to specify the transitions to make available in
+  		// the transitions panel, for example...
+  		// ['None', 'Fade', 'Slide']
+  		transitions: false,
+  
+  		// Adds a menu button to the slides to open the menu panel.
+  		// Set to 'false' to hide the button.
+  		openButton: true,
+  
+  		// If 'true' allows the slide number in the presentation to
+  		// open the menu panel. The reveal.js slideNumber option must 
+  		// be displayed for this to take effect
+  		openSlideNumber: false,
+  
+  		// If true allows the user to open and navigate the menu using
+  		// the keyboard. Standard keyboard interaction with reveal
+  		// will be disabled while the menu is open.
+  		keyboard: true,
+  
+  		// Normally the menu will close on user actions such as
+  		// selecting a menu item, or clicking the presentation area.
+  		// If 'true', the sticky option will leave the menu open
+  		// until it is explicitly closed, that is, using the close
+  		// button or pressing the ESC or m key (when the keyboard 
+  		// interaction option is enabled).
+  		sticky: false,
+  
+  		// If 'true' standard menu items will be automatically opened
+  		// when navigating using the keyboard. Note: this only takes 
+  		// effect when both the 'keyboard' and 'sticky' options are enabled.
+  		autoOpen: true,
+  
+  		// If 'true' the menu will not be created until it is explicitly
+  		// requested by calling RevealMenu.init(). Note this will delay
+  		// the creation of all menu panels, including custom panels, and
+  		// the menu button.
+  		delayInit: false,
+  
+  		// If 'true' the menu will be shown when the menu is initialised.
+  		openOnInit: false,
+  
+  		// By default the menu will load it's own font-awesome library
+  		// icons. If your presentation needs to load a different
+  		// font-awesome library the 'loadIcons' option can be set to false
+  		// and the menu will not attempt to load the font-awesome library.
+  		loadIcons: true
+
+    },
+
+    chalkboard: {
+        boardmarkerWidth: 3,
+        chalkWidth: 7,
+        chalkEffect: 1.0,
+        storage: null,
+        src: null,
+        readOnly: undefined,
+        toggleChalkboardButton: { left: "80px" },
+				toggleNotesButton: { left: "130px" },
+        transition: 800,
+        theme: "chalkboard",
+    },
+
+        // reveal.js plugins
+        plugins: [
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom,
+          RevealMarkdown, 
+          RevealMenu, 
+          RevealHighlight,
+          RevealChalkboard
+        ]
+      });
+    </script>
+    </body>
+</html>
